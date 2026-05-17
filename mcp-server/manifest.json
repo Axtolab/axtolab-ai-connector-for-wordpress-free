@@ -1,0 +1,63 @@
+{
+  "manifest_version": "0.2",
+  "name": "axtolab-ai-connector",
+  "display_name": "Axtolab AI Connector for WordPress",
+  "version": "1.0.0",
+  "description": "Let AI agents safely write, edit, and manage your WordPress site. MCP Gateway for Claude, ChatGPT, and AI agents.",
+  "author": {
+    "name": "Axtolab",
+    "url": "https://axtolab.com"
+  },
+  "icon": "icon.png",
+  "license": "MIT",
+  "keywords": ["wordpress", "mcp", "claude", "content-management", "editorial"],
+  "tools_generated": true,
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "WP_MCP_TOKENS": "${user_config.site_token_1},${user_config.site_token_2},${user_config.site_token_3},${user_config.site_token_4},${user_config.site_token_5}"
+      }
+    }
+  },
+  "user_config": {
+    "site_token_1": {
+      "type": "string",
+      "title": "Site 1 — Connection Token",
+      "description": "Generate in WordPress Admin → AI Connector → Generate Connection Token",
+      "sensitive": true,
+      "required": true
+    },
+    "site_token_2": {
+      "type": "string",
+      "title": "Site 2 — Connection Token (optional)",
+      "description": "Add a second WordPress site. Leave blank if not needed.",
+      "sensitive": true,
+      "required": false
+    },
+    "site_token_3": {
+      "type": "string",
+      "title": "Site 3 — Connection Token (optional)",
+      "description": "Add a third WordPress site. Leave blank if not needed.",
+      "sensitive": true,
+      "required": false
+    },
+    "site_token_4": {
+      "type": "string",
+      "title": "Site 4 — Connection Token (optional)",
+      "description": "Add a fourth WordPress site. Leave blank if not needed.",
+      "sensitive": true,
+      "required": false
+    },
+    "site_token_5": {
+      "type": "string",
+      "title": "Site 5 — Connection Token (optional)",
+      "description": "Add a fifth WordPress site. Leave blank if not needed. Need more than 5 sites? Create another extension profile or connect additional clients through the AI Connector setup screen.",
+      "sensitive": true,
+      "required": false
+    }
+  }
+}

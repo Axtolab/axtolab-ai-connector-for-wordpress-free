@@ -1,0 +1,42 @@
+.DS_Store
+Wordpress Theme/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+.roo/mcp.json
+
+# Node / JS
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# Python
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+
+# Plugin release artifacts (don't commit ad-hoc zips)
+wp-plugin/*.zip
+
+# Claude Code per-machine settings (contains personal paths)
+.claude/settings.json
+.claude/settings.local.json
+
+# AI assistant / coding-tool config (per-machine, not for public mirror)
+CLAUDE.md
+AGENTS.md
+.claude/
+.roo/
+.cursor/
+.aider*

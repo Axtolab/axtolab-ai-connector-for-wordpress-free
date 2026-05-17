@@ -1,0 +1,56 @@
+# Files and directories to exclude from WordPress.org plugin ZIP
+
+# Tests and proof-of-concept files
+tests/
+test-*.php
+*-gate-proof.php
+
+# Development files
+.git/
+.github/
+.gitignore
+.editorconfig
+.phpcs.xml
+phpcs.xml
+composer.json
+composer.lock
+node_modules/
+package.json
+package-lock.json
+Gruntfile.js
+webpack.config.js
+
+# Documentation (README.md is replaced by readme.txt for WP.org)
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# NOTE: assets/axtolab-ai-connector.mcpb MUST stay in the published zip — DO NOT add it
+# here. The plugin admin offers it as a download so users can install the
+# Axtolab AI Connector bundle in Claude Desktop / other desktop MCP clients. The
+# admin UI checks file_exists() on it (see `mcpbAvailable` in
+# class-mcp-gateway-admin.php). Excluding it breaks the "Download desktop
+# bundle" path for users.
+
+# WordPress.org directory listing assets are uploaded separately via SVN after
+# approval and must not ship inside the plugin code zip.
+assets/banner-*.png
+assets/icon-*.png
+assets/screenshot-*.png
+assets/ASSET-SPECS.md
+
+# Paid add-ons must bundle/load their own licensing SDK. The WordPress.org
+# free core package must not ship license-gating helper code.
+includes/class-axtolab-license.php
+
+# Self-exclude — this file documents excludes, shouldn't ship in the published zip
+.wporgignore

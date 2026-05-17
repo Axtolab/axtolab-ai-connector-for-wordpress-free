@@ -1,0 +1,15 @@
+# Source and dev files — not needed in the published package
+src/
+tests/
+tsconfig.json
+vitest.config.ts
+esbuild.mcpb.mjs
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files — keep .env.example, exclude everything else
+.env
+.env.*
+!.env.example
