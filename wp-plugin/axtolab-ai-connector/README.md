@@ -1,0 +1,106 @@
+# Axtolab AI Connector for WordPress — Plugin
+
+Let AI agents safely write, edit, and manage your WordPress site. This plugin provides the WordPress-side MCP Gateway for Claude, ChatGPT, and other MCP-compatible AI clients to manage content, media, and SEO through a secure REST API.
+
+## Requirements
+
+- WordPress 6.0+
+- PHP 7.4+
+- HTTPS recommended (required for OAuth)
+
+## Installation
+
+1. Download `axtolab-ai-connector-1.0.0.zip`
+2. In WordPress admin: Plugins → Add New → Upload Plugin → select the zip
+3. Activate the plugin
+4. Connect your AI client (see Authentication below)
+
+## Features
+
+### Content Management
+- Create, edit, publish, and schedule posts and pages
+- Clone existing content as new drafts
+- Revision history with restore capability
+- Signed shareable preview links
+
+### Media Library
+- Upload from URL, local file path, or drag-and-drop portal
+- Search and browse existing media
+- Set featured images
+- Insert, replace, and remove inline images with block-aware placement
+
+### AI Image Generation
+- Generate images with Google Imagen or OpenAI (API keys configured in Settings → AI Connector)
+- Search and import free stock photos from Unsplash and Pexels with automatic attribution
+- Generated images auto-cleanup after 24h if not confirmed
+
+### Upload Portal
+- Temporary drag-and-drop upload page — works for any MCP client
+- Token-secured, time-limited (15 minutes), no WordPress login required
+- SVG sanitization strips scripts and event handlers
+- CSP headers and nonce validation
+
+### Yoast SEO Integration
+- Read SEO and readability analysis scores
+- Update focus keyphrase, SEO title, meta description
+- Preview rendered head/meta tags
+
+### Authors & Taxonomies
+- Assign authors from an allowlist
+- Create and assign taxonomy terms (categories, tags, custom taxonomies)
+
+## Authentication
+
+The plugin supports three authentication methods:
+
+### 1. Application Passwords (Default)
+WordPress built-in Application Passwords via HTTP Basic Auth. Issued to the dedicated `axtolab-connector-service` user via the connection-token flow (token starts with `wmcp1_...`). The token is generated in the AI Connector setup page and consumed by the `wp_connect_site` MCP tool inside Claude Desktop's `.mcpb` extension.
+
+### 2. OAuth 2.1
+For web-based clients (ChatGPT, Claude Web). Supports:
+- Authorization Code + PKCE (S256)
+- Dynamic Client Registration (RFC 7591)
+- Protected Resource Metadata (RFC 9728)
+
+Enable in Settings → AI Connector → OAuth.
+
+### 3. Bearer Token
+For remote MCP-over-HTTP transport connections. Enable in Settings → AI Connector → Remote AI Access.
+
+## Admin Settings
+
+Navigate to **Settings → AI Connector** to configure:
+
+- **Connect AI Client** — generate connection tokens for desktop clients
+- **Service Account** — status of the `axtolab-connector-service` user (explicit-consent creation)
+- **Remote AI Access** — enable/disable bearer token transport
+- **OAuth** — enable/disable OAuth 2.1 authorization server
+- **Image Providers** — API keys for Google Imagen, OpenAI, Unsplash, Pexels
+- **Revoke All** — clear all Application Passwords for the service account
+
+## Security
+
+- **Service account isolation** — dedicated `axtolab-connector-service` user with `axtolab_ai_connector_editor` role (no admin access)
+- **Confirmation tokens** — destructive operations (publish, trash, restore) require explicit confirmation
+- **Rate limiting** — per-IP limits on OAuth registration and token endpoints
+- **SVG sanitization** — DOMDocument-based stripping of scripts, event handlers, and dangerous URIs
+- **CSP headers** — upload portal uses Content-Security-Policy with nonces
+- **Token hashing** — upload portal tokens stored as SHA-256 hashes, never in plaintext
+- **API key encryption** — image provider keys encrypted with AES-256-CBC using WordPress salts
+
+## Uninstallation
+
+When the plugin is deleted (not just deactivated), it removes:
+- The `axtolab-connector-service` user (content reassigned to admin)
+- The `axtolab_ai_connector_editor` role
+- All plugin options and settings
+- All plugin transients (upload sessions, rate limits, OAuth tokens)
+- .htaccess rules for OAuth discovery
+
+## Identifier conventions
+
+All identifiers use the `axtolab_ai_connector_*` / `Axtolab_AI_Connector_*` / `AXTOLAB_AI_CONNECTOR_*` prefix family. The REST namespace is `/wp-json/axtolab-ai-connector/v1`, the service account user is `axtolab-connector-service`, the role is `axtolab_ai_connector_editor`, and stored-option keys are `axtolab_ai_connector_*`.
+
+## License
+
+GPL-2.0-or-later

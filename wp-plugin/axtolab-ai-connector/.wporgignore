@@ -1,0 +1,52 @@
+# Files and directories to exclude from WordPress.org plugin ZIP
+
+# Tests and proof-of-concept files
+tests/
+test-*.php
+*-gate-proof.php
+
+# Development files
+.git/
+.github/
+.gitignore
+.editorconfig
+.phpcs.xml
+phpcs.xml
+composer.json
+composer.lock
+node_modules/
+package.json
+package-lock.json
+Gruntfile.js
+webpack.config.js
+
+# Documentation (README.md is replaced by readme.txt for WP.org)
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Claude Desktop bundle (.mcpb) is excluded from the WordPress.org plugin zip
+# per the WordPress.org plugin guidelines (only plugin-functional files are
+# permitted in the published zip). The bundle is distributed as a GitHub
+# Release asset instead; see AXTOLAB_AI_CONNECTOR_MCPB_URL in
+# wp-mcp-gateway.php for the canonical download URL.
+assets/axtolab-ai-connector.mcpb
+
+# WordPress.org directory listing assets are uploaded separately via SVN after
+# approval and must not ship inside the plugin code zip.
+assets/banner-*.png
+assets/icon-*.png
+assets/screenshot-*.png
+assets/ASSET-SPECS.md
+
+# Self-exclude — this file documents excludes, shouldn't ship in the published zip
+.wporgignore
