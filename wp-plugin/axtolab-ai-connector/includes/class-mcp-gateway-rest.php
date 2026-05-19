@@ -813,16 +813,6 @@ final class Axtolab_AI_Connector_REST {
 			)
 		);
 
-		register_rest_route(
-			self::NS,
-			'/plugin-settings/(?P<slug>[a-zA-Z0-9_\-]+)',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_plugin_settings' ),
-				'permission_callback' => array( __CLASS__, 'permission_admin' ),
-			)
-		);
-
 		// ── Term Meta (taxonomy term meta — Yoast/Rank Math/AIOSEO term SEO) ─
 		register_rest_route(
 			self::NS,
@@ -5759,61 +5749,6 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'key'   => $key,
 				'value' => $value,
-			),
-			200,
-			self::audit_id()
-		);
-	}
-
-	/**
-	 * GET /plugin-settings/{slug} — read all wp_options whose key matches a
-	 * plugin's prefix, with sensitive-key redaction. Lets AI agents understand
-	 * a plugin's configuration without exposing stored credentials.
-	 *
-	 * Matching: option key starts with `<slug>_`, `<slug>-`, OR exactly `<slug>`.
-	 *
-	 * @param WP_REST_Request $request
-	 * @return WP_REST_Response
-	 */
-	public static function handle_get_plugin_settings( WP_REST_Request $request ) {
-		global $wpdb;
-
-		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
-		if ( '' === $slug ) {
-			return Axtolab_AI_Connector_Response::error( 'invalid_slug', 'Plugin slug required.', 400, self::audit_id() );
-		}
-
-		$like_prefix_underscore = $wpdb->esc_like( $slug . '_' ) . '%';
-		$like_prefix_dash       = $wpdb->esc_like( $slug . '-' ) . '%';
-		$exact                  = $slug;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Enumerating option_name by prefix on the core options table. WP core exposes no get_options_by_prefix() helper; this is the documented way to discover a third-party plugin's stored settings. Restricted to an authenticated MCP caller, capped at 200 rows, and sensitive keys are redacted by self::is_sensitive_option_key() below.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name = %s LIMIT 200",
-				$like_prefix_underscore,
-				$like_prefix_dash,
-				$exact
-			)
-		);
-
-		$out = array();
-		foreach ( (array) $rows as $row ) {
-			$opt_name = $row->option_name;
-			$value    = get_option( $opt_name );
-			if ( self::is_sensitive_option_key( $opt_name ) ) {
-				$value = '[REDACTED]';
-			} else {
-				$value = self::redact_sensitive_in_value( $value );
-			}
-			$out[ $opt_name ] = $value;
-		}
-
-		return Axtolab_AI_Connector_Response::success(
-			array(
-				'slug'    => $slug,
-				'count'   => count( $out ),
-				'options' => $out,
 			),
 			200,
 			self::audit_id()
