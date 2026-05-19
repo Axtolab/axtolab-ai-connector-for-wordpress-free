@@ -31,7 +31,8 @@ class Axtolab_AI_Connector_Bearer_Auth {
 		}
 
 		$raw_bytes = random_bytes( 32 );
-		$token     = rtrim( strtr( base64_encode( $raw_bytes ), '+/', '-_' ), '=' );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding of random bytes for a URL-safe opaque bearer token, not obfuscation.
+		$token = rtrim( strtr( base64_encode( $raw_bytes ), '+/', '-_' ), '=' );
 
 		$hash = hash_hmac( 'sha256', $token, wp_salt( 'auth' ) );
 
@@ -99,7 +100,6 @@ class Axtolab_AI_Connector_Bearer_Auth {
 			'created_at' => $settings['remote_bearer_token_created'] ?? '',
 		);
 	}
-
 }
 
 if ( ! class_exists( 'MCP_Gateway_Bearer_Auth', false ) ) {

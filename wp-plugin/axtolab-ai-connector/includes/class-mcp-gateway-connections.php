@@ -148,12 +148,12 @@ class Axtolab_AI_Connector_Connections {
 			$active  = time() < $expires;
 
 			if ( $active ) {
-				$oauth_id     = self::OAUTH_CONNECTION_ID;
-				$meta         = get_option( self::META_PREFIX . $oauth_id, array() );
-				$last_active  = (int) get_option( self::LAST_ACTIVE_PREFIX . $oauth_id, 0 );
-				$created_str  = isset( $settings['oauth_access_token_created'] ) ? $settings['oauth_access_token_created'] : '';
-				$created_ts   = $created_str ? strtotime( $created_str ) : 0;
-				$client_name  = isset( $settings['oauth_client_name'] ) ? $settings['oauth_client_name'] : 'MCP Client';
+				$oauth_id    = self::OAUTH_CONNECTION_ID;
+				$meta        = get_option( self::META_PREFIX . $oauth_id, array() );
+				$last_active = (int) get_option( self::LAST_ACTIVE_PREFIX . $oauth_id, 0 );
+				$created_str = isset( $settings['oauth_access_token_created'] ) ? $settings['oauth_access_token_created'] : '';
+				$created_ts  = $created_str ? strtotime( $created_str ) : 0;
+				$client_name = isset( $settings['oauth_client_name'] ) ? $settings['oauth_client_name'] : 'MCP Client';
 
 				// Auto-detect client type from client_name.
 				$client_type = 'unknown';
@@ -317,7 +317,7 @@ class Axtolab_AI_Connector_Connections {
 			if ( is_array( $passwords ) ) {
 				foreach ( $passwords as $pwd ) {
 					self::cleanup_meta( $pwd['uuid'] );
-					$count++;
+					++$count;
 				}
 				WP_Application_Passwords::delete_all_application_passwords( $service_user_id );
 			}
@@ -327,7 +327,7 @@ class Axtolab_AI_Connector_Connections {
 		if ( Axtolab_AI_Connector_OAuth::has_active_token() ) {
 			Axtolab_AI_Connector_OAuth::revoke_token();
 			self::cleanup_meta( self::OAUTH_CONNECTION_ID );
-			$count++;
+			++$count;
 		}
 
 		self::invalidate_cache();
@@ -662,16 +662,19 @@ class Axtolab_AI_Connector_Connections {
 			}
 			$result = self::revoke( $conn['id'] );
 			if ( true === $result ) {
-				$count++;
+				++$count;
 			}
 		}
 
 		if ( $count > 0 ) {
-			do_action( 'axtolab_ai_connector_debug_log', sprintf(
-				'[WP MCP Gateway] Auto-expired %d connection(s) inactive for >%d days.',
-				$count,
-				$expiry_days
-			) );
+			do_action(
+				'axtolab_ai_connector_debug_log',
+				sprintf(
+					'[WP MCP Gateway] Auto-expired %d connection(s) inactive for >%d days.',
+					$count,
+					$expiry_days
+				)
+			);
 		}
 
 		return $count;

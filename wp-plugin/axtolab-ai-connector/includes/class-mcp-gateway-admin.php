@@ -256,7 +256,6 @@ class Axtolab_AI_Connector_Admin {
 		// helper add-ons use, so support copy stays consistent.
 		add_filter( 'plugin_action_links_' . plugin_basename( AXTOLAB_AI_CONNECTOR_FILE ), array( $this, 'add_plugin_action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
-
 	}
 
 	// ── First-run OAuth enable notice ────────────────────────────────────────
@@ -418,9 +417,9 @@ class Axtolab_AI_Connector_Admin {
 
 		// Limit the notice to AI Connector / Axtolab admin pages so we don't
 		// pollute unrelated wp-admin screens. Hook formats:
-		//   toplevel_page_axtolab          (parent menu direct nav)
-		//   axtolab_page_axtolab-ai-connector       (AI Connector submenu)
-		//   axtolab_page_axtolab-ai-connector-logs  (Logs & Roll Back submenu)
+		// toplevel_page_axtolab          (parent menu direct nav)
+		// axtolab_page_axtolab-ai-connector       (AI Connector submenu)
+		// axtolab_page_axtolab-ai-connector-logs  (Logs & Roll Back submenu)
 		$allowed_screens = array(
 			'toplevel_page_' . self::PARENT_MENU_SLUG,
 			self::PARENT_MENU_SLUG . '_page_' . self::MENU_SLUG,
@@ -554,15 +553,15 @@ class Axtolab_AI_Connector_Admin {
 	/**
 	 * Add a "Settings · Support" pair to the Plugins admin row for this
 	 * plugin (left-side action links, next to Deactivate). Both come
-	 * from Axtolab_Support_Links so the support email + label stays
+	 * from Axtolab_AI_Connector_Support_Links so the support email + label stays
 	 * consistent across the suite.
 	 */
 	public function add_plugin_action_links( $links ) {
-		if ( ! class_exists( 'Axtolab_Support_Links' ) ) {
+		if ( ! class_exists( 'Axtolab_AI_Connector_Support_Links' ) ) {
 			return $links;
 		}
 		$settings_url = admin_url( 'admin.php?page=' . self::MENU_SLUG );
-		$rows         = Axtolab_Support_Links::plugin_row_links( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector', $settings_url );
+		$rows         = Axtolab_AI_Connector_Support_Links::plugin_row_links( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector', $settings_url );
 		// WP merges $links with our additions — prepend ours so they
 		// appear before Deactivate / Activate.
 		return array_merge( $rows['action'], $links );
@@ -577,10 +576,10 @@ class Axtolab_AI_Connector_Admin {
 		if ( $file !== plugin_basename( AXTOLAB_AI_CONNECTOR_FILE ) ) {
 			return $links;
 		}
-		if ( ! class_exists( 'Axtolab_Support_Links' ) ) {
+		if ( ! class_exists( 'Axtolab_AI_Connector_Support_Links' ) ) {
 			return $links;
 		}
-		$rows = Axtolab_Support_Links::plugin_row_links( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector' );
+		$rows = Axtolab_AI_Connector_Support_Links::plugin_row_links( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector' );
 		return array_merge( $links, $rows['meta'] );
 	}
 
@@ -653,6 +652,7 @@ class Axtolab_AI_Connector_Admin {
 			$cached = 'dashicons-rest-api';
 			return $cached;
 		}
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Standard data: URI encoding of the inline admin-menu SVG icon (RFC 2397), not obfuscation.
 		$cached = 'data:image/svg+xml;base64,' . base64_encode( $svg );
 		return $cached;
 	}
@@ -667,11 +667,11 @@ class Axtolab_AI_Connector_Admin {
 		// Load on either the Axtolab parent landing, the AI Connector submenu, or Logs.
 		// Hook formats: 'toplevel_page_axtolab' (parent direct nav) and
 		// '{parent}_page_{submenu_slug}' = 'axtolab_page_wp-mcp-gateway' (nested page).
-		$parent_landing  = 'toplevel_page_' . self::PARENT_MENU_SLUG;
-		$ai_connector    = self::PARENT_MENU_SLUG . '_page_' . self::MENU_SLUG;
-		$logs_page       = self::PARENT_MENU_SLUG . '_page_wp-mcp-gateway-logs';
-		$is_settings     = in_array( $hook_suffix, array( $parent_landing, $ai_connector ), true );
-		$is_logs         = ( $hook_suffix === $logs_page );
+		$parent_landing = 'toplevel_page_' . self::PARENT_MENU_SLUG;
+		$ai_connector   = self::PARENT_MENU_SLUG . '_page_' . self::MENU_SLUG;
+		$logs_page      = self::PARENT_MENU_SLUG . '_page_wp-mcp-gateway-logs';
+		$is_settings    = in_array( $hook_suffix, array( $parent_landing, $ai_connector ), true );
+		$is_logs        = ( $hook_suffix === $logs_page );
 		if ( ! $is_settings && ! $is_logs ) {
 			return;
 		}
@@ -688,25 +688,25 @@ class Axtolab_AI_Connector_Admin {
 			'axtolab-ai-connector-admin',
 			'axtolabAiConnector',
 			array(
-				'restBase'       => esc_url_raw( rest_url( 'axtolab-ai-connector/v1' ) ),
-				'nonce'          => wp_create_nonce( 'wp_rest' ),
-				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
-				'ajaxNonce'      => wp_create_nonce( self::MENU_SLUG . '-ajax' ),
-				'strings'        => array(
-					'revoking'     => __( 'Revoking…', 'axtolab-ai-connector' ),
-					'recreating'   => __( 'Recreating…', 'axtolab-ai-connector' ),
+				'restBase'      => esc_url_raw( rest_url( 'axtolab-ai-connector/v1' ) ),
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'ajaxNonce'     => wp_create_nonce( self::MENU_SLUG . '-ajax' ),
+				'strings'       => array(
+					'revoking'      => __( 'Revoking…', 'axtolab-ai-connector' ),
+					'recreating'    => __( 'Recreating…', 'axtolab-ai-connector' ),
 					'confirmRevoke' => __( 'Revoke all active connections? Connected AI clients will lose access until re-authorized.', 'axtolab-ai-connector' ),
 				),
-				'mcpbAvailable'  => true,
-				'actions'        => array(
-					'saveImageProviders'       => self::AJAX_SAVE_IMAGE_PROVIDERS,
-					'testImageProvider'        => self::AJAX_TEST_IMAGE_PROVIDER,
-					'renameConnection'         => self::AJAX_RENAME_CONNECTION,
-					'revokeConnection'         => self::AJAX_REVOKE_CONNECTION,
-					'updateConnectionCaps'     => self::AJAX_UPDATE_CONNECTION_CAPS,
-					'saveReviewEmail'          => self::AJAX_SAVE_REVIEW_EMAIL,
-					'updateConnectionAuthors'  => self::AJAX_UPDATE_CONNECTION_AUTHORS,
-					'toggleAdvancedWrite'      => self::AJAX_TOGGLE_ADVANCED_WRITE,
+				'mcpbAvailable' => true,
+				'actions'       => array(
+					'saveImageProviders'      => self::AJAX_SAVE_IMAGE_PROVIDERS,
+					'testImageProvider'       => self::AJAX_TEST_IMAGE_PROVIDER,
+					'renameConnection'        => self::AJAX_RENAME_CONNECTION,
+					'revokeConnection'        => self::AJAX_REVOKE_CONNECTION,
+					'updateConnectionCaps'    => self::AJAX_UPDATE_CONNECTION_CAPS,
+					'saveReviewEmail'         => self::AJAX_SAVE_REVIEW_EMAIL,
+					'updateConnectionAuthors' => self::AJAX_UPDATE_CONNECTION_AUTHORS,
+					'toggleAdvancedWrite'     => self::AJAX_TOGGLE_ADVANCED_WRITE,
 				),
 			)
 		);
@@ -736,8 +736,8 @@ class Axtolab_AI_Connector_Admin {
 			<h1>
 				<?php esc_html_e( 'Axtolab AI Connector', 'axtolab-ai-connector' ); ?>
 				<?php
-				if ( class_exists( 'Axtolab_Support_Links' ) ) {
-					Axtolab_Support_Links::render_header_link( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION );
+				if ( class_exists( 'Axtolab_AI_Connector_Support_Links' ) ) {
+					Axtolab_AI_Connector_Support_Links::render_header_link( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION );
 				}
 				?>
 			</h1>
@@ -758,8 +758,8 @@ class Axtolab_AI_Connector_Admin {
 			<?php $this->render_info_section(); ?>
 
 			<?php
-			if ( class_exists( 'Axtolab_Support_Links' ) ) {
-				Axtolab_Support_Links::render_footer( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector' );
+			if ( class_exists( 'Axtolab_AI_Connector_Support_Links' ) ) {
+				Axtolab_AI_Connector_Support_Links::render_footer( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector' );
 			}
 			?>
 
@@ -786,7 +786,7 @@ class Axtolab_AI_Connector_Admin {
 		// from this read-side handler, so no WordPress nonce is required.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$query_params = wp_unslash( $_GET );
-		$filters = array();
+		$filters      = array();
 		foreach ( array( 'session_id', 'target_type', 'target_id', 'tool_name', 'source', 'action', 'status' ) as $f ) {
 			if ( ! empty( $query_params[ $f ] ) ) {
 				$filters[ $f ] = sanitize_text_field( (string) $query_params[ $f ] );
@@ -928,14 +928,14 @@ class Axtolab_AI_Connector_Admin {
 			</p>
 
 			<?php
-			if ( class_exists( 'Axtolab_Support_Links' ) ) {
-				Axtolab_Support_Links::render_footer( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector' );
+			if ( class_exists( 'Axtolab_AI_Connector_Support_Links' ) ) {
+				Axtolab_AI_Connector_Support_Links::render_footer( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, 'axtolab-ai-connector' );
 			}
 			?>
 
 			</div>
 			<?php
-		}
+	}
 
 	/**
 	 * Return JavaScript for the Logs & Roll Back admin page.
@@ -1156,21 +1156,24 @@ JS;
 				$oauth_settings = get_option( 'axtolab_ai_connector_settings', array() );
 				if ( ! empty( $oauth_settings['oauth_enabled'] ) ) :
 					$discovery_url    = rest_url( 'axtolab-ai-connector/v1/oauth/metadata/resource' );
-					$discovery_result = wp_remote_get( $discovery_url, array(
-						'timeout'   => 5,
-						'sslverify' => false,
-					) );
+					$discovery_result = wp_remote_get(
+						$discovery_url,
+						array(
+							'timeout'   => 5,
+							'sslverify' => false,
+						)
+					);
 					$discovery_ok     = false;
 
 					if ( ! is_wp_error( $discovery_result ) ) {
-						$code = wp_remote_retrieve_response_code( $discovery_result );
-						$body = wp_remote_retrieve_body( $discovery_result );
-						$json = json_decode( $body, true );
+						$code         = wp_remote_retrieve_response_code( $discovery_result );
+						$body         = wp_remote_retrieve_body( $discovery_result );
+						$json         = json_decode( $body, true );
 						$discovery_ok = ( 200 === $code && is_array( $json ) && ! empty( $json['resource'] ) );
 					}
 
 					if ( $discovery_ok ) :
-				?>
+						?>
 					<li class="status-ok">
 						<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'OAuth Discovery', 'axtolab-ai-connector' ); ?></span>
@@ -1182,7 +1185,7 @@ JS;
 						<span class="mcp-status-label"><?php esc_html_e( 'OAuth Discovery', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail"><?php esc_html_e( 'Endpoints not reachable — check REST API accessibility', 'axtolab-ai-connector' ); ?></span>
 					</li>
-				<?php
+					<?php
 					endif;
 				endif;
 
@@ -1197,22 +1200,25 @@ JS;
 					$wellknown_status = get_transient( 'axtolab_ai_connector_wellknown_status' );
 					if ( false === $wellknown_status ) {
 						$wellknown_url    = home_url( '/.well-known/oauth-protected-resource' );
-						$wellknown_result = wp_remote_get( $wellknown_url, array(
-							'timeout'   => 5,
-							'sslverify' => false,
-						) );
-						$wellknown_ok = false;
+						$wellknown_result = wp_remote_get(
+							$wellknown_url,
+							array(
+								'timeout'   => 5,
+								'sslverify' => false,
+							)
+						);
+						$wellknown_ok     = false;
 						if ( ! is_wp_error( $wellknown_result ) ) {
-							$code = wp_remote_retrieve_response_code( $wellknown_result );
-							$body = wp_remote_retrieve_body( $wellknown_result );
-							$json = json_decode( $body, true );
+							$code         = wp_remote_retrieve_response_code( $wellknown_result );
+							$body         = wp_remote_retrieve_body( $wellknown_result );
+							$json         = json_decode( $body, true );
 							$wellknown_ok = ( 200 === $code && is_array( $json ) && ! empty( $json['resource'] ) );
 						}
 						$wellknown_status = $wellknown_ok ? 'ok' : 'blocked';
 						set_transient( 'axtolab_ai_connector_wellknown_status', $wellknown_status, 6 * HOUR_IN_SECONDS );
 					}
 					if ( 'ok' === $wellknown_status ) :
-				?>
+						?>
 					<li class="status-ok">
 						<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'Host-root .well-known discovery', 'axtolab-ai-connector' ); ?></span>
@@ -1226,7 +1232,7 @@ JS;
 							<?php esc_html_e( 'Blocked by your web server (likely nginx). MCP clients still work via the resource-metadata flow — this is non-blocking. For full RFC 8414/9728 compliance, ask your host to forward /.well-known/oauth-* paths to PHP. See the FAQ in the plugin readme for an nginx config snippet.', 'axtolab-ai-connector' ); ?>
 						</span>
 					</li>
-				<?php
+					<?php
 					endif;
 				endif;
 				?>
@@ -1243,9 +1249,9 @@ JS;
 	 * @return void
 	 */
 	private function render_connect_claude_section( array $status ): void {
-		$service_user_id  = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-		$app_pwd_count    = $status['active_app_passwords'];
-		$hostname         = wp_parse_url( home_url(), PHP_URL_HOST );
+		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
+		$app_pwd_count   = $status['active_app_passwords'];
+		$hostname        = wp_parse_url( home_url(), PHP_URL_HOST );
 		?>
 		<div class="mcp-gateway-card mcp-gateway-connect">
 			<h2><?php esc_html_e( 'Connect AI Client', 'axtolab-ai-connector' ); ?></h2>
@@ -1319,12 +1325,12 @@ JS;
 
 			<?php // ── Tab 2: Remote Access (bearer token + OAuth) ── ?>
 			<?php
-			$remote_settings   = get_option( 'axtolab_ai_connector_settings', array() );
-			$remote_enabled    = ! empty( $remote_settings['remote_mcp_enabled'] );
-			$bearer_info       = Axtolab_AI_Connector_Bearer_Auth::get_token_info();
-			$oauth_enabled     = ! empty( $remote_settings['oauth_enabled'] );
-			$oauth_info        = Axtolab_AI_Connector_OAuth::get_token_info();
-			$mcp_endpoint_url  = rest_url( 'axtolab-ai-connector/v1/mcp' );
+			$remote_settings  = get_option( 'axtolab_ai_connector_settings', array() );
+			$remote_enabled   = ! empty( $remote_settings['remote_mcp_enabled'] );
+			$bearer_info      = Axtolab_AI_Connector_Bearer_Auth::get_token_info();
+			$oauth_enabled    = ! empty( $remote_settings['oauth_enabled'] );
+			$oauth_info       = Axtolab_AI_Connector_OAuth::get_token_info();
+			$mcp_endpoint_url = rest_url( 'axtolab-ai-connector/v1/mcp' );
 
 			// Capability definitions for rendering checkboxes — use shared class.
 			$capability_defs = Axtolab_AI_Connector_Capabilities::group_labels();
@@ -1385,8 +1391,8 @@ JS;
 									esc_html__( 'Connected — client: %1$s — expires: %2$s', 'axtolab-ai-connector' ),
 									esc_html( $oauth_info['client_name'] ),
 									esc_html( $oauth_info['expires_at'] )
-							);
-							?>
+								);
+								?>
 						</p>
 						<button type="button" id="mcp-revoke-oauth-btn" class="button button-secondary" style="color: #d63638;">
 							<?php esc_html_e( 'Revoke OAuth Token', 'axtolab-ai-connector' ); ?>
@@ -1482,8 +1488,8 @@ JS;
 											esc_html__( 'Active — prefix: %1$s… — created: %2$s', 'axtolab-ai-connector' ),
 											esc_html( $bearer_info['prefix'] ),
 											esc_html( $bearer_info['created_at'] )
-									);
-									?>
+										);
+										?>
 								</p>
 							<?php else : ?>
 								<p class="mcp-help-text"><?php esc_html_e( 'No bearer token active.', 'axtolab-ai-connector' ); ?></p>
@@ -1707,32 +1713,32 @@ JS;
 	 *
 	 * @return void
 	 */
-		private function render_connected_clients_section(): void {
-		$connections   = Axtolab_AI_Connector_Connections::get_all_connections();
-		$count         = count( $connections );
-		$settings      = get_option( 'axtolab_ai_connector_settings', array() );
-		$review_email  = ! empty( $settings['review_notification_email'] )
-			? $settings['review_notification_email']
-			: '';
+	private function render_connected_clients_section(): void {
+		$connections  = Axtolab_AI_Connector_Connections::get_all_connections();
+		$count        = count( $connections );
+		$settings     = get_option( 'axtolab_ai_connector_settings', array() );
+		$review_email = ! empty( $settings['review_notification_email'] )
+		? $settings['review_notification_email']
+		: '';
 		?>
 		<h3><?php esc_html_e( 'Connected Clients', 'axtolab-ai-connector' ); ?></h3>
 
 		<div class="mcp-review-email-row" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 			<label for="mcp-review-email" style="font-weight: 500; white-space: nowrap;">
-				<?php esc_html_e( 'Review notification email:', 'axtolab-ai-connector' ); ?>
+			<?php esc_html_e( 'Review notification email:', 'axtolab-ai-connector' ); ?>
 			</label>
 			<input type="email" id="mcp-review-email" class="regular-text"
 				value="<?php echo esc_attr( $review_email ); ?>"
 				placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>"
 				style="max-width: 280px;" />
 			<button type="button" id="mcp-save-review-email-btn" class="button button-small">
-				<?php esc_html_e( 'Save', 'axtolab-ai-connector' ); ?>
+			<?php esc_html_e( 'Save', 'axtolab-ai-connector' ); ?>
 			</button>
 			<span id="mcp-review-email-saved" style="color:#00a32a; font-size:13px; display:none;">
-				<?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?>
+			<?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?>
 			</span>
 			<p class="mcp-help-text" style="width:100%; margin:2px 0 0;">
-				<?php esc_html_e( 'Where to send "ready for review" emails from Draft Only connections. Defaults to the WordPress admin email if left blank.', 'axtolab-ai-connector' ); ?>
+			<?php esc_html_e( 'Where to send "ready for review" emails from Draft Only connections. Defaults to the WordPress admin email if left blank.', 'axtolab-ai-connector' ); ?>
 			</p>
 		</div>
 
@@ -1809,12 +1815,14 @@ JS;
 									<span class="mcp-conn-caps-saved" style="opacity:0; transition: opacity 0.3s;"><?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?></span>
 
 									<?php
-									$wp_authors           = get_users( array(
-										'role__in' => array( 'administrator', 'editor', 'author', 'contributor' ),
-										'orderby'  => 'display_name',
-										'order'    => 'ASC',
-										'fields'   => array( 'ID', 'display_name' ),
-									) );
+									$wp_authors           = get_users(
+										array(
+											'role__in' => array( 'administrator', 'editor', 'author', 'contributor' ),
+											'orderby'  => 'display_name',
+											'order'    => 'ASC',
+											'fields'   => array( 'ID', 'display_name' ),
+										)
+									);
 									$conn_allowed_authors = isset( $conn['allowed_authors'] ) ? $conn['allowed_authors'] : null;
 									?>
 									<div style="margin-top:12px; border-top:1px solid #e0e0e0; padding-top:10px;">
@@ -1850,10 +1858,10 @@ JS;
 					<?php
 					printf(
 							/* translators: %d: number of active connections */
-							esc_html( _n( '%d active connection', '%d active connections', $count, 'axtolab-ai-connector' ) ),
-							(int) $count
-						);
-						?>
+						esc_html( _n( '%d active connection', '%d active connections', $count, 'axtolab-ai-connector' ) ),
+						(int) $count
+					);
+					?>
 					</span>
 				&mdash;
 				<a href="#" id="mcp-revoke-all-link" class="mcp-danger-link">
@@ -1880,9 +1888,9 @@ JS;
 	 * back off — no DB-poking required.
 	 */
 	private function render_advanced_writes_section(): void {
-		$settings           = get_option( 'axtolab_ai_connector_settings', array() );
-		$permalink_enabled  = ! empty( $settings['permalink_writes_enabled'] );
-		$options_enabled    = ! empty( $settings['options_writes_enabled'] );
+		$settings          = get_option( 'axtolab_ai_connector_settings', array() );
+		$permalink_enabled = ! empty( $settings['permalink_writes_enabled'] );
+		$options_enabled   = ! empty( $settings['options_writes_enabled'] );
 		?>
 		<div class="mcp-gateway-card mcp-gateway-advanced-writes">
 			<h2><?php esc_html_e( 'Advanced Write Gates', 'axtolab-ai-connector' ); ?></h2>
@@ -1936,7 +1944,7 @@ JS;
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
 		}
 
-		$key = isset( $_POST['key'] ) ? sanitize_key( wp_unslash( (string) $_POST['key'] ) ) : '';
+		$key     = isset( $_POST['key'] ) ? sanitize_key( wp_unslash( (string) $_POST['key'] ) ) : '';
 		$allowed = array( 'permalink_writes_enabled', 'options_writes_enabled' );
 		if ( ! in_array( $key, $allowed, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Unknown setting.', 'axtolab-ai-connector' ) ), 400 );
@@ -1950,10 +1958,12 @@ JS;
 		$settings[ $key ] = $enabled;
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
-		wp_send_json_success( array(
-			'key'     => $key,
-			'enabled' => $enabled,
-		) );
+		wp_send_json_success(
+			array(
+				'key'     => $key,
+				'enabled' => $enabled,
+			)
+		);
 	}
 
 	private function render_info_section(): void {
@@ -2314,7 +2324,7 @@ JS;
 			}
 		}
 
-		$settings = get_option( 'axtolab_ai_connector_settings', array() );
+		$settings                       = get_option( 'axtolab_ai_connector_settings', array() );
 		$settings['remote_mcp_enabled'] = $enabled;
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
@@ -2344,7 +2354,12 @@ JS;
 
 		$info = Axtolab_AI_Connector_Bearer_Auth::get_token_info();
 
-		wp_send_json_success( array( 'token' => $token, 'info' => $info ) );
+		wp_send_json_success(
+			array(
+				'token' => $token,
+				'info'  => $info,
+			)
+		);
 	}
 
 	/**
@@ -2380,8 +2395,8 @@ JS;
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
 		}
 
-		$enabled  = ! empty( $_POST['enabled'] );
-		$settings = get_option( 'axtolab_ai_connector_settings', array() );
+		$enabled                   = ! empty( $_POST['enabled'] );
+		$settings                  = get_option( 'axtolab_ai_connector_settings', array() );
 		$settings['oauth_enabled'] = $enabled;
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
@@ -2446,7 +2461,7 @@ JS;
 		} else {
 			$settings_key = 'bearer_capabilities';
 		}
-		$settings     = get_option( 'axtolab_ai_connector_settings', array() );
+		$settings                  = get_option( 'axtolab_ai_connector_settings', array() );
 		$settings[ $settings_key ] = $caps;
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
@@ -2528,9 +2543,9 @@ JS;
 			wp_send_json_error( array( 'message' => __( 'No provider specified.', 'axtolab-ai-connector' ) ) );
 		}
 
-			if ( in_array( $provider, array( 'google_imagen', 'openai' ), true ) && ! Axtolab_AI_Connector_Free_Gates::is_image_generation_allowed() ) {
-				wp_send_json_error( array( 'message' => __( 'AI image generation is disabled on this site.', 'axtolab-ai-connector' ) ), 403 );
-			}
+		if ( in_array( $provider, array( 'google_imagen', 'openai' ), true ) && ! Axtolab_AI_Connector_Free_Gates::is_image_generation_allowed() ) {
+			wp_send_json_error( array( 'message' => __( 'AI image generation is disabled on this site.', 'axtolab-ai-connector' ) ), 403 );
+		}
 
 		if ( empty( $api_key ) ) {
 			$result = Axtolab_AI_Connector_Image_Providers::test_connection( $provider );

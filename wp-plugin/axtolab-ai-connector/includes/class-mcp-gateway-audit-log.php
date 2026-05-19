@@ -71,18 +71,19 @@ class Axtolab_AI_Connector_Audit_Log {
 	public static function drop_table() {
 		global $wpdb;
 		$table = esc_sql( $wpdb->prefix . self::TABLE );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Dropping the plugin-owned audit-log table on uninstall; no WP API exists for schema changes.
 		$wpdb->query( "DROP TABLE IF EXISTS $table" );
 	}
 
 	/**
 	 * Log an action.
 	 *
-	 * @param string      $tool_name        Tool or action name.
-	 * @param string      $outcome          'success' or 'error'.
-	 * @param string      $detail           Optional detail text.
-	 * @param int|null    $post_id          Related post ID.
-	 * @param string      $connection_id    Connection identifier.
-	 * @param string      $connection_label Connection display label.
+	 * @param string   $tool_name        Tool or action name.
+	 * @param string   $outcome          'success' or 'error'.
+	 * @param string   $detail           Optional detail text.
+	 * @param int|null $post_id          Related post ID.
+	 * @param string   $connection_id    Connection identifier.
+	 * @param string   $connection_label Connection display label.
 	 * @return void
 	 */
 	public static function log( $tool_name, $outcome = 'success', $detail = '', $post_id = null, $connection_id = '', $connection_label = '' ) {
@@ -91,6 +92,7 @@ class Axtolab_AI_Connector_Audit_Log {
 		$table = $wpdb->prefix . self::TABLE;
 
 		// Check if table exists (avoid errors before activation).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Existence check for the plugin-owned audit-log table; SHOW TABLES is the only way to verify table presence and is not cacheable.
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			return;
 		}
@@ -100,6 +102,7 @@ class Axtolab_AI_Connector_Audit_Log {
 			$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Insert into the plugin-owned audit-log table; no WP API exists for custom tables and row-level cache would add invalidation complexity without correctness benefit.
 		$wpdb->insert(
 			$table,
 			array(
@@ -151,7 +154,7 @@ class Axtolab_AI_Connector_Audit_Log {
 		$vals[]    = $per_page;
 		$vals[]    = $offset;
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query fragments are built from fixed clauses above; values are prepared.
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned audit-log table; query fragments are built from fixed clauses above and values are prepared.
 			$results = $wpdb->get_results( $wpdb->prepare( $sql, $vals ), ARRAY_A );
 
 		return $results ? $results : array();
@@ -165,6 +168,7 @@ class Axtolab_AI_Connector_Audit_Log {
 	public static function count() {
 		global $wpdb;
 		$table = esc_sql( $wpdb->prefix . self::TABLE );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Count from the plugin-owned audit-log table; row-level cache would not improve correctness here.
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
 	}
 
@@ -181,8 +185,9 @@ class Axtolab_AI_Connector_Audit_Log {
 			$days = self::RETENTION_DAYS;
 		}
 
-		$table   = esc_sql( $wpdb->prefix . self::TABLE );
-		$cutoff  = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+		$table  = esc_sql( $wpdb->prefix . self::TABLE );
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Retention prune on the plugin-owned audit-log table; runs from a daily cron, no cache layer applies.
 		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM $table WHERE created_at < %s", $cutoff ) );
 
 		return $deleted ? (int) $deleted : 0;

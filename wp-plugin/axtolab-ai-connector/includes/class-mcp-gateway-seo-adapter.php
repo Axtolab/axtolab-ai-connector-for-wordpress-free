@@ -71,45 +71,45 @@ final class Axtolab_AI_Connector_SEO_Adapter {
 		switch ( $plugin ) {
 			case 'yoast':
 				return array(
-					'title'                => '_yoast_wpseo_title',
-					'description'          => '_yoast_wpseo_metadesc',
-					'focus_keyphrase'      => '_yoast_wpseo_focuskw',
-					'noindex'              => '_yoast_wpseo_meta-robots-noindex',
-					'nofollow'             => '_yoast_wpseo_meta-robots-nofollow',
-					'og_title'             => '_yoast_wpseo_opengraph-title',
-					'og_description'       => '_yoast_wpseo_opengraph-description',
-					'og_image'             => '_yoast_wpseo_opengraph-image',
-					'twitter_title'        => '_yoast_wpseo_twitter-title',
-					'twitter_description'  => '_yoast_wpseo_twitter-description',
-					'twitter_image'        => '_yoast_wpseo_twitter-image',
+					'title'               => '_yoast_wpseo_title',
+					'description'         => '_yoast_wpseo_metadesc',
+					'focus_keyphrase'     => '_yoast_wpseo_focuskw',
+					'noindex'             => '_yoast_wpseo_meta-robots-noindex',
+					'nofollow'            => '_yoast_wpseo_meta-robots-nofollow',
+					'og_title'            => '_yoast_wpseo_opengraph-title',
+					'og_description'      => '_yoast_wpseo_opengraph-description',
+					'og_image'            => '_yoast_wpseo_opengraph-image',
+					'twitter_title'       => '_yoast_wpseo_twitter-title',
+					'twitter_description' => '_yoast_wpseo_twitter-description',
+					'twitter_image'       => '_yoast_wpseo_twitter-image',
 				);
 			case 'rank_math':
 				return array(
-					'title'                => 'rank_math_title',
-					'description'          => 'rank_math_description',
-					'focus_keyphrase'      => 'rank_math_focus_keyword',
-					'noindex'              => 'rank_math_robots',
-					'nofollow'             => 'rank_math_robots',
-					'og_title'             => 'rank_math_facebook_title',
-					'og_description'       => 'rank_math_facebook_description',
-					'og_image'             => 'rank_math_facebook_image',
-					'twitter_title'        => 'rank_math_twitter_title',
-					'twitter_description'  => 'rank_math_twitter_description',
-					'twitter_image'        => 'rank_math_twitter_image',
+					'title'               => 'rank_math_title',
+					'description'         => 'rank_math_description',
+					'focus_keyphrase'     => 'rank_math_focus_keyword',
+					'noindex'             => 'rank_math_robots',
+					'nofollow'            => 'rank_math_robots',
+					'og_title'            => 'rank_math_facebook_title',
+					'og_description'      => 'rank_math_facebook_description',
+					'og_image'            => 'rank_math_facebook_image',
+					'twitter_title'       => 'rank_math_twitter_title',
+					'twitter_description' => 'rank_math_twitter_description',
+					'twitter_image'       => 'rank_math_twitter_image',
 				);
 			case 'aioseo':
 				return array(
-					'title'                => '_aioseo_title',
-					'description'          => '_aioseo_description',
-					'focus_keyphrase'      => '_aioseo_keyphrases',
-					'noindex'              => '_aioseo_robots_noindex',
-					'nofollow'             => '_aioseo_robots_nofollow',
-					'og_title'             => '_aioseo_og_title',
-					'og_description'       => '_aioseo_og_description',
-					'og_image'             => '_aioseo_og_image_url',
-					'twitter_title'        => '_aioseo_twitter_title',
-					'twitter_description'  => '_aioseo_twitter_description',
-					'twitter_image'        => '_aioseo_twitter_image',
+					'title'               => '_aioseo_title',
+					'description'         => '_aioseo_description',
+					'focus_keyphrase'     => '_aioseo_keyphrases',
+					'noindex'             => '_aioseo_robots_noindex',
+					'nofollow'            => '_aioseo_robots_nofollow',
+					'og_title'            => '_aioseo_og_title',
+					'og_description'      => '_aioseo_og_description',
+					'og_image'            => '_aioseo_og_image_url',
+					'twitter_title'       => '_aioseo_twitter_title',
+					'twitter_description' => '_aioseo_twitter_description',
+					'twitter_image'       => '_aioseo_twitter_image',
 				);
 		}
 		return array();
@@ -144,7 +144,7 @@ final class Axtolab_AI_Connector_SEO_Adapter {
 			// Rank Math: noindex/nofollow are stored as a serialized list of
 			// robots directives ('index','follow','noindex',...). Translate.
 			if ( 'rank_math' === $plugin && in_array( $field, array( 'noindex', 'nofollow' ), true ) ) {
-				$robots = is_array( $value ) ? $value : array();
+				$robots        = is_array( $value ) ? $value : array();
 				$out[ $field ] = in_array( $field, $robots, true ) ? '1' : '';
 				continue;
 			}
@@ -171,7 +171,10 @@ final class Axtolab_AI_Connector_SEO_Adapter {
 		$plugin  = self::active_plugin();
 
 		if ( null === $plugin ) {
-			return array( 'plugin' => null, 'written' => array() );
+			return array(
+				'plugin'  => null,
+				'written' => array(),
+			);
 		}
 
 		$map     = self::meta_key_map( $plugin );
@@ -188,7 +191,14 @@ final class Axtolab_AI_Connector_SEO_Adapter {
 			if ( 'rank_math' === $plugin && in_array( $field, array( 'noindex', 'nofollow' ), true ) ) {
 				$robots = (array) get_post_meta( $post_id, $meta_key, true );
 				$want   = (bool) $value && '0' !== (string) $value;
-				$robots = array_values( array_filter( $robots, function ( $r ) use ( $field ) { return $r !== $field; } ) );
+				$robots = array_values(
+					array_filter(
+						$robots,
+						function ( $r ) use ( $field ) {
+							return $r !== $field;
+						}
+					)
+				);
 				if ( $want ) {
 					$robots[] = $field;
 				}
@@ -202,7 +212,10 @@ final class Axtolab_AI_Connector_SEO_Adapter {
 			$written[ $meta_key ] = $write_value;
 		}
 
-		return array( 'plugin' => $plugin, 'written' => $written );
+		return array(
+			'plugin'  => $plugin,
+			'written' => $written,
+		);
 	}
 }
 

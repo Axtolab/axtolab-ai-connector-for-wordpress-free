@@ -34,20 +34,20 @@ class Axtolab_AI_Connector_Snapshots {
 		}
 
 		$fields = array(
-			'ID'             => (int) $post->ID,
-			'post_title'     => $post->post_title,
-			'post_content'   => $post->post_content,
-			'post_excerpt'   => $post->post_excerpt,
-			'post_status'    => $post->post_status,
-			'post_name'      => $post->post_name,
-			'post_author'    => (int) $post->post_author,
-			'post_date_gmt'  => $post->post_date_gmt,
+			'ID'                => (int) $post->ID,
+			'post_title'        => $post->post_title,
+			'post_content'      => $post->post_content,
+			'post_excerpt'      => $post->post_excerpt,
+			'post_status'       => $post->post_status,
+			'post_name'         => $post->post_name,
+			'post_author'       => (int) $post->post_author,
+			'post_date_gmt'     => $post->post_date_gmt,
 			'post_modified_gmt' => $post->post_modified_gmt,
-			'post_type'      => $post->post_type,
-			'post_parent'    => (int) $post->post_parent,
-			'menu_order'     => (int) $post->menu_order,
-			'comment_status' => $post->comment_status,
-			'ping_status'    => $post->ping_status,
+			'post_type'         => $post->post_type,
+			'post_parent'       => (int) $post->post_parent,
+			'menu_order'        => (int) $post->menu_order,
+			'comment_status'    => $post->comment_status,
+			'ping_status'       => $post->ping_status,
 		);
 
 		$meta_raw = get_post_meta( $post->ID );
@@ -65,7 +65,7 @@ class Axtolab_AI_Connector_Snapshots {
 			}
 		}
 
-		$terms = array();
+		$terms      = array();
 		$taxonomies = get_object_taxonomies( $post->post_type );
 		foreach ( $taxonomies as $taxonomy ) {
 			$tids = wp_get_object_terms( $post->ID, $taxonomy, array( 'fields' => 'ids' ) );
@@ -115,8 +115,8 @@ class Axtolab_AI_Connector_Snapshots {
 			// snapshot's ID. WP supports this via `import_id`.
 			$insert = $post;
 			unset( $insert['ID'] );
-			$insert['import_id']        = (int) $post['ID'];
-			$insert['post_modified']    = current_time( 'mysql' );
+			$insert['import_id']         = (int) $post['ID'];
+			$insert['post_modified']     = current_time( 'mysql' );
 			$insert['post_modified_gmt'] = current_time( 'mysql', true );
 
 			$new_id = wp_insert_post( wp_slash( $insert ), true );
@@ -124,9 +124,9 @@ class Axtolab_AI_Connector_Snapshots {
 				return $new_id;
 			}
 		} else {
-			$update = $post;
+			$update       = $post;
 			$update['ID'] = (int) $post['ID'];
-			$result = wp_update_post( wp_slash( $update ), true );
+			$result       = wp_update_post( wp_slash( $update ), true );
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
@@ -237,9 +237,9 @@ class Axtolab_AI_Connector_Snapshots {
 		if ( empty( $snapshot['post_id'] ) || empty( $snapshot['key'] ) ) {
 			return false;
 		}
-		$post_id  = (int) $snapshot['post_id'];
-		$key      = (string) $snapshot['key'];
-		$values   = isset( $snapshot['values'] ) && is_array( $snapshot['values'] ) ? $snapshot['values'] : array();
+		$post_id = (int) $snapshot['post_id'];
+		$key     = (string) $snapshot['key'];
+		$values  = isset( $snapshot['values'] ) && is_array( $snapshot['values'] ) ? $snapshot['values'] : array();
 
 		delete_post_meta( $post_id, $key );
 		foreach ( $values as $value ) {
@@ -271,7 +271,8 @@ class Axtolab_AI_Connector_Snapshots {
 		if ( is_array( $meta_raw ) ) {
 			foreach ( $meta_raw as $k => $vals ) {
 				$meta[ $k ] = array_map(
-					static function ( $v ) { return maybe_unserialize( $v ); },
+					static function ( $v ) {
+						return maybe_unserialize( $v ); },
 					(array) $vals
 				);
 			}
@@ -322,12 +323,16 @@ class Axtolab_AI_Connector_Snapshots {
 			}
 			$tid = (int) $result['term_id'];
 		} else {
-			$result = wp_update_term( $tid, $tax, array(
-				'name'        => (string) $snapshot['name'],
-				'slug'        => (string) ( $snapshot['slug'] ?? '' ),
-				'description' => (string) ( $snapshot['description'] ?? '' ),
-				'parent'      => (int) ( $snapshot['parent'] ?? 0 ),
-			) );
+			$result = wp_update_term(
+				$tid,
+				$tax,
+				array(
+					'name'        => (string) $snapshot['name'],
+					'slug'        => (string) ( $snapshot['slug'] ?? '' ),
+					'description' => (string) ( $snapshot['description'] ?? '' ),
+					'parent'      => (int) ( $snapshot['parent'] ?? 0 ),
+				)
+			);
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
@@ -402,8 +407,8 @@ class Axtolab_AI_Connector_Snapshots {
 	 */
 	public static function capture_theme_mod( $name ) {
 		$sentinel = '__axtolab_ai_connector_themod_missing__';
-		$mods = get_theme_mods();
-		$existed = is_array( $mods ) && array_key_exists( (string) $name, $mods );
+		$mods     = get_theme_mods();
+		$existed  = is_array( $mods ) && array_key_exists( (string) $name, $mods );
 		return array(
 			'name'    => (string) $name,
 			'value'   => $existed ? $mods[ $name ] : null,
@@ -508,7 +513,7 @@ class Axtolab_AI_Connector_Snapshots {
 		// Pass 1: insert items, capturing old_db_id -> new_db_id.
 		$id_map = array();
 		foreach ( $rows as $row ) {
-			$args = array(
+			$args   = array(
 				'menu-item-object-id'   => (int) $row['object_id'],
 				'menu-item-object'      => (string) $row['object'],
 				'menu-item-type'        => (string) $row['type'],
@@ -531,7 +536,7 @@ class Axtolab_AI_Connector_Snapshots {
 
 		// Pass 2: fix up parents now we have the id_map.
 		foreach ( $rows as $row ) {
-			$old_id = (int) $row['db_id'];
+			$old_id     = (int) $row['db_id'];
 			$old_parent = (int) $row['menu_item_parent'];
 			if ( ! $old_parent ) {
 				continue;

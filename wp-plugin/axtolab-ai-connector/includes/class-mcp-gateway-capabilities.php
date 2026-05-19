@@ -104,8 +104,15 @@ class Axtolab_AI_Connector_Capabilities {
 	 * Default preset: all except trash_restore.
 	 */
 	const DEFAULT_PRESET = array(
-		'read', 'create_edit', 'publish', 'media_manage',
-		'taxonomy', 'authors', 'seo', 'image', 'upload_portal',
+		'read',
+		'create_edit',
+		'publish',
+		'media_manage',
+		'taxonomy',
+		'authors',
+		'seo',
+		'image',
+		'upload_portal',
 	);
 
 	/**

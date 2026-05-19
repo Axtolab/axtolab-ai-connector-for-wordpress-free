@@ -44,10 +44,14 @@ class Axtolab_AI_Connector_Rate_Limiter {
 		$data = get_transient( $key );
 
 		if ( false === $data ) {
-			set_transient( $key, array(
-				'count' => 1,
-				'start' => time(),
-			), self::WINDOW_SECONDS );
+			set_transient(
+				$key,
+				array(
+					'count' => 1,
+					'start' => time(),
+				),
+				self::WINDOW_SECONDS
+			);
 			return true;
 		}
 

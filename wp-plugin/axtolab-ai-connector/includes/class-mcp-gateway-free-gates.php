@@ -82,7 +82,7 @@ final class Axtolab_AI_Connector_Free_Gates {
 			'image_generation_disabled',
 			__( 'AI image generation has been disabled on this site by an administrator or extension plugin. Stock photos and media uploads are still available.', 'axtolab-ai-connector' ),
 			array(
-				'status'    => 403,
+				'status' => 403,
 			)
 		);
 	}

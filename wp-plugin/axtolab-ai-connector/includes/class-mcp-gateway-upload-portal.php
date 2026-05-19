@@ -192,10 +192,10 @@ class Axtolab_AI_Connector_Upload_Portal {
 		}
 
 		// Check individual file size.
-		$config       = Axtolab_AI_Connector_Config::get();
-		$max_size_mb  = isset( $config['media_max_size_mb'] ) ? (int) $config['media_max_size_mb'] : 10;
-		$max_bytes    = $max_size_mb * 1024 * 1024;
-		$file_size    = filesize( $file['tmp_name'] );
+		$config      = Axtolab_AI_Connector_Config::get();
+		$max_size_mb = isset( $config['media_max_size_mb'] ) ? (int) $config['media_max_size_mb'] : 10;
+		$max_bytes   = $max_size_mb * 1024 * 1024;
+		$file_size   = filesize( $file['tmp_name'] );
 
 		if ( $file_size > $max_bytes ) {
 			self::debug_log( sprintf( 'MCP Upload Portal: File too large (%s bytes, max %s) for session %s, file %s.', $file_size, $max_bytes, $session['session_id'], isset( $file['name'] ) ? $file['name'] : 'unknown' ) );
@@ -266,10 +266,13 @@ class Axtolab_AI_Connector_Upload_Portal {
 		$previous_user_id = get_current_user_id();
 		wp_set_current_user( $service_user_id );
 
-		$upload = wp_handle_upload( $upload_file, array(
-			'test_form' => false,
-			'action'    => 'axtolab_ai_connector_upload',
-		) );
+		$upload = wp_handle_upload(
+			$upload_file,
+			array(
+				'test_form' => false,
+				'action'    => 'axtolab_ai_connector_upload',
+			)
+		);
 
 		// Restore previous user context.
 		wp_set_current_user( $previous_user_id );
@@ -306,10 +309,10 @@ class Axtolab_AI_Connector_Upload_Portal {
 		$record = self::to_upload_record( $attachment_id, $filename );
 
 		// Update session transient.
-		$token_hash                = hash( 'sha256', $token );
-		$session['uploads'][]      = $record;
-		$session['upload_count']   = $session['upload_count'] + 1;
-		$session['total_bytes']    = $session['total_bytes'] + $file_size;
+		$token_hash              = hash( 'sha256', $token );
+		$session['uploads'][]    = $record;
+		$session['upload_count'] = $session['upload_count'] + 1;
+		$session['total_bytes']  = $session['total_bytes'] + $file_size;
 
 		$remaining_ttl = max( 1, $session['expires_at'] - time() );
 		set_transient( self::TRANSIENT_PREFIX . $token_hash, $session, $remaining_ttl );
@@ -414,7 +417,7 @@ class Axtolab_AI_Connector_Upload_Portal {
 	/**
 	 * Render the expired/error page.
 	 *
- * @param string $csp_nonce Retained for backwards-compatible call signatures.
+	 * @param string $csp_nonce Retained for backwards-compatible call signatures.
 	 * @return void
 	 */
 	private static function render_expired_page( $csp_nonce ) {
@@ -424,7 +427,7 @@ class Axtolab_AI_Connector_Upload_Portal {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Session Expired</title>
-	<?php self::print_upload_portal_styles(); ?>
+		<?php self::print_upload_portal_styles(); ?>
 </head>
 <body class="axtolab-upload-portal-status">
 	<div class="card">
@@ -434,23 +437,25 @@ class Axtolab_AI_Connector_Upload_Portal {
 		<p style="margin-top:12px;">Please request a new upload link from your AI assistant.</p>
 	</div>
 </body>
-</html><?php
+</html>
+		<?php
 	}
 
 	/**
 	 * Render a generic error page (e.g. uncaught exception).
 	 *
- * @param string $csp_nonce Retained for backwards-compatible call signatures.
+	 * @param string $csp_nonce Retained for backwards-compatible call signatures.
 	 * @return void
 	 */
 	private static function render_error_page( $csp_nonce ) {
-		?><!DOCTYPE html>
+		?>
+		<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Something Went Wrong</title>
-	<?php self::print_upload_portal_styles(); ?>
+		<?php self::print_upload_portal_styles(); ?>
 </head>
 <body class="axtolab-upload-portal-status">
 	<div class="card">
@@ -460,7 +465,8 @@ class Axtolab_AI_Connector_Upload_Portal {
 		<p style="margin-top:12px;">Please request a new upload link from your AI assistant.</p>
 	</div>
 </body>
-</html><?php
+</html>
+		<?php
 	}
 
 	/**
@@ -480,13 +486,14 @@ class Axtolab_AI_Connector_Upload_Portal {
 	private static function render_html( $csp_nonce, $token, $wp_nonce, $upload_url, $site_name, $max_files, $max_size, $expires_at, $existing ) {
 		$site_name_esc  = esc_html( $site_name );
 		$upload_url_esc = esc_url( $upload_url );
-		?><!DOCTYPE html>
+		?>
+		<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Upload Files &mdash; <?php echo esc_html( $site_name_esc ); ?></title>
-	<?php self::print_upload_portal_styles(); ?>
+		<?php self::print_upload_portal_styles(); ?>
 </head>
 <body class="axtolab-upload-portal-page">
 	<div class="upload-portal" id="portal"
@@ -528,9 +535,10 @@ class Axtolab_AI_Connector_Upload_Portal {
 		</div>
 	</div>
 
-	<?php self::print_upload_portal_script(); ?>
+		<?php self::print_upload_portal_script(); ?>
 </body>
-</html><?php
+</html>
+		<?php
 	}
 
 	/**
@@ -628,7 +636,7 @@ class Axtolab_AI_Connector_Upload_Portal {
 
 		libxml_use_internal_errors( true );
 
-		$dom = new DOMDocument();
+		$dom    = new DOMDocument();
 		$loaded = $dom->loadXML( $contents, LIBXML_NONET );
 		libxml_clear_errors();
 

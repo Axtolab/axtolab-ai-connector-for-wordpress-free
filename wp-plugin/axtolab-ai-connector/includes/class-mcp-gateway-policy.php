@@ -56,7 +56,7 @@ final class Axtolab_AI_Connector_Policy {
 	}
 
 	public static function assert_allowed_author( int $author_id ) {
-		$config = Axtolab_AI_Connector_Config::get();
+		$config             = Axtolab_AI_Connector_Config::get();
 		$allowed_author_ids = array_map( 'intval', (array) $config['allowed_author_ids'] );
 		if ( empty( $allowed_author_ids ) ) {
 			return true;
@@ -70,12 +70,19 @@ final class Axtolab_AI_Connector_Policy {
 	}
 
 	public static function assert_allowed_yoast_meta_keys( array $meta ) {
-		$config = Axtolab_AI_Connector_Config::get();
+		$config  = Axtolab_AI_Connector_Config::get();
 		$allowed = array_map( 'strval', (array) $config['yoast_allowed_meta_keys'] );
 
 		foreach ( array_keys( $meta ) as $key ) {
 			if ( ! in_array( $key, $allowed, true ) ) {
-				return new WP_Error( 'disallowed_yoast_meta_key', 'Yoast meta key is not allowed.', array( 'status' => 403, 'key' => $key ) );
+				return new WP_Error(
+					'disallowed_yoast_meta_key',
+					'Yoast meta key is not allowed.',
+					array(
+						'status' => 403,
+						'key'    => $key,
+					)
+				);
 			}
 		}
 
@@ -83,14 +90,14 @@ final class Axtolab_AI_Connector_Policy {
 	}
 
 	public static function assert_allowed_media( string $mime_type, int $size_bytes, string $alt_text = '' ) {
-		$config = Axtolab_AI_Connector_Config::get();
+		$config             = Axtolab_AI_Connector_Config::get();
 		$allowed_mime_types = array_map( 'strval', (array) $config['media_allowed_mime_types'] );
 
 		if ( ! in_array( $mime_type, $allowed_mime_types, true ) ) {
 			return new WP_Error( 'disallowed_media_mime', 'Media MIME type is not allowed.', array( 'status' => 403 ) );
 		}
 
-		$max_size_mb = max( 1, intval( $config['media_max_size_mb'] ) );
+		$max_size_mb    = max( 1, intval( $config['media_max_size_mb'] ) );
 		$max_size_bytes = $max_size_mb * 1024 * 1024;
 		if ( $size_bytes > $max_size_bytes ) {
 			return new WP_Error( 'media_size_exceeded', 'Media exceeds configured size limit.', array( 'status' => 400 ) );
@@ -159,7 +166,14 @@ final class Axtolab_AI_Connector_Policy {
 
 		foreach ( array_keys( $patch ) as $key ) {
 			if ( ! in_array( $key, $allowed, true ) ) {
-				return new WP_Error( 'disallowed_patch_field', 'Patch field is not allowed.', array( 'status' => 400, 'field' => $key ) );
+				return new WP_Error(
+					'disallowed_patch_field',
+					'Patch field is not allowed.',
+					array(
+						'status' => 400,
+						'field'  => $key,
+					)
+				);
 			}
 		}
 
@@ -168,8 +182,8 @@ final class Axtolab_AI_Connector_Policy {
 
 	public static function to_content_record( WP_Post $post ): array {
 		$content_type = $post->post_type;
-		$terms = array();
-		$taxonomies = get_object_taxonomies( $content_type, 'names' );
+		$terms        = array();
+		$taxonomies   = get_object_taxonomies( $content_type, 'names' );
 		foreach ( $taxonomies as $taxonomy ) {
 			$term_ids = wp_get_object_terms( $post->ID, $taxonomy, array( 'fields' => 'ids' ) );
 			if ( ! is_wp_error( $term_ids ) ) {

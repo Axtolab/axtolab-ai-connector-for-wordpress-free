@@ -38,8 +38,15 @@ define(
 // registers its admin pages as submenus under this top-level slug. Defined here
 // (in the AI Connector core) so add-on plugins can detect and gracefully fall
 // back when this plugin isn't active.
+if ( ! defined( 'AXTOLAB_AI_CONNECTOR_ADMIN_PARENT_SLUG' ) ) {
+	define( 'AXTOLAB_AI_CONNECTOR_ADMIN_PARENT_SLUG', 'axtolab' );
+}
+// Back-compat alias for already-shipped add-on plugins that read the original
+// constant name. Kept defined so existing installs continue to register their
+// submenus under the same parent slug.
 if ( ! defined( 'AXTOLAB_ADMIN_PARENT_SLUG' ) ) {
-	define( 'AXTOLAB_ADMIN_PARENT_SLUG', 'axtolab' );
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Back-compat alias for already-shipped add-on plugins that reference the pre-rename constant name.
+	define( 'AXTOLAB_ADMIN_PARENT_SLUG', AXTOLAB_AI_CONNECTOR_ADMIN_PARENT_SLUG );
 }
 
 // ── Includes ──────────────────────────────────────────────────────────────────
@@ -157,7 +164,7 @@ function axtolab_ai_connector_ensure_oauth_htaccess_rules(): void {
 	if ( ! is_readable( $htaccess_file ) ) {
 		return;
 	}
-	$contents = @file_get_contents( $htaccess_file );
+	$contents = file_get_contents( $htaccess_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local .htaccess for marker detection; wp_remote_get is for HTTP only. Phase B will switch to WP_Filesystem.
 	if ( false === $contents ) {
 		return;
 	}
@@ -403,28 +410,28 @@ function axtolab_ai_connector_uninstall(): void {
 function axtolab_ai_connector_provision_role(): WP_Role {
 	$capabilities = array(
 		// Core access.
-		'read'                                       => true,
+		'read'                                => true,
 		// Posts.
-		'edit_posts'                                 => true,
-		'edit_published_posts'                       => true,
-		'edit_others_posts'                          => true,
-		'publish_posts'                              => true,
+		'edit_posts'                          => true,
+		'edit_published_posts'                => true,
+		'edit_others_posts'                   => true,
+		'publish_posts'                       => true,
 		// Pages.
-		'edit_pages'                                 => true,
-		'edit_published_pages'                       => true,
-		'edit_others_pages'                          => true,
-		'publish_pages'                              => true,
+		'edit_pages'                          => true,
+		'edit_published_pages'                => true,
+		'edit_others_pages'                   => true,
+		'publish_pages'                       => true,
 		// Media.
-		'upload_files'                               => true,
+		'upload_files'                        => true,
 		// Taxonomy.
-		'manage_categories'                          => true,
+		'manage_categories'                   => true,
 		// User directory (granted so /users/{id} lookups work for the
 		// service account; required by `permission_list_users`).
-		'list_users'                                 => true,
+		'list_users'                          => true,
 		// Custom plugin caps — gate /changelog and /audit-log routes
 		// without requiring the service account to be administrator.
-		'axtolab_ai_connector_view_changelog'        => true,
-		'axtolab_ai_connector_view_audit'            => true,
+		'axtolab_ai_connector_view_changelog' => true,
+		'axtolab_ai_connector_view_audit'     => true,
 	);
 
 	$existing = get_role( 'axtolab_ai_connector_editor' );
@@ -625,9 +632,9 @@ function axtolab_ai_connector_bootstrap(): void {
 
 	// Remote MCP Transport (Streamable HTTP).
 	// Enable if bearer token or OAuth is active.
-	$settings       = get_option( 'axtolab_ai_connector_settings', array() );
-	$bearer_active  = ! empty( $settings['remote_mcp_enabled'] ) && Axtolab_AI_Connector_Bearer_Auth::has_token();
-	$oauth_active   = ! empty( $settings['oauth_enabled'] );
+	$settings      = get_option( 'axtolab_ai_connector_settings', array() );
+	$bearer_active = ! empty( $settings['remote_mcp_enabled'] ) && Axtolab_AI_Connector_Bearer_Auth::has_token();
+	$oauth_active  = ! empty( $settings['oauth_enabled'] );
 
 	if ( $bearer_active || $oauth_active ) {
 		Axtolab_AI_Connector_MCP_Transport::bootstrap();
@@ -667,14 +674,14 @@ function axtolab_ai_connector_bootstrap(): void {
 
 		// Display any activation error stored as a transient. Each error
 		// notice carries an inline "contact support" link via the shared
-		// Axtolab_Support_Links helper so a stuck merchant can reach us
+		// Axtolab_AI_Connector_Support_Links helper so a stuck merchant can reach us
 		// with one click.
 		add_action(
 			'admin_notices',
 			static function () {
 				$support = '';
-				if ( class_exists( 'Axtolab_Support_Links' ) ) {
-					$support = ' ' . Axtolab_Support_Links::inline_contact_link( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, __( 'If this persists, contact support', 'axtolab-ai-connector' ) ) . '.';
+				if ( class_exists( 'Axtolab_AI_Connector_Support_Links' ) ) {
+					$support = ' ' . Axtolab_AI_Connector_Support_Links::inline_contact_link( 'AI Connector', AXTOLAB_AI_CONNECTOR_VERSION, __( 'If this persists, contact support', 'axtolab-ai-connector' ) ) . '.';
 				}
 
 				$error = get_transient( 'axtolab_ai_connector_activation_error' );

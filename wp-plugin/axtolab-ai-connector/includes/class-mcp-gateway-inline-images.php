@@ -6,13 +6,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Axtolab_AI_Connector_Inline_Images {
 	public static function insert( WP_Post $post, array $args ) {
-		$content = $post->post_content;
+		$content  = $post->post_content;
 		$media_id = intval( $args['media_id'] ?? 0 );
 		if ( $media_id <= 0 ) {
 			return new WP_Error( 'invalid_media_id', 'media_id is required.', array( 'status' => 400 ) );
 		}
 
-		$placement = isset( $args['placement'] ) ? (string) $args['placement'] : 'end';
+		$placement   = isset( $args['placement'] ) ? (string) $args['placement'] : 'end';
 		$image_block = self::build_image_block( $media_id, $args );
 
 		if ( has_blocks( $content ) && in_array( $placement, array( 'start', 'end' ), true ) ) {
@@ -27,7 +27,7 @@ final class Axtolab_AI_Connector_Inline_Images {
 
 		// Flatsome shortcode mode
 		if ( self::has_flatsome_images( $content ) || preg_match( '/\[section\s/', $content ) ) {
-			$size = isset( $args['size_slug'] ) ? ' image_size="' . esc_attr( (string) $args['size_slug'] ) . '"' : ' image_size="original"';
+			$size      = isset( $args['size_slug'] ) ? ' image_size="' . esc_attr( (string) $args['size_slug'] ) . '"' : ' image_size="original"';
 			$shortcode = '[ux_image id="' . $media_id . '"' . $size . ']';
 			return array( 'content' => self::insert_html( $content, $shortcode, $placement, $args ) );
 		}
@@ -41,10 +41,10 @@ final class Axtolab_AI_Connector_Inline_Images {
 	}
 
 	public static function replace( WP_Post $post, array $args ) {
-		$content = $post->post_content;
-		$new_media_id = intval( $args['new_media_id'] ?? 0 );
+		$content        = $post->post_content;
+		$new_media_id   = intval( $args['new_media_id'] ?? 0 );
 		$match_media_id = intval( $args['match_media_id'] ?? 0 );
-		$match_src = isset( $args['match_src_substring'] ) ? (string) $args['match_src_substring'] : '';
+		$match_src      = isset( $args['match_src_substring'] ) ? (string) $args['match_src_substring'] : '';
 
 		if ( $new_media_id <= 0 ) {
 			return new WP_Error( 'invalid_new_media_id', 'new_media_id is required.', array( 'status' => 400 ) );
@@ -55,9 +55,9 @@ final class Axtolab_AI_Connector_Inline_Images {
 		}
 
 		if ( has_blocks( $content ) ) {
-			$blocks = parse_blocks( $content );
+			$blocks   = parse_blocks( $content );
 			$replaced = false;
-			$blocks = self::replace_block_images_recursive( $blocks, $new_media_id, $match_media_id, $match_src, $args, $replaced );
+			$blocks   = self::replace_block_images_recursive( $blocks, $new_media_id, $match_media_id, $match_src, $args, $replaced );
 			if ( $replaced ) {
 				return array( 'content' => serialize_blocks( $blocks ) );
 			}
@@ -82,18 +82,18 @@ final class Axtolab_AI_Connector_Inline_Images {
 	}
 
 	public static function remove( WP_Post $post, array $args ) {
-		$content = $post->post_content;
+		$content        = $post->post_content;
 		$match_media_id = intval( $args['match_media_id'] ?? 0 );
-		$match_src = isset( $args['match_src_substring'] ) ? (string) $args['match_src_substring'] : '';
+		$match_src      = isset( $args['match_src_substring'] ) ? (string) $args['match_src_substring'] : '';
 
 		if ( $match_media_id <= 0 && '' === $match_src ) {
 			return new WP_Error( 'inline_match_required', 'match_media_id or match_src_substring is required.', array( 'status' => 400 ) );
 		}
 
 		if ( has_blocks( $content ) ) {
-			$blocks = parse_blocks( $content );
+			$blocks  = parse_blocks( $content );
 			$removed = false;
-			$blocks = self::remove_block_images_recursive( $blocks, $match_media_id, $match_src, $removed );
+			$blocks  = self::remove_block_images_recursive( $blocks, $match_media_id, $match_src, $removed );
 			if ( $removed ) {
 				return array( 'content' => serialize_blocks( $blocks ) );
 			}
@@ -114,22 +114,22 @@ final class Axtolab_AI_Connector_Inline_Images {
 
 	private static function build_image_block( int $media_id, array $args ): array {
 		$image_src = wp_get_attachment_image_src( $media_id, $args['size_slug'] ?? 'full' );
-		$src = is_array( $image_src ) ? $image_src[0] : wp_get_attachment_url( $media_id );
-		$alt = isset( $args['alt_text'] ) && '' !== trim( (string) $args['alt_text'] ) ? (string) $args['alt_text'] : get_post_meta( $media_id, '_wp_attachment_image_alt', true );
-		$caption = isset( $args['caption'] ) ? (string) $args['caption'] : '';
+		$src       = is_array( $image_src ) ? $image_src[0] : wp_get_attachment_url( $media_id );
+		$alt       = isset( $args['alt_text'] ) && '' !== trim( (string) $args['alt_text'] ) ? (string) $args['alt_text'] : get_post_meta( $media_id, '_wp_attachment_image_alt', true );
+		$caption   = isset( $args['caption'] ) ? (string) $args['caption'] : '';
 
 		$attrs = array(
-			'id'      => $media_id,
-			'sizeSlug'=> isset( $args['size_slug'] ) ? (string) $args['size_slug'] : 'full',
-			'alt'     => $alt,
-			'url'     => $src,
+			'id'       => $media_id,
+			'sizeSlug' => isset( $args['size_slug'] ) ? (string) $args['size_slug'] : 'full',
+			'alt'      => $alt,
+			'url'      => $src,
 		);
 
 		if ( ! empty( $args['align'] ) ) {
 			$attrs['align'] = (string) $args['align'];
 		}
 
-		$inner_html = '<figure class="wp-block-image">';
+		$inner_html  = '<figure class="wp-block-image">';
 		$inner_html .= '<img src="' . esc_url( $src ) . '" alt="' . esc_attr( $alt ) . '" class="wp-image-' . intval( $media_id ) . '" />';
 		if ( '' !== $caption ) {
 			$inner_html .= '<figcaption>' . esc_html( $caption ) . '</figcaption>';
@@ -151,12 +151,12 @@ final class Axtolab_AI_Connector_Inline_Images {
 			return '';
 		}
 
-		$src = $image_src[0];
-		$alt = isset( $args['alt_text'] ) && '' !== trim( (string) $args['alt_text'] ) ? (string) $args['alt_text'] : get_post_meta( $media_id, '_wp_attachment_image_alt', true );
+		$src     = $image_src[0];
+		$alt     = isset( $args['alt_text'] ) && '' !== trim( (string) $args['alt_text'] ) ? (string) $args['alt_text'] : get_post_meta( $media_id, '_wp_attachment_image_alt', true );
 		$caption = isset( $args['caption'] ) ? (string) $args['caption'] : '';
-		$align = isset( $args['align'] ) ? sanitize_html_class( (string) $args['align'] ) : 'none';
+		$align   = isset( $args['align'] ) ? sanitize_html_class( (string) $args['align'] ) : 'none';
 
-		$html = '<figure class="wp-block-image align' . esc_attr( $align ) . '">';
+		$html  = '<figure class="wp-block-image align' . esc_attr( $align ) . '">';
 		$html .= '<img src="' . esc_url( $src ) . '" alt="' . esc_attr( $alt ) . '" class="wp-image-' . intval( $media_id ) . '" />';
 		if ( '' !== $caption ) {
 			$html .= '<figcaption>' . esc_html( $caption ) . '</figcaption>';
@@ -204,12 +204,12 @@ final class Axtolab_AI_Connector_Inline_Images {
 			}
 
 			if ( isset( $block['blockName'] ) && 'core/image' === $block['blockName'] ) {
-				$current_id = isset( $block['attrs']['id'] ) ? intval( $block['attrs']['id'] ) : 0;
+				$current_id  = isset( $block['attrs']['id'] ) ? intval( $block['attrs']['id'] ) : 0;
 				$current_src = isset( $block['attrs']['url'] ) ? (string) $block['attrs']['url'] : '';
 
 				$matched = ( $match_media_id > 0 && $current_id === $match_media_id ) || ( '' !== $match_src && false !== strpos( $current_src, $match_src ) );
 				if ( $matched ) {
-					$block = self::build_image_block( $new_media_id, $args );
+					$block    = self::build_image_block( $new_media_id, $args );
 					$replaced = true;
 					break;
 				}
@@ -228,7 +228,7 @@ final class Axtolab_AI_Connector_Inline_Images {
 		foreach ( $blocks as $block ) {
 			$drop = false;
 			if ( isset( $block['blockName'] ) && 'core/image' === $block['blockName'] ) {
-				$current_id = isset( $block['attrs']['id'] ) ? intval( $block['attrs']['id'] ) : 0;
+				$current_id  = isset( $block['attrs']['id'] ) ? intval( $block['attrs']['id'] ) : 0;
 				$current_src = isset( $block['attrs']['url'] ) ? (string) $block['attrs']['url'] : '';
 
 				$drop = ( $match_media_id > 0 && $current_id === $match_media_id ) || ( '' !== $match_src && false !== strpos( $current_src, $match_src ) );
@@ -305,7 +305,7 @@ final class Axtolab_AI_Connector_Inline_Images {
 			// Match [ux_image id="MEDIA_ID" ...] shortcodes
 			$pattern = '/\[ux_image([^\]]*\bid=["\']?' . $match_media_id . '["\']?[^\]]*\]/';
 			if ( preg_match( $pattern, $content ) ) {
-				$size = isset( $args['size_slug'] ) ? ' image_size="' . esc_attr( (string) $args['size_slug'] ) . '"' : '';
+				$size        = isset( $args['size_slug'] ) ? ' image_size="' . esc_attr( (string) $args['size_slug'] ) . '"' : '';
 				$replacement = '[ux_image id="' . $new_media_id . '"' . $size . ']';
 				return preg_replace( $pattern, $replacement, $content, 1 );
 			}
@@ -322,7 +322,6 @@ final class Axtolab_AI_Connector_Inline_Images {
 		}
 		return $content;
 	}
-
 }
 
 if ( ! class_exists( 'MCP_Gateway_Inline_Images', false ) ) {

@@ -108,29 +108,33 @@ class Axtolab_AI_Connector_OAuth {
 		if ( '/.well-known/oauth-protected-resource' === $path ) {
 			header( 'Content-Type: application/json' );
 			header( 'Access-Control-Allow-Origin: *' );
-			echo wp_json_encode( array(
-				'resource'               => $mcp_url,
-				'authorization_servers'  => array( $rest_base ),
-				'scopes_supported'       => array( 'mcp:read', 'mcp:write' ),
-				'resource_documentation' => home_url(),
-			) );
+			echo wp_json_encode(
+				array(
+					'resource'               => $mcp_url,
+					'authorization_servers'  => array( $rest_base ),
+					'scopes_supported'       => array( 'mcp:read', 'mcp:write' ),
+					'resource_documentation' => home_url(),
+				)
+			);
 			exit;
 		}
 
 		if ( '/.well-known/oauth-authorization-server' === $path ) {
 			header( 'Content-Type: application/json' );
 			header( 'Access-Control-Allow-Origin: *' );
-			echo wp_json_encode( array(
-				'issuer'                                => $rest_base,
-				'authorization_endpoint'                => $rest_base . '/oauth/authorize',
-				'token_endpoint'                        => $rest_base . '/oauth/token',
-				'registration_endpoint'                 => $rest_base . '/oauth/register',
-				'code_challenge_methods_supported'      => array( 'S256' ),
-				'response_types_supported'              => array( 'code' ),
-				'grant_types_supported'                 => array( 'authorization_code', 'refresh_token' ),
-				'token_endpoint_auth_methods_supported' => array( 'none' ),
-				'scopes_supported'                      => array( 'mcp:read', 'mcp:write' ),
-			) );
+			echo wp_json_encode(
+				array(
+					'issuer'                           => $rest_base,
+					'authorization_endpoint'           => $rest_base . '/oauth/authorize',
+					'token_endpoint'                   => $rest_base . '/oauth/token',
+					'registration_endpoint'            => $rest_base . '/oauth/register',
+					'code_challenge_methods_supported' => array( 'S256' ),
+					'response_types_supported'         => array( 'code' ),
+					'grant_types_supported'            => array( 'authorization_code', 'refresh_token' ),
+					'token_endpoint_auth_methods_supported' => array( 'none' ),
+					'scopes_supported'                 => array( 'mcp:read', 'mcp:write' ),
+				)
+			);
 			exit;
 		}
 
@@ -162,11 +166,15 @@ class Axtolab_AI_Connector_OAuth {
 		// before a client has a WordPress login or bearer token. The callback
 		// validates redirect URIs against the allowlist/loopback rules before
 		// persisting a short-lived client registration.
-		register_rest_route( self::NS, '/oauth/register', array(
-			'methods'             => 'POST',
-			'callback'            => array( __CLASS__, 'handle_register' ),
-			'permission_callback' => '__return_true',
-		) );
+		register_rest_route(
+			self::NS,
+			'/oauth/register',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'handle_register' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 
 		// Note: /oauth/authorize is handled via init hook (handle_early_requests)
 		// so WordPress cookie auth works after wp-login.php redirect.
@@ -174,36 +182,52 @@ class Axtolab_AI_Connector_OAuth {
 		// Public by OAuth protocol: clients exchange single-use authorization
 		// codes and refresh tokens here. The callback verifies client_id,
 		// redirect_uri, PKCE verifier, resource, code expiry, and token hashes.
-		register_rest_route( self::NS, '/oauth/token', array(
-			'methods'             => 'POST',
-			'callback'            => array( __CLASS__, 'handle_token' ),
-			'permission_callback' => '__return_true',
-		) );
+		register_rest_route(
+			self::NS,
+			'/oauth/token',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'handle_token' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 
 		// Public by OAuth protocol: discovery metadata contains endpoint URLs
 		// and supported methods only. It exposes no private site data.
 		// These REST routes are also a reliable fallback for hosts where
 		// host-root .well-known is blocked by Nginx or other reverse proxies.
-		register_rest_route( self::NS, '/oauth/metadata/resource', array(
-			'methods'             => 'GET',
-			'callback'            => array( __CLASS__, 'rest_protected_resource_metadata' ),
-			'permission_callback' => '__return_true',
-		) );
+		register_rest_route(
+			self::NS,
+			'/oauth/metadata/resource',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'rest_protected_resource_metadata' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 
-		register_rest_route( self::NS, '/oauth/metadata/server', array(
-			'methods'             => 'GET',
-			'callback'            => array( __CLASS__, 'rest_authorization_server_metadata' ),
-			'permission_callback' => '__return_true',
-		) );
+		register_rest_route(
+			self::NS,
+			'/oauth/metadata/server',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'rest_authorization_server_metadata' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 
 		// RFC 8414 discovery path under the REST namespace.
 		// ChatGPT constructs this as {issuer}/.well-known/oauth-authorization-server
 		// Since issuer = rest_url( NS ), this resolves to /wp-json/axtolab-ai-connector/v1/.well-known/...
-		register_rest_route( self::NS, '/\.well-known/oauth-authorization-server', array(
-			'methods'             => 'GET',
-			'callback'            => array( __CLASS__, 'rest_authorization_server_metadata' ),
-			'permission_callback' => '__return_true',
-		) );
+		register_rest_route(
+			self::NS,
+			'/\.well-known/oauth-authorization-server',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'rest_authorization_server_metadata' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 
 		// OpenID Connect Discovery path. Claude Web's custom-connector flow
 		// probes {issuer}/.well-known/openid-configuration for OAuth/OIDC
@@ -212,11 +236,15 @@ class Axtolab_AI_Connector_OAuth {
 		// host-root /register, gets 404, and shows "Couldn't reach the MCP
 		// server". We serve the same metadata doc with a few OIDC-required
 		// stub fields added by rest_authorization_server_metadata().
-		register_rest_route( self::NS, '/\.well-known/openid-configuration', array(
-			'methods'             => 'GET',
-			'callback'            => array( __CLASS__, 'rest_authorization_server_metadata' ),
-			'permission_callback' => '__return_true',
-		) );
+		register_rest_route(
+			self::NS,
+			'/\.well-known/openid-configuration',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'rest_authorization_server_metadata' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -225,12 +253,14 @@ class Axtolab_AI_Connector_OAuth {
 	 * @return WP_REST_Response
 	 */
 	public static function rest_protected_resource_metadata(): WP_REST_Response {
-		$response = new WP_REST_Response( array(
-			'resource'               => rest_url( self::NS . '/mcp' ),
-			'authorization_servers'  => array( rest_url( self::NS ) ),
-			'scopes_supported'       => array( 'mcp:read', 'mcp:write' ),
-			'resource_documentation' => home_url(),
-		) );
+		$response = new WP_REST_Response(
+			array(
+				'resource'               => rest_url( self::NS . '/mcp' ),
+				'authorization_servers'  => array( rest_url( self::NS ) ),
+				'scopes_supported'       => array( 'mcp:read', 'mcp:write' ),
+				'resource_documentation' => home_url(),
+			)
+		);
 
 		$response->header( 'Access-Control-Allow-Origin', '*' );
 		$response->header( 'Cache-Control', 'no-store' );
@@ -258,23 +288,25 @@ class Axtolab_AI_Connector_OAuth {
 	public static function rest_authorization_server_metadata(): WP_REST_Response {
 		$rest_base = rest_url( self::NS );
 
-		$response = new WP_REST_Response( array(
-			'issuer'                                => $rest_base,
-			'authorization_endpoint'                => $rest_base . '/oauth/authorize',
-			'token_endpoint'                        => $rest_base . '/oauth/token',
-			'registration_endpoint'                 => $rest_base . '/oauth/register',
-			'code_challenge_methods_supported'      => array( 'S256' ),
-			'response_types_supported'              => array( 'code' ),
-			'grant_types_supported'                 => array( 'authorization_code', 'refresh_token' ),
-			'token_endpoint_auth_methods_supported' => array( 'none' ),
-			'scopes_supported'                      => array( 'mcp:read', 'mcp:write' ),
-			// OIDC discovery stubs — required for the doc to parse as valid
-			// OIDC discovery. We do not issue ID tokens; these are present
-			// only so OIDC-aware clients (Claude Web) accept the doc and
-			// proceed to Dynamic Client Registration.
-			'subject_types_supported'                  => array( 'public' ),
-			'id_token_signing_alg_values_supported'    => array( 'RS256' ),
-		) );
+		$response = new WP_REST_Response(
+			array(
+				'issuer'                                => $rest_base,
+				'authorization_endpoint'                => $rest_base . '/oauth/authorize',
+				'token_endpoint'                        => $rest_base . '/oauth/token',
+				'registration_endpoint'                 => $rest_base . '/oauth/register',
+				'code_challenge_methods_supported'      => array( 'S256' ),
+				'response_types_supported'              => array( 'code' ),
+				'grant_types_supported'                 => array( 'authorization_code', 'refresh_token' ),
+				'token_endpoint_auth_methods_supported' => array( 'none' ),
+				'scopes_supported'                      => array( 'mcp:read', 'mcp:write' ),
+				// OIDC discovery stubs — required for the doc to parse as valid
+				// OIDC discovery. We do not issue ID tokens; these are present
+				// only so OIDC-aware clients (Claude Web) accept the doc and
+				// proceed to Dynamic Client Registration.
+				'subject_types_supported'               => array( 'public' ),
+				'id_token_signing_alg_values_supported' => array( 'RS256' ),
+			)
+		);
 
 		$response->header( 'Access-Control-Allow-Origin', '*' );
 		$response->header( 'Cache-Control', 'no-store' );
@@ -299,7 +331,10 @@ class Axtolab_AI_Connector_OAuth {
 		$count    = (int) get_transient( $rate_key );
 		if ( $count >= self::DCR_RATE_LIMIT ) {
 			return new WP_REST_Response(
-				array( 'error' => 'too_many_requests', 'error_description' => 'Rate limit exceeded.' ),
+				array(
+					'error'             => 'too_many_requests',
+					'error_description' => 'Rate limit exceeded.',
+				),
 				429
 			);
 		}
@@ -311,7 +346,10 @@ class Axtolab_AI_Connector_OAuth {
 		$redirect_uris = $body['redirect_uris'] ?? array();
 		if ( empty( $redirect_uris ) ) {
 			return new WP_REST_Response(
-				array( 'error' => 'invalid_client_metadata', 'error_description' => 'redirect_uris required.' ),
+				array(
+					'error'             => 'invalid_client_metadata',
+					'error_description' => 'redirect_uris required.',
+				),
 				400
 			);
 		}
@@ -319,7 +357,10 @@ class Axtolab_AI_Connector_OAuth {
 		foreach ( $redirect_uris as $uri ) {
 			if ( ! self::is_redirect_uri_allowed( $uri ) ) {
 				return new WP_REST_Response(
-					array( 'error' => 'invalid_redirect_uri', 'error_description' => 'Redirect URI not allowed.' ),
+					array(
+						'error'             => 'invalid_redirect_uri',
+						'error_description' => 'Redirect URI not allowed.',
+					),
 					400
 				);
 			}
@@ -535,23 +576,31 @@ class Axtolab_AI_Connector_OAuth {
 		}
 
 		// Generate authorization code.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding of random bytes for an OAuth 2.0 authorization code; not obfuscation.
 		$code = rtrim( strtr( base64_encode( random_bytes( 32 ) ), '+/', '-_' ), '=' );
 
 		// Store code with all context (10-minute TTL, single-use).
-		set_transient( 'axtolab_ai_connector_oauth_code_' . $code, array(
-			'client_id'      => $client_id,
-			'redirect_uri'   => $redirect_uri,
-			'code_challenge' => sanitize_text_field( $post_params['code_challenge'] ?? '' ),
-			'scope'          => sanitize_text_field( $post_params['scope'] ?? '' ),
-			'resource'       => esc_url_raw( $post_params['resource'] ?? '' ),
-			'created_at'     => time(),
-		), self::CODE_EXPIRY );
+		set_transient(
+			'axtolab_ai_connector_oauth_code_' . $code,
+			array(
+				'client_id'      => $client_id,
+				'redirect_uri'   => $redirect_uri,
+				'code_challenge' => sanitize_text_field( $post_params['code_challenge'] ?? '' ),
+				'scope'          => sanitize_text_field( $post_params['scope'] ?? '' ),
+				'resource'       => esc_url_raw( $post_params['resource'] ?? '' ),
+				'created_at'     => time(),
+			),
+			self::CODE_EXPIRY
+		);
 
 		// Redirect back to ChatGPT with auth code.
-		$redirect = add_query_arg( array(
-			'code'  => $code,
-			'state' => $state,
-		), $redirect_uri );
+		$redirect = add_query_arg(
+			array(
+				'code'  => $code,
+				'state' => $state,
+			),
+			$redirect_uri
+		);
 
 		self::safe_client_redirect( $redirect );
 	}
@@ -606,6 +655,7 @@ class Axtolab_AI_Connector_OAuth {
 		}
 
 		// Verify PKCE: base64url(sha256(code_verifier)) must equal stored code_challenge.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- RFC 7636 (PKCE) mandates base64url(SHA256(verifier)) as the S256 code-challenge encoding.
 		$expected_challenge = rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' );
 		if ( ! hash_equals( $code_data['code_challenge'], $expected_challenge ) ) {
 			return self::token_error( 'invalid_grant', 'PKCE verification failed.' );
@@ -618,15 +668,17 @@ class Axtolab_AI_Connector_OAuth {
 		}
 
 		// Generate access token.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding of random bytes for an OAuth 2.0 bearer access token; not obfuscation.
 		$raw_token = 'axtolab_ai_connector_oat_' . rtrim( strtr( base64_encode( random_bytes( 32 ) ), '+/', '-_' ), '=' );
 		$hash      = hash_hmac( 'sha256', $raw_token, wp_salt( 'auth' ) );
 
 		// Generate refresh token.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding of random bytes for an OAuth 2.0 refresh token; not obfuscation.
 		$refresh_token = 'axtolab_ai_connector_ort_' . rtrim( strtr( base64_encode( random_bytes( 32 ) ), '+/', '-_' ), '=' );
 		$refresh_hash  = hash_hmac( 'sha256', $refresh_token, wp_salt( 'auth' ) );
 
 		// Store token hashes.
-		$settings = get_option( 'axtolab_ai_connector_settings', array() );
+		$settings                                = get_option( 'axtolab_ai_connector_settings', array() );
 		$settings['oauth_access_token_hash']     = $hash;
 		$settings['oauth_access_token_prefix']   = substr( $raw_token, 0, 20 );
 		$settings['oauth_access_token_created']  = current_time( 'mysql' );
@@ -636,8 +688,8 @@ class Axtolab_AI_Connector_OAuth {
 		$settings['oauth_refresh_token_expires'] = time() + self::REFRESH_TOKEN_EXPIRY;
 
 		// Store client name from registration.
-		$client_data = get_transient( 'axtolab_ai_connector_oauth_client_' . $client_id );
-		$client_name = $client_data ? $client_data['client_name'] : 'MCP Client';
+		$client_data                   = get_transient( 'axtolab_ai_connector_oauth_client_' . $client_id );
+		$client_name                   = $client_data ? $client_data['client_name'] : 'MCP Client';
 		$settings['oauth_client_name'] = $client_name;
 
 		update_option( 'axtolab_ai_connector_settings', $settings );
@@ -658,13 +710,16 @@ class Axtolab_AI_Connector_OAuth {
 			)
 		);
 
-		$response = new WP_REST_Response( array(
-			'access_token'  => $raw_token,
-			'token_type'    => 'Bearer',
-			'expires_in'    => self::TOKEN_EXPIRY,
-			'refresh_token' => $refresh_token,
-			'scope'         => $code_data['scope'] ?? 'mcp:read mcp:write',
-		), 200 );
+		$response = new WP_REST_Response(
+			array(
+				'access_token'  => $raw_token,
+				'token_type'    => 'Bearer',
+				'expires_in'    => self::TOKEN_EXPIRY,
+				'refresh_token' => $refresh_token,
+				'scope'         => $code_data['scope'] ?? 'mcp:read mcp:write',
+			),
+			200
+		);
 
 		$response->header( 'Cache-Control', 'no-store' );
 		$response->header( 'Pragma', 'no-cache' );
@@ -703,7 +758,9 @@ class Axtolab_AI_Connector_OAuth {
 		}
 
 		// Rotate: generate new access token + new refresh token.
-		$new_access  = 'axtolab_ai_connector_oat_' . rtrim( strtr( base64_encode( random_bytes( 32 ) ), '+/', '-_' ), '=' );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding of random bytes for a rotated OAuth 2.0 access token; not obfuscation.
+		$new_access = 'axtolab_ai_connector_oat_' . rtrim( strtr( base64_encode( random_bytes( 32 ) ), '+/', '-_' ), '=' );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding of random bytes for a rotated OAuth 2.0 refresh token; not obfuscation.
 		$new_refresh = 'axtolab_ai_connector_ort_' . rtrim( strtr( base64_encode( random_bytes( 32 ) ), '+/', '-_' ), '=' );
 
 		$settings['oauth_access_token_hash']     = hash_hmac( 'sha256', $new_access, wp_salt( 'auth' ) );
@@ -715,13 +772,16 @@ class Axtolab_AI_Connector_OAuth {
 
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
-		$response = new WP_REST_Response( array(
-			'access_token'  => $new_access,
-			'token_type'    => 'Bearer',
-			'expires_in'    => self::TOKEN_EXPIRY,
-			'refresh_token' => $new_refresh,
-			'scope'         => 'mcp:read mcp:write',
-		), 200 );
+		$response = new WP_REST_Response(
+			array(
+				'access_token'  => $new_access,
+				'token_type'    => 'Bearer',
+				'expires_in'    => self::TOKEN_EXPIRY,
+				'refresh_token' => $new_refresh,
+				'scope'         => 'mcp:read mcp:write',
+			),
+			200
+		);
 
 		$response->header( 'Cache-Control', 'no-store' );
 		$response->header( 'Pragma', 'no-cache' );
@@ -848,11 +908,14 @@ class Axtolab_AI_Connector_OAuth {
 	 * @param string $state        The original state parameter.
 	 */
 	private static function redirect_with_error( string $redirect_uri, string $error, string $description, string $state ): void {
-		$redirect = add_query_arg( array(
-			'error'             => $error,
-			'error_description' => $description,
-			'state'             => $state,
-		), $redirect_uri );
+		$redirect = add_query_arg(
+			array(
+				'error'             => $error,
+				'error_description' => $description,
+				'state'             => $state,
+			),
+			$redirect_uri
+		);
 
 		self::safe_client_redirect( $redirect );
 	}
@@ -887,10 +950,13 @@ class Axtolab_AI_Connector_OAuth {
 	 * @return WP_REST_Response
 	 */
 	private static function token_error( string $error, string $description, int $status = 400 ): WP_REST_Response {
-		return new WP_REST_Response( array(
-			'error'             => $error,
-			'error_description' => $description,
-		), $status );
+		return new WP_REST_Response(
+			array(
+				'error'             => $error,
+				'error_description' => $description,
+			),
+			$status
+		);
 	}
 }
 

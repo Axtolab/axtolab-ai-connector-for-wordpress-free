@@ -42,12 +42,27 @@ final class Axtolab_AI_Connector_Image_Providers {
 	 */
 	public static function get_settings(): array {
 		$defaults = array(
-			'google_imagen' => array( 'enabled' => false, 'api_key' => '', 'model' => 'imagen-3.0-generate-002' ),
-			'openai'        => array( 'enabled' => false, 'api_key' => '', 'model' => 'gpt-image-1', 'quality' => 'medium' ),
-			'unsplash'      => array( 'enabled' => false, 'access_key' => '' ),
-			'pexels'        => array( 'enabled' => false, 'api_key' => '' ),
+			'google_imagen' => array(
+				'enabled' => false,
+				'api_key' => '',
+				'model'   => 'imagen-3.0-generate-002',
+			),
+			'openai'        => array(
+				'enabled' => false,
+				'api_key' => '',
+				'model'   => 'gpt-image-1',
+				'quality' => 'medium',
+			),
+			'unsplash'      => array(
+				'enabled'    => false,
+				'access_key' => '',
+			),
+			'pexels'        => array(
+				'enabled' => false,
+				'api_key' => '',
+			),
 		);
-		$saved = get_option( self::OPTION_KEY, array() );
+		$saved    = get_option( self::OPTION_KEY, array() );
 		return is_array( $saved ) ? array_replace_recursive( $defaults, $saved ) : $defaults;
 	}
 
@@ -111,6 +126,7 @@ final class Axtolab_AI_Connector_Image_Providers {
 		$key    = wp_salt( 'auth' );
 		$iv     = substr( md5( wp_salt( 'secure_auth' ) ), 0, 16 );
 		$cipher = openssl_encrypt( $plain, 'aes-256-cbc', $key, 0, $iv );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64 encoding of the openssl_encrypt() ciphertext for safe storage in the options table; not obfuscation.
 		return base64_encode( $cipher );
 	}
 
@@ -124,8 +140,9 @@ final class Axtolab_AI_Connector_Image_Providers {
 		if ( '' === $encrypted ) {
 			return '';
 		}
-		$key    = wp_salt( 'auth' );
-		$iv     = substr( md5( wp_salt( 'secure_auth' ) ), 0, 16 );
+		$key = wp_salt( 'auth' );
+		$iv  = substr( md5( wp_salt( 'secure_auth' ) ), 0, 16 );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the base64-wrapped openssl_encrypt() ciphertext written by encrypt_key(); not obfuscation.
 		$cipher = base64_decode( $encrypted );
 		if ( false === $cipher ) {
 			self::debug_log( 'MCP Gateway: API key decryption failed — base64_decode returned false. Keys may need to be re-entered.' );
@@ -240,14 +257,17 @@ final class Axtolab_AI_Connector_Image_Providers {
 			),
 		);
 
-		$response = wp_remote_post( $url, array(
-			'headers' => array(
-				'Content-Type'   => 'application/json',
-				'x-goog-api-key' => $api_key,
-			),
-			'body'    => wp_json_encode( $body ),
-			'timeout' => 60,
-		) );
+		$response = wp_remote_post(
+			$url,
+			array(
+				'headers' => array(
+					'Content-Type'   => 'application/json',
+					'x-goog-api-key' => $api_key,
+				),
+				'body'    => wp_json_encode( $body ),
+				'timeout' => 60,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -267,6 +287,7 @@ final class Axtolab_AI_Connector_Image_Providers {
 		}
 
 		return array(
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the base64-encoded image bytes returned by the Google Imagen API (bytesBase64Encoded field); not obfuscation.
 			'bytes'  => base64_decode( $b64 ),
 			'format' => 'png',
 		);
@@ -292,7 +313,7 @@ final class Axtolab_AI_Connector_Image_Providers {
 			'4:3'  => '1536x1024',
 			'3:4'  => '1024x1536',
 		);
-		$size = $size_map[ $aspect_ratio ] ?? '1536x1024';
+		$size     = $size_map[ $aspect_ratio ] ?? '1536x1024';
 
 		$body = array(
 			'model'         => $model,
@@ -303,14 +324,17 @@ final class Axtolab_AI_Connector_Image_Providers {
 			'output_format' => 'png',
 		);
 
-		$response = wp_remote_post( 'https://api.openai.com/v1/images/generations', array(
-			'headers' => array(
-				'Content-Type'  => 'application/json',
-				'Authorization' => 'Bearer ' . $api_key,
-			),
-			'body'    => wp_json_encode( $body ),
-			'timeout' => 120,
-		) );
+		$response = wp_remote_post(
+			'https://api.openai.com/v1/images/generations',
+			array(
+				'headers' => array(
+					'Content-Type'  => 'application/json',
+					'Authorization' => 'Bearer ' . $api_key,
+				),
+				'body'    => wp_json_encode( $body ),
+				'timeout' => 120,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -330,6 +354,7 @@ final class Axtolab_AI_Connector_Image_Providers {
 		}
 
 		return array(
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the base64-encoded image bytes returned by the OpenAI Images API (b64_json field); not obfuscation.
 			'bytes'  => base64_decode( $b64 ),
 			'format' => 'png',
 		);
@@ -436,10 +461,13 @@ final class Axtolab_AI_Connector_Image_Providers {
 		}
 
 		$url      = add_query_arg( $args, 'https://api.pexels.com/v1/search' );
-		$response = wp_remote_get( $url, array(
-			'headers' => array( 'Authorization' => $api_key ),
-			'timeout' => 15,
-		) );
+		$response = wp_remote_get(
+			$url,
+			array(
+				'headers' => array( 'Authorization' => $api_key ),
+				'timeout' => 15,
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -499,7 +527,7 @@ final class Axtolab_AI_Connector_Image_Providers {
 				wp_remote_get( $track_url, array( 'timeout' => 10 ) );
 
 				// Get photo details.
-				$photo_url = sprintf(
+				$photo_url      = sprintf(
 					'https://api.unsplash.com/photos/%s?client_id=%s',
 					rawurlencode( $provider_id ),
 					rawurlencode( $access_key )
@@ -518,11 +546,14 @@ final class Axtolab_AI_Connector_Image_Providers {
 			case 'pexels':
 				$api_key = self::decrypt_key( $settings['pexels']['api_key'] );
 
-				$photo_url = sprintf( 'https://api.pexels.com/v1/photos/%s', rawurlencode( $provider_id ) );
-				$photo_response = wp_remote_get( $photo_url, array(
-					'headers' => array( 'Authorization' => $api_key ),
-					'timeout' => 15,
-				) );
+				$photo_url      = sprintf( 'https://api.pexels.com/v1/photos/%s', rawurlencode( $provider_id ) );
+				$photo_response = wp_remote_get(
+					$photo_url,
+					array(
+						'headers' => array( 'Authorization' => $api_key ),
+						'timeout' => 15,
+					)
+				);
 				if ( is_wp_error( $photo_response ) ) {
 					return $photo_response;
 				}
@@ -669,24 +700,26 @@ final class Axtolab_AI_Connector_Image_Providers {
 	 * Called by WP-Cron.
 	 */
 	public static function cleanup_pending_images(): void {
-		$query = new WP_Query( array(
-			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
-			'posts_per_page' => 50,
-			'meta_query'     => array(
-				'relation' => 'AND',
-				array(
-					'key'   => '_axtolab_ai_connector_image_status',
-					'value' => 'pending',
+		$query = new WP_Query(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'posts_per_page' => 50,
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array(
+						'key'   => '_axtolab_ai_connector_image_status',
+						'value' => 'pending',
+					),
+					array(
+						'key'     => '_axtolab_ai_connector_image_generated_at',
+						'value'   => gmdate( 'Y-m-d H:i:s', time() - self::PENDING_IMAGE_TTL ),
+						'compare' => '<',
+						'type'    => 'DATETIME',
+					),
 				),
-				array(
-					'key'     => '_axtolab_ai_connector_image_generated_at',
-					'value'   => gmdate( 'Y-m-d H:i:s', time() - self::PENDING_IMAGE_TTL ),
-					'compare' => '<',
-					'type'    => 'DATETIME',
-				),
-			),
-		) );
+			)
+		);
 
 		foreach ( $query->posts as $post ) {
 			wp_delete_attachment( $post->ID, true );
@@ -709,18 +742,24 @@ final class Axtolab_AI_Connector_Image_Providers {
 		switch ( $provider ) {
 			case 'google_imagen':
 				$api_key  = self::decrypt_key( $settings['google_imagen']['api_key'] );
-				$response = wp_remote_get( 'https://generativelanguage.googleapis.com/v1beta/models', array(
-					'headers' => array( 'x-goog-api-key' => $api_key ),
-					'timeout' => 10,
-				) );
+				$response = wp_remote_get(
+					'https://generativelanguage.googleapis.com/v1beta/models',
+					array(
+						'headers' => array( 'x-goog-api-key' => $api_key ),
+						'timeout' => 10,
+					)
+				);
 				break;
 
 			case 'openai':
 				$api_key  = self::decrypt_key( $settings['openai']['api_key'] );
-				$response = wp_remote_get( 'https://api.openai.com/v1/models', array(
-					'headers' => array( 'Authorization' => 'Bearer ' . $api_key ),
-					'timeout' => 10,
-				) );
+				$response = wp_remote_get(
+					'https://api.openai.com/v1/models',
+					array(
+						'headers' => array( 'Authorization' => 'Bearer ' . $api_key ),
+						'timeout' => 10,
+					)
+				);
 				break;
 
 			case 'unsplash':
@@ -731,10 +770,13 @@ final class Axtolab_AI_Connector_Image_Providers {
 
 			case 'pexels':
 				$api_key  = self::decrypt_key( $settings['pexels']['api_key'] );
-				$response = wp_remote_get( 'https://api.pexels.com/v1/curated?per_page=1', array(
-					'headers' => array( 'Authorization' => $api_key ),
-					'timeout' => 10,
-				) );
+				$response = wp_remote_get(
+					'https://api.pexels.com/v1/curated?per_page=1',
+					array(
+						'headers' => array( 'Authorization' => $api_key ),
+						'timeout' => 10,
+					)
+				);
 				break;
 
 			default:
@@ -747,7 +789,10 @@ final class Axtolab_AI_Connector_Image_Providers {
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( $code >= 200 && $code < 300 ) {
-			return array( 'success' => true, 'provider' => $provider );
+			return array(
+				'success'  => true,
+				'provider' => $provider,
+			);
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
@@ -765,17 +810,23 @@ final class Axtolab_AI_Connector_Image_Providers {
 	public static function test_connection_with_key( string $provider, string $api_key ) {
 		switch ( $provider ) {
 			case 'google_imagen':
-				$response = wp_remote_get( 'https://generativelanguage.googleapis.com/v1beta/models', array(
-					'headers' => array( 'x-goog-api-key' => $api_key ),
-					'timeout' => 10,
-				) );
+				$response = wp_remote_get(
+					'https://generativelanguage.googleapis.com/v1beta/models',
+					array(
+						'headers' => array( 'x-goog-api-key' => $api_key ),
+						'timeout' => 10,
+					)
+				);
 				break;
 
 			case 'openai':
-				$response = wp_remote_get( 'https://api.openai.com/v1/models', array(
-					'headers' => array( 'Authorization' => 'Bearer ' . $api_key ),
-					'timeout' => 10,
-				) );
+				$response = wp_remote_get(
+					'https://api.openai.com/v1/models',
+					array(
+						'headers' => array( 'Authorization' => 'Bearer ' . $api_key ),
+						'timeout' => 10,
+					)
+				);
 				break;
 
 			case 'unsplash':
@@ -784,10 +835,13 @@ final class Axtolab_AI_Connector_Image_Providers {
 				break;
 
 			case 'pexels':
-				$response = wp_remote_get( 'https://api.pexels.com/v1/curated?per_page=1', array(
-					'headers' => array( 'Authorization' => $api_key ),
-					'timeout' => 10,
-				) );
+				$response = wp_remote_get(
+					'https://api.pexels.com/v1/curated?per_page=1',
+					array(
+						'headers' => array( 'Authorization' => $api_key ),
+						'timeout' => 10,
+					)
+				);
 				break;
 
 			default:
@@ -800,7 +854,10 @@ final class Axtolab_AI_Connector_Image_Providers {
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( $code >= 200 && $code < 300 ) {
-			return array( 'success' => true, 'provider' => $provider );
+			return array(
+				'success'  => true,
+				'provider' => $provider,
+			);
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );

@@ -149,333 +149,502 @@ final class Axtolab_AI_Connector_REST {
 			)
 		);
 
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/publish', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_publish_content' ),
-			'permission_callback' => array( __CLASS__, 'permission_publish_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/trash', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_trash_content' ),
-			'permission_callback' => array( __CLASS__, 'permission_delete_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/restore', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_restore_content' ),
-			'permission_callback' => array( __CLASS__, 'permission_delete_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/revisions', array(
-			'methods' => WP_REST_Server::READABLE,
-			'callback' => array( __CLASS__, 'handle_list_revisions' ),
-			'permission_callback' => array( __CLASS__, 'permission_read_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/revisions/(?P<revision_id>\d+)/restore', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_restore_revision' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
-
-		register_rest_route( self::NS, '/authors', array(
-			'methods' => WP_REST_Server::READABLE,
-			'callback' => array( __CLASS__, 'handle_list_authors' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/author', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_assign_author' ),
-			'permission_callback' => array( __CLASS__, 'permission_assign_author' ),
-		) );
-
-		register_rest_route( self::NS, '/taxonomies/(?P<taxonomy>[a-zA-Z0-9_\-]+)/terms', array(
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/publish',
 			array(
-				'methods' => WP_REST_Server::READABLE,
-				'callback' => array( __CLASS__, 'handle_list_terms' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-			),
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_publish_content' ),
+				'permission_callback' => array( __CLASS__, 'permission_publish_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/trash',
 			array(
-				'methods' => WP_REST_Server::CREATABLE,
-				'callback' => array( __CLASS__, 'handle_create_term' ),
-				'permission_callback' => array( __CLASS__, 'permission_manage_terms' ),
-			),
-		) );
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_trash_content' ),
+				'permission_callback' => array( __CLASS__, 'permission_delete_post' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/terms', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_assign_terms' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
-
-		register_rest_route( self::NS, '/taxonomies/(?P<taxonomy>[a-zA-Z0-9_\-]+)/terms/(?P<term_id>\d+)', array(
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/restore',
 			array(
-				'methods' => WP_REST_Server::EDITABLE,
-				'callback' => array( __CLASS__, 'handle_update_term' ),
-				'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
-			),
-			array(
-				'methods' => WP_REST_Server::DELETABLE,
-				'callback' => array( __CLASS__, 'handle_delete_term' ),
-				'permission_callback' => array( __CLASS__, 'permission_delete_term' ),
-			),
-		) );
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_restore_content' ),
+				'permission_callback' => array( __CLASS__, 'permission_delete_post' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/users', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_list_users' ),
-			'permission_callback' => array( __CLASS__, 'permission_list_users' ),
-		) );
-
-		register_rest_route( self::NS, '/users/(?P<id>\d+)', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_user' ),
-			'permission_callback' => array( __CLASS__, 'permission_list_users' ),
-		) );
-
-		register_rest_route( self::NS, '/media', array(
-			array(
-				'methods' => WP_REST_Server::READABLE,
-				'callback' => array( __CLASS__, 'handle_search_media' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-			),
-			array(
-				'methods' => WP_REST_Server::CREATABLE,
-				'callback' => array( __CLASS__, 'handle_upload_media' ),
-				'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
-			),
-		) );
-
-		register_rest_route( self::NS, '/media/(?P<id>\d+)', array(
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/revisions',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_media' ),
-				'permission_callback' => array( __CLASS__, 'permission_get_media' ),
-			),
+				'callback'            => array( __CLASS__, 'handle_list_revisions' ),
+				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/revisions/(?P<revision_id>\d+)/restore',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_restore_revision' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/authors',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_list_authors' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/author',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_assign_author' ),
+				'permission_callback' => array( __CLASS__, 'permission_assign_author' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/taxonomies/(?P<taxonomy>[a-zA-Z0-9_\-]+)/terms',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_list_terms' ),
+					'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_create_term' ),
+					'permission_callback' => array( __CLASS__, 'permission_manage_terms' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/terms',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_assign_terms' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/taxonomies/(?P<taxonomy>[a-zA-Z0-9_\-]+)/terms/(?P<term_id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( __CLASS__, 'handle_update_term' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( __CLASS__, 'handle_delete_term' ),
+					'permission_callback' => array( __CLASS__, 'permission_delete_term' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/users',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_list_users' ),
+				'permission_callback' => array( __CLASS__, 'permission_list_users' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/users/(?P<id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_get_user' ),
+				'permission_callback' => array( __CLASS__, 'permission_list_users' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/media',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_search_media' ),
+					'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_upload_media' ),
+					'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/media/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_get_media' ),
+					'permission_callback' => array( __CLASS__, 'permission_get_media' ),
+				),
+				array(
+					'methods'             => 'PATCH',
+					'callback'            => array( __CLASS__, 'handle_update_media' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_media' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/media/from-url',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_upload_media_from_url' ),
+				'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/clone',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_clone_content' ),
+				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/featured-image',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_set_featured_image' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/inline-image/insert',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_insert_inline_image' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/inline-image/replace',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_replace_inline_image' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/inline-image/remove',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_remove_inline_image' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/yoast/analysis/(?P<id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_yoast_analysis' ),
+				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/yoast/metadata/(?P<id>\d+)',
 			array(
 				'methods'             => 'PATCH',
-				'callback'            => array( __CLASS__, 'handle_update_media' ),
-				'permission_callback' => array( __CLASS__, 'permission_edit_media' ),
-			),
-		) );
+				'callback'            => array( __CLASS__, 'handle_update_yoast_metadata' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/media/from-url', array(
-		'methods'             => WP_REST_Server::CREATABLE,
-		'callback'            => array( __CLASS__, 'handle_upload_media_from_url' ),
-		'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
-	) );
+		register_rest_route(
+			self::NS,
+			'/yoast/head/(?P<id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_yoast_head' ),
+				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
+			)
+		);
 
-	register_rest_route( self::NS, '/content/(?P<id>\d+)/clone', array(
-		'methods'             => WP_REST_Server::CREATABLE,
-		'callback'            => array( __CLASS__, 'handle_clone_content' ),
-		'permission_callback' => array( __CLASS__, 'permission_read_post' ),
-	) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/featured-image', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_set_featured_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/inline-image/insert', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_insert_inline_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/inline-image/replace', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_replace_inline_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/inline-image/remove', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_remove_inline_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
-
-		register_rest_route( self::NS, '/yoast/analysis/(?P<id>\d+)', array(
-			'methods' => WP_REST_Server::READABLE,
-			'callback' => array( __CLASS__, 'handle_yoast_analysis' ),
-			'permission_callback' => array( __CLASS__, 'permission_read_post' ),
-		) );
-
-		register_rest_route( self::NS, '/yoast/metadata/(?P<id>\d+)', array(
-			'methods' => 'PATCH',
-			'callback' => array( __CLASS__, 'handle_update_yoast_metadata' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
-
-		register_rest_route( self::NS, '/yoast/head/(?P<id>\d+)', array(
-			'methods' => WP_REST_Server::READABLE,
-			'callback' => array( __CLASS__, 'handle_yoast_head' ),
-			'permission_callback' => array( __CLASS__, 'permission_read_post' ),
-		) );
-
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/preview-link', array(
-			'methods' => WP_REST_Server::CREATABLE,
-			'callback' => array( __CLASS__, 'handle_preview_link' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/preview-link',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_preview_link' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
 
 		// ── Post Meta / Custom Fields ───────────────────────────────────────────
 
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/meta', array(
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/meta',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_post_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( __CLASS__, 'handle_update_post_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-			),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_get_post_meta' ),
+					'permission_callback' => array( __CLASS__, 'permission_read_post' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_update_post_meta' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+				),
+			)
+		);
 
-		register_rest_route( self::NS, '/content/(?P<id>\d+)/meta/(?P<meta_key>[a-zA-Z0-9_\-]+)', array(
-			'methods'             => WP_REST_Server::DELETABLE,
-			'callback'            => array( __CLASS__, 'handle_delete_post_meta' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>\d+)/meta/(?P<meta_key>[a-zA-Z0-9_\-]+)',
+			array(
+				'methods'             => WP_REST_Server::DELETABLE,
+				'callback'            => array( __CLASS__, 'handle_delete_post_meta' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+			)
+		);
 
 		// ── Comments ────────────────────────────────────────────────────────────
 
-		register_rest_route( self::NS, '/comments', array(
+		register_rest_route(
+			self::NS,
+			'/comments',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_list_comments' ),
-				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
-			),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_list_comments' ),
+					'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_create_comment' ),
+					'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/comments/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_get_comment' ),
+					'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( __CLASS__, 'handle_delete_comment' ),
+					'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/comments/(?P<id>\d+)/moderate',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( __CLASS__, 'handle_create_comment' ),
+				'callback'            => array( __CLASS__, 'handle_moderate_comment' ),
 				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
-			),
-		) );
-
-		register_rest_route( self::NS, '/comments/(?P<id>\d+)', array(
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_comment' ),
-				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( __CLASS__, 'handle_delete_comment' ),
-				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
-			),
-		) );
-
-		register_rest_route( self::NS, '/comments/(?P<id>\d+)/moderate', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_moderate_comment' ),
-			'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
-		) );
+			)
+		);
 
 		// ── Audit Log ───────────────────────────────────────────────────────────
 		// Permission: authenticated (editor+) so AI agents can review their own
 		// activity via wp_get_audit_log. The richer admin-side view lives in
 		// the WP-Admin Audit Log page (which performs its own admin check).
 
-		register_rest_route( self::NS, '/audit-log', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_audit_log' ),
-			'permission_callback' => array( __CLASS__, 'permission_view_audit' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/audit-log',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_get_audit_log' ),
+				'permission_callback' => array( __CLASS__, 'permission_view_audit' ),
+			)
+		);
 
 		// ── Image Providers ──────────────────────────────────────────────────────
 
-		register_rest_route( self::NS, '/image/generate', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_generate_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/image/generate',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_generate_image' ),
+				'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/image/stock/search', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_search_stock_photos' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/image/stock/search',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_search_stock_photos' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/image/stock/import', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_import_stock_photo' ),
-			'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/image/stock/import',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_import_stock_photo' ),
+				'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/image/providers', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_list_image_providers' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/image/providers',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_list_image_providers' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/image/(?P<id>\d+)/confirm', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_confirm_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_media' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/image/(?P<id>\d+)/confirm',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_confirm_image' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_media' ),
+			)
+		);
 
 		// ── Upload Portal ──────────────────────────────────────────────────────
 
-		register_rest_route( self::NS, '/upload/session', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_create_upload_session' ),
-			'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/upload/session',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_create_upload_session' ),
+				'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/upload/session/(?P<id>[a-f0-9\-]{36})', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_upload_session' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/upload/session/(?P<id>[a-f0-9\-]{36})',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_get_upload_session' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/upload/file', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_upload_file' ),
-			'permission_callback' => '__return_true', // Public — validated by session token + nonce.
-		) );
+		register_rest_route(
+			self::NS,
+			'/upload/file',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_upload_file' ),
+				'permission_callback' => '__return_true', // Public — validated by session token + nonce.
+			)
+		);
 
-		register_rest_route( self::NS, '/upload/portal', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_upload_portal' ),
-			'permission_callback' => '__return_true', // Public — validated by session token.
-		) );
+		register_rest_route(
+			self::NS,
+			'/upload/portal',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_upload_portal' ),
+				'permission_callback' => '__return_true', // Public — validated by session token.
+			)
+		);
 
 		// ── Connection capabilities ──────────────────────────────────────────
-		register_rest_route( self::NS, '/connection/capabilities', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_connection_capabilities' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/connection/capabilities',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_connection_capabilities' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
 
 		// ── Review notification ──────────────────────────────────────────────
-		register_rest_route( self::NS, '/content/(?P<id>[\d]+)/request-review', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_request_review' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-			'args'                => array(
-				'id'   => array(
-					'required'          => true,
-					'validate_callback' => function ( $v ) { return is_numeric( $v ) && (int) $v > 0; },
-					'sanitize_callback' => 'absint',
+		register_rest_route(
+			self::NS,
+			'/content/(?P<id>[\d]+)/request-review',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_request_review' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+				'args'                => array(
+					'id'   => array(
+						'required'          => true,
+						'validate_callback' => function ( $v ) {
+							return is_numeric( $v ) && (int) $v > 0; },
+						'sanitize_callback' => 'absint',
+					),
+					'note' => array(
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_textarea_field',
+					),
 				),
-				'note' => array(
-					'required'          => false,
-					'sanitize_callback' => 'sanitize_textarea_field',
-				),
-			),
-		) );
+			)
+		);
 
 		// ── Extension download (.mcpb) ──────────────────────────────────────
-		register_rest_route( self::NS, '/extension/download', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_extension_download' ),
-			'permission_callback' => array( __CLASS__, 'permission_admin' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/extension/download',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_extension_download' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
+			)
+		);
 
 		// ── WordPress Abilities API bridge (WP 6.9+) ────────────────────────
 		// Exposes abilities registered via the official WP Abilities API
@@ -483,36 +652,56 @@ final class Axtolab_AI_Connector_REST {
 		// generic dispatcher: list -> discover, invoke -> execute. Safer
 		// than dynamic per-ability tool registration because each ability
 		// goes through WP core's own permission_callback before running.
-		register_rest_route( self::NS, '/abilities', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_list_abilities' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
-		register_rest_route( self::NS, '/abilities/(?P<name>[a-zA-Z0-9_\-/]+)/execute', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_invoke_ability' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/abilities',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_list_abilities' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/abilities/(?P<name>[a-zA-Z0-9_\-/]+)/execute',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_invoke_ability' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
 
 		// ── Theme Appearance (read-only in this package) ────────────────────
 		// Free package exposes theme reads only. Theme writes (custom CSS,
 		// theme_mods updates) are out of scope per WordPress.org guidelines
 		// against plugins that save arbitrary CSS/JS/PHP.
-		register_rest_route( self::NS, '/theme', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_active_theme' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
-		register_rest_route( self::NS, '/theme/mods', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_theme_mods' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
-		register_rest_route( self::NS, '/theme/custom-css', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_custom_css' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/theme',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_get_active_theme' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/theme/mods',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_get_theme_mods' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/theme/custom-css',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_get_custom_css' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
 
 		// ── Navigation Menus (list / CRUD / reorder) ────────────────────────
 		// Reads (list, get) require authenticated access. Writes (create,
@@ -520,38 +709,58 @@ final class Axtolab_AI_Connector_REST {
 		// capability via the dedicated permission callback so service-
 		// account users without the cap get a clear 403 before the handler
 		// runs.
-		register_rest_route( self::NS, '/menus', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_list_menus' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
-		register_rest_route( self::NS, '/menus/(?P<id_or_slug>[\w\-]+)', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_menu' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-		) );
-		register_rest_route( self::NS, '/menus/(?P<id>\d+)/items', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_create_menu_item' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
-		) );
-		register_rest_route( self::NS, '/menu-items/(?P<item_id>\d+)', array(
+		register_rest_route(
+			self::NS,
+			'/menus',
 			array(
-				'methods'             => WP_REST_Server::EDITABLE,
-				'callback'            => array( __CLASS__, 'handle_update_menu_item' ),
-				'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
-			),
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_list_menus' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/menus/(?P<id_or_slug>[\w\-]+)',
 			array(
-				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( __CLASS__, 'handle_delete_menu_item' ),
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_get_menu' ),
+				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/menus/(?P<id>\d+)/items',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_create_menu_item' ),
 				'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
-			),
-		) );
-		register_rest_route( self::NS, '/menus/(?P<id>\d+)/reorder', array(
-			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => array( __CLASS__, 'handle_reorder_menu_items' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
-		) );
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/menu-items/(?P<item_id>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( __CLASS__, 'handle_update_menu_item' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( __CLASS__, 'handle_delete_menu_item' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
+				),
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/menus/(?P<id>\d+)/reorder',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_reorder_menu_items' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
+			)
+		);
 
 		// ── Generic SEO meta (auto-detects Yoast / Rank Math / AIOSEO) ──────
 		// Provider-neutral SEO read/write. The active SEO plugin is detected
@@ -561,65 +770,85 @@ final class Axtolab_AI_Connector_REST {
 		// keys for whichever plugin is installed. Falls back to the legacy
 		// Yoast-specific tools if you need direct access to provider-
 		// specific behavior.
-		register_rest_route( self::NS, '/seo/(?P<id>\d+)', array(
+		register_rest_route(
+			self::NS,
+			'/seo/(?P<id>\d+)',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_seo_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( __CLASS__, 'handle_update_seo_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
-			),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_get_seo_meta' ),
+					'permission_callback' => array( __CLASS__, 'permission_read_post' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_update_seo_meta' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
+				),
+			)
+		);
 
 		// ── Options API (allowlisted read/write of WordPress options) ───────
 		// Three-gate write security identical to permalink_structure:
-		//   1. Admin toggle: axtolab_ai_connector_settings['options_writes_enabled']
-		//   2. WordPress capability: manage_options (via permission_admin)
-		//   3. Runtime allowlist: axtolab_ai_connector_writable_options filter +
-		//      hard denylist for sensitive keys (siteurl/home/license_*/etc).
+		// 1. Admin toggle: axtolab_ai_connector_settings['options_writes_enabled']
+		// 2. WordPress capability: manage_options (via permission_admin)
+		// 3. Runtime allowlist: axtolab_ai_connector_writable_options filter +
+		// hard denylist for sensitive keys (siteurl/home/license_*/etc).
 		// Reads use authenticated permission with automatic sensitive-key
 		// redaction (api_key/secret/password/token/license/salt patterns
 		// replaced with [REDACTED] before leaving the server).
-		register_rest_route( self::NS, '/options/(?P<key>[a-zA-Z0-9_\-]+)', array(
+		register_rest_route(
+			self::NS,
+			'/options/(?P<key>[a-zA-Z0-9_\-]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_get_option' ),
+					'permission_callback' => array( __CLASS__, 'permission_admin' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_update_option' ),
+					'permission_callback' => array( __CLASS__, 'permission_admin' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/plugin-settings/(?P<slug>[a-zA-Z0-9_\-]+)',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_option' ),
+				'callback'            => array( __CLASS__, 'handle_get_plugin_settings' ),
 				'permission_callback' => array( __CLASS__, 'permission_admin' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( __CLASS__, 'handle_update_option' ),
-				'permission_callback' => array( __CLASS__, 'permission_admin' ),
-			),
-		) );
-
-		register_rest_route( self::NS, '/plugin-settings/(?P<slug>[a-zA-Z0-9_\-]+)', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_get_plugin_settings' ),
-			'permission_callback' => array( __CLASS__, 'permission_admin' ),
-		) );
+			)
+		);
 
 		// ── Term Meta (taxonomy term meta — Yoast/Rank Math/AIOSEO term SEO) ─
-		register_rest_route( self::NS, '/terms/(?P<term_id>\d+)/meta', array(
+		register_rest_route(
+			self::NS,
+			'/terms/(?P<term_id>\d+)/meta',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_term_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
-			),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_get_term_meta' ),
+					'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_update_term_meta' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
+				),
+			)
+		);
+		register_rest_route(
+			self::NS,
+			'/terms/(?P<term_id>\d+)/meta/(?P<meta_key>[a-zA-Z0-9_\-]+)',
 			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( __CLASS__, 'handle_update_term_meta' ),
+				'methods'             => WP_REST_Server::DELETABLE,
+				'callback'            => array( __CLASS__, 'handle_delete_term_meta' ),
 				'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
-			),
-		) );
-		register_rest_route( self::NS, '/terms/(?P<term_id>\d+)/meta/(?P<meta_key>[a-zA-Z0-9_\-]+)', array(
-			'methods'             => WP_REST_Server::DELETABLE,
-			'callback'            => array( __CLASS__, 'handle_delete_term_meta' ),
-			'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
-		) );
+			)
+		);
 
 		// ── Plugins & Themes inventory ──────────────────────────────────────
 		// Read-only metadata (name, version, status, author, description) for
@@ -627,17 +856,25 @@ final class Axtolab_AI_Connector_REST {
 		// security-software footprint, so we gate behind `manage_options`
 		// rather than the broad authenticated check — matches WP core's
 		// own `/wp/v2/plugins` permission model.
-		register_rest_route( self::NS, '/plugins', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_list_plugins' ),
-			'permission_callback' => array( __CLASS__, 'permission_admin' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/plugins',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_list_plugins' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
+			)
+		);
 
-		register_rest_route( self::NS, '/themes', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( __CLASS__, 'handle_list_themes' ),
-			'permission_callback' => array( __CLASS__, 'permission_admin' ),
-		) );
+		register_rest_route(
+			self::NS,
+			'/themes',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'handle_list_themes' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
+			)
+		);
 
 		// ── Permalink structure ─────────────────────────────────────────────
 		// GET and write both require `manage_options`. The permalink
@@ -645,24 +882,28 @@ final class Axtolab_AI_Connector_REST {
 		// `/options/{key}` endpoint above. Writes additionally require an
 		// explicit admin toggle in axtolab_ai_connector_settings
 		// (`permalink_writes_enabled`, off by default).
-		register_rest_route( self::NS, '/permalink-structure', array(
+		register_rest_route(
+			self::NS,
+			'/permalink-structure',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'handle_get_permalink_structure' ),
-				'permission_callback' => array( __CLASS__, 'permission_admin' ),
-			),
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( __CLASS__, 'handle_update_permalink_structure' ),
-				'permission_callback' => array( __CLASS__, 'permission_admin' ),
-				'args'                => array(
-					'structure' => array(
-						'required'          => true,
-						'sanitize_callback' => 'sanitize_text_field',
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'handle_get_permalink_structure' ),
+					'permission_callback' => array( __CLASS__, 'permission_admin' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'handle_update_permalink_structure' ),
+					'permission_callback' => array( __CLASS__, 'permission_admin' ),
+					'args'                => array(
+						'structure' => array(
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 					),
 				),
-			),
-		) );
+			)
+		);
 	}
 
 	public static function permission_authenticated() {
@@ -1327,16 +1568,16 @@ final class Axtolab_AI_Connector_REST {
 		$config = Axtolab_AI_Connector_Config::get();
 
 		// Gather active theme context
-		$theme = wp_get_theme();
+		$theme      = wp_get_theme();
 		$theme_name = $theme->get( 'Name' );
 		$theme_slug = get_stylesheet();
 
 		// Resolve parent theme (relevant when a child theme is active)
-		$parent_theme = null;
+		$parent_theme      = null;
 		$parent_theme_name = '';
 		$parent_theme_slug = '';
 		if ( $theme->parent() ) {
-			$parent_theme = $theme->parent();
+			$parent_theme      = $theme->parent();
 			$parent_theme_name = $parent_theme->get( 'Name' );
 			$parent_theme_slug = $parent_theme->get_stylesheet();
 		}
@@ -1400,10 +1641,10 @@ final class Axtolab_AI_Connector_REST {
 		update_option( 'axtolab_ai_connector_last_health_check', time(), false );
 		return Axtolab_AI_Connector_Response::success(
 			array(
-				'status'   => 'connected',
-				'site_url' => home_url( '/' ),
-				'rest_url' => rest_url( self::NS ),
-				'user'     => array(
+				'status'         => 'connected',
+				'site_url'       => home_url( '/' ),
+				'rest_url'       => rest_url( self::NS ),
+				'user'           => array(
 					'id'    => $user->ID,
 					'login' => $user->user_login,
 					'name'  => $user->display_name,
@@ -1438,24 +1679,24 @@ final class Axtolab_AI_Connector_REST {
 			$capabilities = isset( $settings['oauth_capabilities'] )
 				? (array) $settings['oauth_capabilities']
 				: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
-			$note = 'OAuth connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
+			$note         = 'OAuth connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
 		} elseif ( 'bearer' === $auth_method ) {
 			$capabilities = isset( $settings['bearer_capabilities'] )
 				? (array) $settings['bearer_capabilities']
 				: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
-			$note = 'Bearer-token connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
+			$note         = 'Bearer-token connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
 		} else {
 			// Application Password / direct REST: no per-connection filter.
 			$capabilities = Axtolab_AI_Connector_Capabilities::PRESETS['full_access'];
-			$note = 'Application Password auth has no per-connection capability filter; all tools are reachable subject to add-on gates and WordPress role/capability checks.';
+			$note         = 'Application Password auth has no per-connection capability filter; all tools are reachable subject to add-on gates and WordPress role/capability checks.';
 		}
 
 		if ( ! in_array( 'read', $capabilities, true ) ) {
 			$capabilities[] = 'read';
 		}
 
-		$preset      = Axtolab_AI_Connector_Capabilities::detect_preset( $capabilities );
-		$labels      = Axtolab_AI_Connector_Capabilities::preset_labels();
+		$preset       = Axtolab_AI_Connector_Capabilities::detect_preset( $capabilities );
+		$labels       = Axtolab_AI_Connector_Capabilities::preset_labels();
 		$preset_label = isset( $labels[ $preset ] ) ? $labels[ $preset ] : 'Custom';
 
 		return Axtolab_AI_Connector_Response::success(
@@ -1599,7 +1840,8 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_rollback_change( WP_REST_Request $request ) {
 		$denied = self::require_tool_capability( 'wp_rollback_change' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$change_id = (int) $request->get_param( 'id' );
 		$change    = Axtolab_AI_Connector_Changelog::get( $change_id );
@@ -1624,10 +1866,10 @@ final class Axtolab_AI_Connector_REST {
 				'rollback_change',
 				'change:' . $change_id,
 				array(
-					'change_id'   => $change_id,
-					'tool_name'   => $change['tool_name'],
-					'action'      => $change['action'],
-					'target'      => $change['target_type'] . '#' . $change['target_id'],
+					'change_id' => $change_id,
+					'tool_name' => $change['tool_name'],
+					'action'    => $change['action'],
+					'target'    => $change['target_type'] . '#' . $change['target_id'],
 				)
 			);
 
@@ -1684,19 +1926,22 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_rollback_session( WP_REST_Request $request ) {
 		$denied = self::require_tool_capability( 'wp_rollback_change' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$session_id = (string) $request->get_param( 'session_id' );
 		if ( '' === $session_id ) {
 			return Axtolab_AI_Connector_Response::error( 'missing_session_id', 'session_id is required.', 400 );
 		}
 
-		$result = Axtolab_AI_Connector_Changelog::query( array(
-			'session_id' => $session_id,
-			'status'     => 'pending',
-			'per_page'   => 200,
-		) );
-		$items = isset( $result['items'] ) ? $result['items'] : array();
+		$result = Axtolab_AI_Connector_Changelog::query(
+			array(
+				'session_id' => $session_id,
+				'status'     => 'pending',
+				'per_page'   => 200,
+			)
+		);
+		$items  = isset( $result['items'] ) ? $result['items'] : array();
 
 		if ( empty( $items ) ) {
 			return Axtolab_AI_Connector_Response::success(
@@ -1712,13 +1957,13 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		// LIFO: items already returned ORDER BY id DESC.
-		$token = (string) ( $request->get_param( 'confirmation_token' ) ?: '' );
+		$token            = (string) ( $request->get_param( 'confirmation_token' ) ?: '' );
 		$allow_concurrent = (bool) $request->get_param( 'allow_concurrent_edit_override' );
 
 		if ( '' === $token ) {
 			$descriptions = array();
 			foreach ( $items as $it ) {
-				$full = Axtolab_AI_Connector_Changelog::get( (int) $it['id'] );
+				$full           = Axtolab_AI_Connector_Changelog::get( (int) $it['id'] );
 				$descriptions[] = array(
 					'id'          => (int) $it['id'],
 					'description' => $full ? self::describe_rollback( $full ) : 'Change #' . (int) $it['id'],
@@ -1727,7 +1972,10 @@ final class Axtolab_AI_Connector_REST {
 			$issued = Axtolab_AI_Connector_Confirmation::issue(
 				'rollback_session',
 				'session:' . $session_id,
-				array( 'session_id' => $session_id, 'count' => count( $items ) )
+				array(
+					'session_id' => $session_id,
+					'count'      => count( $items ),
+				)
 			);
 			return Axtolab_AI_Connector_Response::success(
 				array(
@@ -1765,14 +2013,22 @@ final class Axtolab_AI_Connector_REST {
 		foreach ( $items as $it ) {
 			$full = Axtolab_AI_Connector_Changelog::get( (int) $it['id'] );
 			if ( ! $full ) {
-				$results[] = array( 'id' => (int) $it['id'], 'success' => false, 'error' => 'changelog_not_found' );
-				$failed++;
+				$results[] = array(
+					'id'      => (int) $it['id'],
+					'success' => false,
+					'error'   => 'changelog_not_found',
+				);
+				++$failed;
 				continue;
 			}
 			// If a previous rollback in this loop already affected
 			// this row (shouldn't happen, but defensive), skip.
 			if ( ! empty( $full['rolled_back_at'] ) ) {
-				$results[] = array( 'id' => (int) $it['id'], 'success' => false, 'error' => 'already_rolled_back' );
+				$results[] = array(
+					'id'      => (int) $it['id'],
+					'success' => false,
+					'error'   => 'already_rolled_back',
+				);
 				continue;
 			}
 			$dispatch = self::dispatch_rollback_target( $full, $chain_override );
@@ -1780,11 +2036,11 @@ final class Axtolab_AI_Connector_REST {
 				$body = $dispatch->get_data();
 				if ( ! empty( $body['success'] ) ) {
 					$results[] = array(
-						'id'        => (int) $it['id'],
-						'success'   => true,
-						'message'   => isset( $body['data']['message'] ) ? $body['data']['message'] : '',
+						'id'      => (int) $it['id'],
+						'success' => true,
+						'message' => isset( $body['data']['message'] ) ? $body['data']['message'] : '',
 					);
-					$succeeded++;
+					++$succeeded;
 				} else {
 					$results[] = array(
 						'id'        => (int) $it['id'],
@@ -1792,11 +2048,15 @@ final class Axtolab_AI_Connector_REST {
 						'error'     => isset( $body['error']['code'] ) ? $body['error']['code'] : 'unknown',
 						'error_msg' => isset( $body['error']['message'] ) ? $body['error']['message'] : '',
 					);
-					$failed++;
+					++$failed;
 				}
 			} else {
-				$results[] = array( 'id' => (int) $it['id'], 'success' => false, 'error' => 'no_response' );
-				$failed++;
+				$results[] = array(
+					'id'      => (int) $it['id'],
+					'success' => false,
+					'error'   => 'no_response',
+				);
+				++$failed;
 			}
 		}
 
@@ -1825,12 +2085,18 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	private static function dispatch_rollback_target( array $change, $allow_concurrent ) {
 		switch ( $change['target_type'] ) {
-			case 'post':       return self::execute_post_rollback( $change, $allow_concurrent );
-			case 'option':     return self::execute_option_rollback( $change );
-			case 'post_meta':  return self::execute_post_meta_rollback( $change );
-			case 'term_meta':  return self::execute_term_meta_rollback( $change );
-			case 'menu':       return self::execute_menu_rollback( $change );
-			case 'term':       return self::execute_term_rollback( $change );
+			case 'post':
+				return self::execute_post_rollback( $change, $allow_concurrent );
+			case 'option':
+				return self::execute_option_rollback( $change );
+			case 'post_meta':
+				return self::execute_post_meta_rollback( $change );
+			case 'term_meta':
+				return self::execute_term_meta_rollback( $change );
+			case 'menu':
+				return self::execute_menu_rollback( $change );
+			case 'term':
+				return self::execute_term_rollback( $change );
 			default:
 				return Axtolab_AI_Connector_Response::error(
 					'rollback_not_supported',
@@ -1849,7 +2115,8 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_redo_change( WP_REST_Request $request ) {
 		$denied = self::require_tool_capability( 'wp_redo_change' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$change_id = (int) $request->get_param( 'id' );
 		$change    = Axtolab_AI_Connector_Changelog::get( $change_id );
@@ -1927,17 +2194,19 @@ final class Axtolab_AI_Connector_REST {
 		// Record this redo in its own changelog entry, linked back
 		// to the original via redo_of_change_id, and clear the
 		// original's rolled_back_at marker.
-		$rid = Axtolab_AI_Connector_Changelog::record( array(
-			'target_type'       => $change['target_type'],
-			'target_id'         => $change['target_id'],
-			'action'            => $change['action'],
-			'tool_name'         => 'wp_redo_change',
-			'before'            => $change['before'],
-			'after'             => $change['after'],
-			'session_id'        => self::current_mcp_session_id(),
-			'redo_of_change_id' => (int) $change['id'],
-			'note'              => 'Redo of change #' . $change['id'],
-		) );
+		$rid = Axtolab_AI_Connector_Changelog::record(
+			array(
+				'target_type'       => $change['target_type'],
+				'target_id'         => $change['target_id'],
+				'action'            => $change['action'],
+				'tool_name'         => 'wp_redo_change',
+				'before'            => $change['before'],
+				'after'             => $change['after'],
+				'session_id'        => self::current_mcp_session_id(),
+				'redo_of_change_id' => (int) $change['id'],
+				'note'              => 'Redo of change #' . $change['id'],
+			)
+		);
 
 		Axtolab_AI_Connector_Changelog::clear_rolled_back( (int) $change['id'] );
 
@@ -2007,16 +2276,18 @@ final class Axtolab_AI_Connector_REST {
 		Axtolab_AI_Connector_Snapshots::restore_option( $before );
 		$post = Axtolab_AI_Connector_Snapshots::capture_option( (string) $change['target_id'] );
 
-		$rid = Axtolab_AI_Connector_Changelog::record( array(
-			'target_type' => 'option',
-			'target_id'   => (string) $change['target_id'],
-			'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
-			'tool_name'   => 'wp_rollback_change',
-			'before'      => $pre,
-			'after'       => $post,
-			'session_id'  => self::current_mcp_session_id(),
-			'note'        => 'Rollback of change #' . $change['id'],
-		) );
+		$rid = Axtolab_AI_Connector_Changelog::record(
+			array(
+				'target_type' => 'option',
+				'target_id'   => (string) $change['target_id'],
+				'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
+				'tool_name'   => 'wp_rollback_change',
+				'before'      => $pre,
+				'after'       => $post,
+				'session_id'  => self::current_mcp_session_id(),
+				'note'        => 'Rollback of change #' . $change['id'],
+			)
+		);
 		Axtolab_AI_Connector_Changelog::mark_rolled_back( (int) $change['id'], $rid ? (int) $rid : 0 );
 
 		return Axtolab_AI_Connector_Response::success(
@@ -2044,16 +2315,18 @@ final class Axtolab_AI_Connector_REST {
 		Axtolab_AI_Connector_Snapshots::restore_post_meta( $before );
 		$post = Axtolab_AI_Connector_Snapshots::capture_post_meta( (int) $before['post_id'], (string) $before['key'] );
 
-		$rid = Axtolab_AI_Connector_Changelog::record( array(
-			'target_type' => 'post_meta',
-			'target_id'   => (string) $change['target_id'],
-			'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
-			'tool_name'   => 'wp_rollback_change',
-			'before'      => $pre,
-			'after'       => $post,
-			'session_id'  => self::current_mcp_session_id(),
-			'note'        => 'Rollback of change #' . $change['id'],
-		) );
+		$rid = Axtolab_AI_Connector_Changelog::record(
+			array(
+				'target_type' => 'post_meta',
+				'target_id'   => (string) $change['target_id'],
+				'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
+				'tool_name'   => 'wp_rollback_change',
+				'before'      => $pre,
+				'after'       => $post,
+				'session_id'  => self::current_mcp_session_id(),
+				'note'        => 'Rollback of change #' . $change['id'],
+			)
+		);
 		Axtolab_AI_Connector_Changelog::mark_rolled_back( (int) $change['id'], $rid ? (int) $rid : 0 );
 
 		return Axtolab_AI_Connector_Response::success(
@@ -2078,16 +2351,18 @@ final class Axtolab_AI_Connector_REST {
 		Axtolab_AI_Connector_Snapshots::restore_term_meta( $before );
 		$post = Axtolab_AI_Connector_Snapshots::capture_term_meta( (int) $before['term_id'], (string) $before['key'] );
 
-		$rid = Axtolab_AI_Connector_Changelog::record( array(
-			'target_type' => 'term_meta',
-			'target_id'   => (string) $change['target_id'],
-			'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
-			'tool_name'   => 'wp_rollback_change',
-			'before'      => $pre,
-			'after'       => $post,
-			'session_id'  => self::current_mcp_session_id(),
-			'note'        => 'Rollback of change #' . $change['id'],
-		) );
+		$rid = Axtolab_AI_Connector_Changelog::record(
+			array(
+				'target_type' => 'term_meta',
+				'target_id'   => (string) $change['target_id'],
+				'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
+				'tool_name'   => 'wp_rollback_change',
+				'before'      => $pre,
+				'after'       => $post,
+				'session_id'  => self::current_mcp_session_id(),
+				'note'        => 'Rollback of change #' . $change['id'],
+			)
+		);
 		Axtolab_AI_Connector_Changelog::mark_rolled_back( (int) $change['id'], $rid ? (int) $rid : 0 );
 
 		return Axtolab_AI_Connector_Response::success(
@@ -2104,13 +2379,13 @@ final class Axtolab_AI_Connector_REST {
 	}
 
 	private static function execute_term_rollback( array $change ) {
-		$action  = $change['action'];
+		$action   = $change['action'];
 		$taxonomy = '';
 		$tid      = 0;
 		// target_id format: "{taxonomy}:{term_id}".
 		if ( false !== strpos( (string) $change['target_id'], ':' ) ) {
 			list( $taxonomy, $tid_str ) = explode( ':', (string) $change['target_id'], 2 );
-			$tid = (int) $tid_str;
+			$tid                        = (int) $tid_str;
 		}
 
 		if ( 'create' === $action ) {
@@ -2118,29 +2393,35 @@ final class Axtolab_AI_Connector_REST {
 			if ( ! $taxonomy || ! $tid ) {
 				return Axtolab_AI_Connector_Response::error( 'snapshot_invalid', 'Could not parse target_id.', 400 );
 			}
-			$pre  = Axtolab_AI_Connector_Snapshots::capture_term( $tid, $taxonomy );
-			$res  = wp_delete_term( $tid, $taxonomy );
+			$pre = Axtolab_AI_Connector_Snapshots::capture_term( $tid, $taxonomy );
+			$res = wp_delete_term( $tid, $taxonomy );
 			if ( is_wp_error( $res ) ) {
 				return self::from_wp_error( $res );
 			}
-			$rid = Axtolab_AI_Connector_Changelog::record( array(
-				'target_type' => 'term',
-				'target_id'   => $taxonomy . ':' . $tid,
-				'action'      => Axtolab_AI_Connector_Changelog::ACTION_DELETE,
-				'tool_name'   => 'wp_rollback_change',
-				'before'      => $pre,
-				'after'       => null,
-				'session_id'  => self::current_mcp_session_id(),
-				'note'        => 'Rollback of change #' . $change['id'],
-			) );
+			$rid = Axtolab_AI_Connector_Changelog::record(
+				array(
+					'target_type' => 'term',
+					'target_id'   => $taxonomy . ':' . $tid,
+					'action'      => Axtolab_AI_Connector_Changelog::ACTION_DELETE,
+					'tool_name'   => 'wp_rollback_change',
+					'before'      => $pre,
+					'after'       => null,
+					'session_id'  => self::current_mcp_session_id(),
+					'note'        => 'Rollback of change #' . $change['id'],
+				)
+			);
 			Axtolab_AI_Connector_Changelog::mark_rolled_back( (int) $change['id'], $rid ? (int) $rid : 0 );
-			return Axtolab_AI_Connector_Response::success( array(
-				'rolled_back_change_id' => (int) $change['id'],
-				'rollback_change_id'    => $rid ? (int) $rid : null,
-				'target_type'           => 'term',
-				'target_id'             => $taxonomy . ':' . $tid,
-				'message'               => 'Term ' . $taxonomy . '#' . $tid . ' deleted.',
-			), 200, self::audit_id() );
+			return Axtolab_AI_Connector_Response::success(
+				array(
+					'rolled_back_change_id' => (int) $change['id'],
+					'rollback_change_id'    => $rid ? (int) $rid : null,
+					'target_type'           => 'term',
+					'target_id'             => $taxonomy . ':' . $tid,
+					'message'               => 'Term ' . $taxonomy . '#' . $tid . ' deleted.',
+				),
+				200,
+				self::audit_id()
+			);
 		}
 
 		// update or delete -> restore the before snapshot.
@@ -2154,25 +2435,31 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $result );
 		}
 		$post = Axtolab_AI_Connector_Snapshots::capture_term( (int) $result, $before['taxonomy'] );
-		$rid  = Axtolab_AI_Connector_Changelog::record( array(
-			'target_type' => 'term',
-			'target_id'   => $before['taxonomy'] . ':' . (int) $result,
-			'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
-			'tool_name'   => 'wp_rollback_change',
-			'before'      => $pre,
-			'after'       => $post,
-			'session_id'  => self::current_mcp_session_id(),
-			'note'        => 'Rollback of change #' . $change['id'],
-		) );
+		$rid  = Axtolab_AI_Connector_Changelog::record(
+			array(
+				'target_type' => 'term',
+				'target_id'   => $before['taxonomy'] . ':' . (int) $result,
+				'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
+				'tool_name'   => 'wp_rollback_change',
+				'before'      => $pre,
+				'after'       => $post,
+				'session_id'  => self::current_mcp_session_id(),
+				'note'        => 'Rollback of change #' . $change['id'],
+			)
+		);
 		Axtolab_AI_Connector_Changelog::mark_rolled_back( (int) $change['id'], $rid ? (int) $rid : 0 );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'rolled_back_change_id' => (int) $change['id'],
-			'rollback_change_id'    => $rid ? (int) $rid : null,
-			'target_type'           => 'term',
-			'target_id'             => $before['taxonomy'] . ':' . (int) $result,
-			'message'               => 'Term restored.',
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'rolled_back_change_id' => (int) $change['id'],
+				'rollback_change_id'    => $rid ? (int) $rid : null,
+				'target_type'           => 'term',
+				'target_id'             => $before['taxonomy'] . ':' . (int) $result,
+				'message'               => 'Term restored.',
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	private static function execute_menu_rollback( array $change ) {
@@ -2180,23 +2467,25 @@ final class Axtolab_AI_Connector_REST {
 		if ( ! $before || empty( $before['menu_id'] ) ) {
 			return Axtolab_AI_Connector_Response::error( 'no_before_snapshot', 'Change has no usable before snapshot.', 400 );
 		}
-		$pre = Axtolab_AI_Connector_Snapshots::capture_menu( (int) $before['menu_id'] );
+		$pre    = Axtolab_AI_Connector_Snapshots::capture_menu( (int) $before['menu_id'] );
 		$result = Axtolab_AI_Connector_Snapshots::restore_menu( $before );
 		if ( is_wp_error( $result ) ) {
 			return self::from_wp_error( $result );
 		}
 		$post = Axtolab_AI_Connector_Snapshots::capture_menu( (int) $before['menu_id'] );
 
-		$rid = Axtolab_AI_Connector_Changelog::record( array(
-			'target_type' => 'menu',
-			'target_id'   => (string) $before['menu_id'],
-			'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
-			'tool_name'   => 'wp_rollback_change',
-			'before'      => $pre,
-			'after'       => $post,
-			'session_id'  => self::current_mcp_session_id(),
-			'note'        => 'Rollback of change #' . $change['id'],
-		) );
+		$rid = Axtolab_AI_Connector_Changelog::record(
+			array(
+				'target_type' => 'menu',
+				'target_id'   => (string) $before['menu_id'],
+				'action'      => Axtolab_AI_Connector_Changelog::ACTION_UPDATE,
+				'tool_name'   => 'wp_rollback_change',
+				'before'      => $pre,
+				'after'       => $post,
+				'session_id'  => self::current_mcp_session_id(),
+				'note'        => 'Rollback of change #' . $change['id'],
+			)
+		);
 		Axtolab_AI_Connector_Changelog::mark_rolled_back( (int) $change['id'], $rid ? (int) $rid : 0 );
 
 		return Axtolab_AI_Connector_Response::success(
@@ -2276,16 +2565,18 @@ final class Axtolab_AI_Connector_REST {
 
 		// Record the rollback as its own changelog entry, linked to
 		// the original via rollback_change_id on the original row.
-		$rollback_id = Axtolab_AI_Connector_Changelog::record( array(
-			'target_type' => 'post',
-			'target_id'   => (string) $post_id,
-			'action'      => $rollback_action,
-			'tool_name'   => 'wp_rollback_change',
-			'before'      => $pre_rollback,
-			'after'       => $post_rollback,
-			'session_id'  => self::current_mcp_session_id(),
-			'note'        => 'Rollback of change #' . $change['id'],
-		) );
+		$rollback_id = Axtolab_AI_Connector_Changelog::record(
+			array(
+				'target_type' => 'post',
+				'target_id'   => (string) $post_id,
+				'action'      => $rollback_action,
+				'tool_name'   => 'wp_rollback_change',
+				'before'      => $pre_rollback,
+				'after'       => $post_rollback,
+				'session_id'  => self::current_mcp_session_id(),
+				'note'        => 'Rollback of change #' . $change['id'],
+			)
+		);
 
 		if ( $rollback_id ) {
 			Axtolab_AI_Connector_Changelog::mark_rolled_back( (int) $change['id'], (int) $rollback_id );
@@ -2355,8 +2646,8 @@ final class Axtolab_AI_Connector_REST {
 	}
 
 	public static function handle_find_content( WP_REST_Request $request ): WP_REST_Response {
-		$config = Axtolab_AI_Connector_Config::get();
-		$content_type = $request->get_param( 'content_type' );
+		$config        = Axtolab_AI_Connector_Config::get();
+		$content_type  = $request->get_param( 'content_type' );
 		$allowed_types = array_map( 'strval', (array) $config['allowed_content_types'] );
 
 		if ( is_string( $content_type ) && '' !== $content_type ) {
@@ -2378,9 +2669,9 @@ final class Axtolab_AI_Connector_REST {
 			'posts_per_page' => max( 1, min( 100, intval( $request->get_param( 'per_page' ) ?: 20 ) ) ),
 		);
 
-		$parent_taxonomy = (string) $request->get_param( 'parent_taxonomy' );
+		$parent_taxonomy  = (string) $request->get_param( 'parent_taxonomy' );
 		$parent_term_slug = (string) $request->get_param( 'parent_term_slug' );
-		$solutions_only = rest_sanitize_boolean( $request->get_param( 'solutions_only' ) );
+		$solutions_only   = rest_sanitize_boolean( $request->get_param( 'solutions_only' ) );
 		if ( '' === $parent_taxonomy ) {
 			$parent_taxonomy = 'featured_item_category';
 		}
@@ -2441,10 +2732,11 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_create_content( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_create_draft' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$content_type = (string) $request->get_param( 'content_type' );
-		$allowed = Axtolab_AI_Connector_Policy::assert_allowed_content_type( $content_type );
+		$allowed      = Axtolab_AI_Connector_Policy::assert_allowed_content_type( $content_type );
 		if ( is_wp_error( $allowed ) ) {
 			return self::from_wp_error( $allowed );
 		}
@@ -2463,7 +2755,8 @@ final class Axtolab_AI_Connector_REST {
 
 		// Server-side author restriction.
 		$author_denied = self::require_allowed_author( $author );
-		if ( $author_denied ) { return $author_denied; }
+		if ( $author_denied ) {
+			return $author_denied; }
 
 		$author_check = Axtolab_AI_Connector_Policy::assert_allowed_author( $author );
 		if ( is_wp_error( $author_check ) ) {
@@ -2511,7 +2804,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_clone_content( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_clone_content' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -2519,7 +2813,7 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$content_type = $post->post_type;
-		$allowed = Axtolab_AI_Connector_Policy::assert_allowed_content_type( $content_type );
+		$allowed      = Axtolab_AI_Connector_Policy::assert_allowed_content_type( $content_type );
 		if ( is_wp_error( $allowed ) ) {
 			return self::from_wp_error( $allowed );
 		}
@@ -2576,7 +2870,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_update_content( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_update_content' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -2669,7 +2964,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_publish_content( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_publish_content' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -2689,10 +2985,10 @@ final class Axtolab_AI_Connector_REST {
 		$before_snapshot = Axtolab_AI_Connector_Snapshots::capture_post( $post->ID );
 
 		$postarr = array( 'ID' => $post->ID );
-		$date = (string) $request->get_param( 'date' );
+		$date    = (string) $request->get_param( 'date' );
 		if ( '' !== $date ) {
 			$postarr['post_date_gmt'] = $date;
-			$postarr['post_status'] = 'future';
+			$postarr['post_status']   = 'future';
 		} else {
 			$postarr['post_status'] = 'publish';
 		}
@@ -2703,7 +2999,7 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $result );
 		}
 
-		$updated = get_post( $post->ID );
+		$updated           = get_post( $post->ID );
 		$publish_completed = Axtolab_AI_Connector_Free_Gates::confirm_publish_completed( $publish_reservation, $updated, array( 'future', 'publish' ) );
 		if ( is_wp_error( $publish_completed ) ) {
 			return self::from_wp_error( $publish_completed );
@@ -2716,7 +3012,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_trash_content( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_trash_content' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -2744,7 +3041,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_restore_content( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_restore_content' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request, true );
 		if ( is_wp_error( $post ) ) {
@@ -2782,7 +3080,7 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$revisions = wp_get_post_revisions( $post->ID );
-		$data = array();
+		$data      = array();
 		foreach ( $revisions as $revision ) {
 			$data[] = array(
 				'id'       => intval( $revision->ID ),
@@ -2799,7 +3097,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_restore_revision( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_restore_revision' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -2814,7 +3113,7 @@ final class Axtolab_AI_Connector_REST {
 		$before_snapshot = Axtolab_AI_Connector_Snapshots::capture_post( $post->ID );
 
 		$revision_id = intval( $request->get_param( 'revision_id' ) );
-		$result = wp_restore_post_revision( $revision_id );
+		$result      = wp_restore_post_revision( $revision_id );
 		if ( ! $result ) {
 			return Axtolab_AI_Connector_Response::error( 'restore_revision_failed', 'Could not restore revision.', 500 );
 		}
@@ -2836,14 +3135,14 @@ final class Axtolab_AI_Connector_REST {
 	 * @return WP_REST_Response
 	 */
 	public static function handle_list_users( WP_REST_Request $request ) {
-		$args = array(
+		$args   = array(
 			'fields' => 'all_with_meta',
 			'number' => min( 100, max( 1, (int) ( $request->get_param( 'per_page' ) ?: 20 ) ) ),
 			'offset' => max( 0, (int) $request->get_param( 'offset' ) ),
 		);
 		$search = (string) $request->get_param( 'search' );
 		if ( '' !== $search ) {
-			$args['search'] = '*' . $search . '*';
+			$args['search']         = '*' . $search . '*';
 			$args['search_columns'] = array( 'user_login', 'user_email', 'display_name', 'user_nicename' );
 		}
 		$role = (string) $request->get_param( 'role' );
@@ -2862,15 +3161,19 @@ final class Axtolab_AI_Connector_REST {
 		unset( $total_args['number'], $total_args['offset'], $total_args['fields'] );
 		$total_args['count_total'] = true;
 		$total_args['fields']      = 'ID';
-		$total = (int) count( get_users( $total_args ) );
+		$total                     = (int) count( get_users( $total_args ) );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'count'    => count( $data ),
-			'total'    => $total,
-			'per_page' => $args['number'],
-			'offset'   => $args['offset'],
-			'users'    => $data,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'count'    => count( $data ),
+				'total'    => $total,
+				'per_page' => $args['number'],
+				'offset'   => $args['offset'],
+				'users'    => $data,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -2897,24 +3200,24 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	private static function format_user_row( $u ) {
 		$row = array(
-			'id'              => (int) $u->ID,
-			'username'        => $u->user_login,
-			'display_name'    => $u->display_name,
-			'email'           => $u->user_email,
-			'roles'           => array_values( (array) $u->roles ),
-			'registered'      => $u->user_registered,
-			'url'             => $u->user_url,
-			'description'     => get_user_meta( $u->ID, 'description', true ),
+			'id'           => (int) $u->ID,
+			'username'     => $u->user_login,
+			'display_name' => $u->display_name,
+			'email'        => $u->user_email,
+			'roles'        => array_values( (array) $u->roles ),
+			'registered'   => $u->user_registered,
+			'url'          => $u->user_url,
+			'description'  => get_user_meta( $u->ID, 'description', true ),
 		);
 		return apply_filters( 'axtolab_ai_connector_user_row', $row, $u );
 	}
 
 	public static function handle_list_authors( WP_REST_Request $request ): WP_REST_Response {
-		$config = Axtolab_AI_Connector_Config::get();
+		$config             = Axtolab_AI_Connector_Config::get();
 		$allowed_author_ids = array_map( 'intval', (array) $config['allowed_author_ids'] );
 
 		$args = array(
-			'who' => 'authors',
+			'who'    => 'authors',
 			'fields' => array( 'ID', 'display_name', 'user_nicename', 'user_email' ),
 		);
 		if ( ! empty( $allowed_author_ids ) ) {
@@ -2922,8 +3225,8 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$users = get_users( $args );
-		$data = array_map(
-			static function( $user ) {
+		$data  = array_map(
+			static function ( $user ) {
 				return array(
 					'id'    => intval( $user->ID ),
 					'name'  => $user->display_name,
@@ -2939,7 +3242,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_assign_author( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_assign_author' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -2950,7 +3254,8 @@ final class Axtolab_AI_Connector_REST {
 
 		// Server-side author restriction.
 		$author_denied = self::require_allowed_author( $author_id );
-		if ( $author_denied ) { return $author_denied; }
+		if ( $author_denied ) {
+			return $author_denied; }
 
 		$author_allowed = Axtolab_AI_Connector_Policy::assert_allowed_author( $author_id );
 		if ( is_wp_error( $author_allowed ) ) {
@@ -2961,10 +3266,13 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'forbidden_assign_author', 'Current user cannot assign authors.', 403 );
 		}
 
-		$result = wp_update_post( array(
-			'ID'          => $post->ID,
-			'post_author' => $author_id,
-		), true );
+		$result = wp_update_post(
+			array(
+				'ID'          => $post->ID,
+				'post_author' => $author_id,
+			),
+			true
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return self::from_wp_error( $result );
@@ -2976,7 +3284,7 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_list_terms( WP_REST_Request $request ): WP_REST_Response {
 		$taxonomy = (string) $request->get_param( 'taxonomy' );
-		$allowed = Axtolab_AI_Connector_Policy::assert_allowed_taxonomy( $taxonomy );
+		$allowed  = Axtolab_AI_Connector_Policy::assert_allowed_taxonomy( $taxonomy );
 		if ( is_wp_error( $allowed ) ) {
 			return self::from_wp_error( $allowed );
 		}
@@ -2998,7 +3306,7 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$data = array_map(
-			static function( WP_Term $term ) {
+			static function ( WP_Term $term ) {
 				return array(
 					'id'       => intval( $term->term_id ),
 					'taxonomy' => $term->taxonomy,
@@ -3015,7 +3323,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_create_term( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_create_term' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$config = Axtolab_AI_Connector_Config::get();
 		if ( empty( $config['allow_term_creation'] ) ) {
@@ -3023,7 +3332,7 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$taxonomy = (string) $request->get_param( 'taxonomy' );
-		$allowed = Axtolab_AI_Connector_Policy::assert_allowed_taxonomy( $taxonomy );
+		$allowed  = Axtolab_AI_Connector_Policy::assert_allowed_taxonomy( $taxonomy );
 		if ( is_wp_error( $allowed ) ) {
 			return self::from_wp_error( $allowed );
 		}
@@ -3071,7 +3380,8 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_update_term( WP_REST_Request $request ) {
 		$denied = self::require_tool_capability( 'wp_update_term' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$taxonomy = (string) $request->get_param( 'taxonomy' );
 		$allowed  = Axtolab_AI_Connector_Policy::assert_allowed_taxonomy( $taxonomy );
@@ -3090,13 +3400,18 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$body = $request->get_json_params();
-		if ( ! is_array( $body ) ) { $body = array(); }
+		if ( ! is_array( $body ) ) {
+			$body = array(); }
 
 		$args = array();
-		if ( array_key_exists( 'name', $body ) )        { $args['name']        = (string) $body['name']; }
-		if ( array_key_exists( 'slug', $body ) )        { $args['slug']        = (string) $body['slug']; }
-		if ( array_key_exists( 'description', $body ) ) { $args['description'] = (string) $body['description']; }
-		if ( array_key_exists( 'parent', $body ) )      { $args['parent']      = (int) $body['parent']; }
+		if ( array_key_exists( 'name', $body ) ) {
+			$args['name'] = (string) $body['name']; }
+		if ( array_key_exists( 'slug', $body ) ) {
+			$args['slug'] = (string) $body['slug']; }
+		if ( array_key_exists( 'description', $body ) ) {
+			$args['description'] = (string) $body['description']; }
+		if ( array_key_exists( 'parent', $body ) ) {
+			$args['parent'] = (int) $body['parent']; }
 
 		if ( empty( $args ) ) {
 			return Axtolab_AI_Connector_Response::error( 'missing_fields', 'Provide at least one of: name, slug, description, parent.', 400 );
@@ -3109,18 +3424,22 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $result );
 		}
 
-		$after  = Axtolab_AI_Connector_Snapshots::capture_term( $term_id, $taxonomy );
+		$after = Axtolab_AI_Connector_Snapshots::capture_term( $term_id, $taxonomy );
 		self::record_change( 'term', $taxonomy . ':' . $term_id, Axtolab_AI_Connector_Changelog::ACTION_UPDATE, 'wp_update_term', $before, $after );
 
 		$updated = get_term( $term_id, $taxonomy );
-		return Axtolab_AI_Connector_Response::success( array(
-			'id'          => (int) $updated->term_id,
-			'taxonomy'    => $updated->taxonomy,
-			'name'        => $updated->name,
-			'slug'        => $updated->slug,
-			'description' => $updated->description,
-			'parent'      => (int) $updated->parent,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'id'          => (int) $updated->term_id,
+				'taxonomy'    => $updated->taxonomy,
+				'name'        => $updated->name,
+				'slug'        => $updated->slug,
+				'description' => $updated->description,
+				'parent'      => (int) $updated->parent,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -3131,7 +3450,8 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_delete_term( WP_REST_Request $request ) {
 		$denied = self::require_tool_capability( 'wp_delete_term' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$taxonomy = (string) $request->get_param( 'taxonomy' );
 		$allowed  = Axtolab_AI_Connector_Policy::assert_allowed_taxonomy( $taxonomy );
@@ -3161,16 +3481,21 @@ final class Axtolab_AI_Connector_REST {
 
 		self::record_change( 'term', $taxonomy . ':' . $term_id, Axtolab_AI_Connector_Changelog::ACTION_DELETE, 'wp_delete_term', $before, null );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'taxonomy' => $taxonomy,
-			'term_id'  => $term_id,
-			'deleted'  => true,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'taxonomy' => $taxonomy,
+				'term_id'  => $term_id,
+				'deleted'  => true,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	public static function handle_assign_terms( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_assign_terms' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -3205,7 +3530,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_upload_media( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_upload_media_from_url' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		/*
 		 * NOTE: Base64 media uploads require adequate PHP limits.
@@ -3220,11 +3546,12 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $can_upload );
 		}
 
-		$filename = sanitize_file_name( (string) $request->get_param( 'filename' ) );
+		$filename  = sanitize_file_name( (string) $request->get_param( 'filename' ) );
 		$mime_type = (string) $request->get_param( 'mime_type' );
-		$base64 = (string) $request->get_param( 'bytes_base64' );
-		$alt_text = (string) $request->get_param( 'alt_text' );
+		$base64    = (string) $request->get_param( 'bytes_base64' );
+		$alt_text  = (string) $request->get_param( 'alt_text' );
 
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the base64-encoded media bytes the MCP client supplied via the upload-media tool contract; not obfuscation.
 		$decoded = base64_decode( $base64, true );
 		if ( false === $decoded ) {
 			return Axtolab_AI_Connector_Response::error( 'invalid_media_base64', 'bytes_base64 must be valid base64.', 400 );
@@ -3267,7 +3594,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_upload_media_from_url( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_upload_media_from_url' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$can_upload = Axtolab_AI_Connector_Policy::can_upload_media();
 		if ( is_wp_error( $can_upload ) ) {
@@ -3279,9 +3607,9 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'missing_url', 'url parameter is required.', 400 );
 		}
 
-		$alt_text = (string) $request->get_param( 'alt_text' );
-		$title = (string) $request->get_param( 'title' );
-		$caption = (string) $request->get_param( 'caption' );
+		$alt_text    = (string) $request->get_param( 'alt_text' );
+		$title       = (string) $request->get_param( 'title' );
+		$caption     = (string) $request->get_param( 'caption' );
 		$description = (string) $request->get_param( 'description' );
 
 		// Download to temp file
@@ -3305,29 +3633,39 @@ final class Axtolab_AI_Connector_REST {
 		);
 
 		// Check mime type against policy
-		$mime = wp_check_filetype( $filename );
-		$mime_type = $mime['type'] ?: 'application/octet-stream';
-			$filesize = filesize( $tmp );
+		$mime          = wp_check_filetype( $filename );
+		$mime_type     = $mime['type'] ?: 'application/octet-stream';
+			$filesize  = filesize( $tmp );
 			$policy_ok = Axtolab_AI_Connector_Policy::assert_allowed_media( $mime_type, $filesize, $alt_text );
-			if ( is_wp_error( $policy_ok ) ) {
-				wp_delete_file( $tmp );
-				return self::from_wp_error( $policy_ok );
-			}
+		if ( is_wp_error( $policy_ok ) ) {
+			wp_delete_file( $tmp );
+			return self::from_wp_error( $policy_ok );
+		}
 
 			$attachment_id = media_handle_sideload( $file_array, 0, $title ?: null );
-			if ( is_wp_error( $attachment_id ) ) {
-				wp_delete_file( $tmp );
-				return self::from_wp_error( $attachment_id );
-			}
+		if ( is_wp_error( $attachment_id ) ) {
+			wp_delete_file( $tmp );
+			return self::from_wp_error( $attachment_id );
+		}
 
 		if ( '' !== trim( $alt_text ) ) {
 			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 		}
 		if ( '' !== trim( $caption ) ) {
-			wp_update_post( array( 'ID' => $attachment_id, 'post_excerpt' => $caption ) );
+			wp_update_post(
+				array(
+					'ID'           => $attachment_id,
+					'post_excerpt' => $caption,
+				)
+			);
 		}
 		if ( '' !== trim( $description ) ) {
-			wp_update_post( array( 'ID' => $attachment_id, 'post_content' => $description ) );
+			wp_update_post(
+				array(
+					'ID'           => $attachment_id,
+					'post_content' => $description,
+				)
+			);
 		}
 
 		$data = self::to_media_record( $attachment_id );
@@ -3348,13 +3686,13 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$query = new WP_Query( $args );
-		$data = array_map( array( __CLASS__, 'to_media_record' ), wp_list_pluck( $query->posts, 'ID' ) );
+		$data  = array_map( array( __CLASS__, 'to_media_record' ), wp_list_pluck( $query->posts, 'ID' ) );
 		return Axtolab_AI_Connector_Response::success( $data, 200, self::audit_id() );
 	}
 
 	public static function handle_get_media( WP_REST_Request $request ): WP_REST_Response {
 		$media_id = intval( $request->get_param( 'id' ) );
-		$media = get_post( $media_id );
+		$media    = get_post( $media_id );
 		if ( ! $media instanceof WP_Post || 'attachment' !== $media->post_type ) {
 			return Axtolab_AI_Connector_Response::error( 'media_not_found', 'Attachment not found.', 404 );
 		}
@@ -3364,10 +3702,11 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_update_media( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_update_media' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$media_id = intval( $request->get_param( 'id' ) );
-		$media = get_post( $media_id );
+		$media    = get_post( $media_id );
 		if ( ! $media instanceof WP_Post || 'attachment' !== $media->post_type ) {
 			return Axtolab_AI_Connector_Response::error( 'media_not_found', 'Attachment not found.', 404 );
 		}
@@ -3403,7 +3742,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_set_featured_image( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_set_featured_image' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -3433,7 +3773,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_insert_inline_image( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_insert_inline_image' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -3450,10 +3791,13 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $result );
 		}
 
-		$updated_id = wp_update_post( array(
-			'ID'           => $post->ID,
-			'post_content' => $result['content'],
-		), true );
+		$updated_id = wp_update_post(
+			array(
+				'ID'           => $post->ID,
+				'post_content' => $result['content'],
+			),
+			true
+		);
 
 		if ( is_wp_error( $updated_id ) ) {
 			return self::from_wp_error( $updated_id );
@@ -3465,7 +3809,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_replace_inline_image( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_replace_inline_image' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -3482,10 +3827,13 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $result );
 		}
 
-		$updated_id = wp_update_post( array(
-			'ID'           => $post->ID,
-			'post_content' => $result['content'],
-		), true );
+		$updated_id = wp_update_post(
+			array(
+				'ID'           => $post->ID,
+				'post_content' => $result['content'],
+			),
+			true
+		);
 
 		if ( is_wp_error( $updated_id ) ) {
 			return self::from_wp_error( $updated_id );
@@ -3497,7 +3845,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_remove_inline_image( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_remove_inline_image' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -3514,10 +3863,13 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $result );
 		}
 
-		$updated_id = wp_update_post( array(
-			'ID'           => $post->ID,
-			'post_content' => $result['content'],
-		), true );
+		$updated_id = wp_update_post(
+			array(
+				'ID'           => $post->ID,
+				'post_content' => $result['content'],
+			),
+			true
+		);
 
 		if ( is_wp_error( $updated_id ) ) {
 			return self::from_wp_error( $updated_id );
@@ -3545,10 +3897,10 @@ final class Axtolab_AI_Connector_REST {
 			);
 		}
 
-		$url = get_permalink( $post );
+		$url      = get_permalink( $post );
 		$analysis = array(
-			'post_id' => $post->ID,
-			'url'     => $url,
+			'post_id'     => $post->ID,
+			'url'         => $url,
 			'readability' => self::safe_rest_call( '/yoast/v1/readability_scores', array( 'url' => $url ) ),
 			'seo'         => self::safe_rest_call( '/yoast/v1/seo_scores', array( 'url' => $url ) ),
 		);
@@ -3558,7 +3910,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_update_yoast_metadata( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_update_yoast_metadata' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post = self::get_post_from_request( $request );
 		if ( is_wp_error( $post ) ) {
@@ -3579,8 +3932,8 @@ final class Axtolab_AI_Connector_REST {
 			update_post_meta( $post->ID, sanitize_key( (string) $meta_key ), is_scalar( $meta_value ) ? (string) $meta_value : wp_json_encode( $meta_value ) );
 		}
 
-		$updated = get_post( $post->ID );
-		$record = Axtolab_AI_Connector_Policy::to_content_record( $updated );
+		$updated              = get_post( $post->ID );
+		$record               = Axtolab_AI_Connector_Policy::to_content_record( $updated );
 		$record['yoast_meta'] = $meta;
 
 		return Axtolab_AI_Connector_Response::success( $record, 200, self::audit_id() );
@@ -3592,7 +3945,7 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $post );
 		}
 
-		$url = get_permalink( $post );
+		$url  = get_permalink( $post );
 		$head = self::safe_rest_call( '/yoast/v1/get_head', array( 'url' => $url ) );
 
 		return Axtolab_AI_Connector_Response::success(
@@ -3629,7 +3982,8 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$denied = self::require_tool_capability( 'wp_generate_image' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$prompt       = sanitize_text_field( $request->get_param( 'prompt' ) ?? '' );
 		$provider     = $request->get_param( 'provider' );
@@ -3640,11 +3994,14 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'missing_prompt', 'A prompt is required.', 400 );
 		}
 
-		$result = Axtolab_AI_Connector_Image_Providers::generate_image( $prompt, array(
-			'provider'     => $provider,
-			'aspect_ratio' => $aspect_ratio,
-			'quality'      => $quality,
-		) );
+		$result = Axtolab_AI_Connector_Image_Providers::generate_image(
+			$prompt,
+			array(
+				'provider'     => $provider,
+				'aspect_ratio' => $aspect_ratio,
+				'quality'      => $quality,
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return self::from_wp_error( $result );
@@ -3655,7 +4012,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_search_stock_photos( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_search_stock_photos' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$query       = sanitize_text_field( $request->get_param( 'query' ) ?? '' );
 		$provider    = $request->get_param( 'provider' );
@@ -3666,11 +4024,14 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'missing_query', 'A search query is required.', 400 );
 		}
 
-		$result = Axtolab_AI_Connector_Image_Providers::search_stock_photos( $query, array(
-			'provider'    => $provider,
-			'orientation' => $orientation,
-			'per_page'    => $per_page,
-		) );
+		$result = Axtolab_AI_Connector_Image_Providers::search_stock_photos(
+			$query,
+			array(
+				'provider'    => $provider,
+				'orientation' => $orientation,
+				'per_page'    => $per_page,
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return self::from_wp_error( $result );
@@ -3681,7 +4042,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_import_stock_photo( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_import_stock_photo' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$provider    = sanitize_text_field( $request->get_param( 'provider' ) ?? '' );
 		$provider_id = sanitize_text_field( $request->get_param( 'provider_id' ) ?? '' );
@@ -3691,9 +4053,13 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'missing_params', 'provider and provider_id are required.', 400 );
 		}
 
-		$result = Axtolab_AI_Connector_Image_Providers::import_stock_photo( $provider, $provider_id, array(
-			'alt_text' => $alt_text,
-		) );
+		$result = Axtolab_AI_Connector_Image_Providers::import_stock_photo(
+			$provider,
+			$provider_id,
+			array(
+				'alt_text' => $alt_text,
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return self::from_wp_error( $result );
@@ -3704,20 +4070,26 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_list_image_providers( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_list_image_providers' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$generation = Axtolab_AI_Connector_Image_Providers::get_enabled_providers( 'generation' );
 		$stock      = Axtolab_AI_Connector_Image_Providers::get_enabled_providers( 'stock' );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'generation_providers' => $generation,
-			'stock_providers'      => $stock,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'generation_providers' => $generation,
+				'stock_providers'      => $stock,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	public static function handle_confirm_image( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_confirm_image' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$media_id = intval( $request->get_param( 'id' ) );
 		$result   = Axtolab_AI_Connector_Image_Providers::confirm_image( $media_id );
@@ -3726,14 +4098,22 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'confirm_failed', 'Image not found or not in pending state.', 404 );
 		}
 
-		return Axtolab_AI_Connector_Response::success( array( 'media_id' => $media_id, 'status' => 'confirmed' ), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'media_id' => $media_id,
+				'status'   => 'confirmed',
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// ── Upload Portal Handlers ─────────────────────────────────────────────
 
 	public static function handle_create_upload_session( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_create_upload_session' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$ip_binding = $request->get_param( 'ip_binding' );
 		$client_ip  = $ip_binding ? self::get_client_ip() : null;
@@ -3749,7 +4129,8 @@ final class Axtolab_AI_Connector_REST {
 
 	public static function handle_get_upload_session( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_get_upload_session' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$session_id = sanitize_text_field( $request->get_param( 'id' ) );
 
@@ -3769,13 +4150,25 @@ final class Axtolab_AI_Connector_REST {
 		$token_hash = hash( 'sha256', $token );
 		$nonce      = $request->get_param( '_wpnonce' );
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, Axtolab_AI_Connector_Upload_Portal::NONCE_ACTION . '_' . $token_hash ) ) {
-			return new WP_REST_Response( array( 'success' => false, 'error' => 'Invalid or expired security token.' ), 403 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'error'   => 'Invalid or expired security token.',
+				),
+				403
+			);
 		}
 
 		// Get uploaded file.
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new WP_REST_Response( array( 'success' => false, 'error' => 'No file uploaded.' ), 400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'error'   => 'No file uploaded.',
+				),
+				400
+			);
 		}
 
 		$result = Axtolab_AI_Connector_Upload_Portal::handle_upload( $token, $files['file'], self::get_client_ip() );
@@ -3783,10 +4176,22 @@ final class Axtolab_AI_Connector_REST {
 		if ( is_wp_error( $result ) ) {
 			$error_data = $result->get_error_data();
 			$status     = is_array( $error_data ) && isset( $error_data['status'] ) ? (int) $error_data['status'] : 400;
-			return new WP_REST_Response( array( 'success' => false, 'error' => $result->get_error_message() ), $status );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'error'   => $result->get_error_message(),
+				),
+				$status
+			);
 		}
 
-		return new WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'data'    => $result,
+			),
+			200
+		);
 	}
 
 	public static function handle_upload_portal( WP_REST_Request $request ) {
@@ -3804,24 +4209,28 @@ final class Axtolab_AI_Connector_REST {
 		if ( ! $connection_id ) {
 			// Cannot determine connection (e.g., basic auth without app password UUID).
 			// Return default capabilities for backward compatibility.
-			return Axtolab_AI_Connector_Response::success( array(
-				'connection_id'      => null,
-				'capabilities'       => Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET,
-				'allowed_tools'      => array_values( Axtolab_AI_Connector_Capabilities::tools_for( Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET ) ),
-				'allowed_author_ids' => null,
-			) );
+			return Axtolab_AI_Connector_Response::success(
+				array(
+					'connection_id'      => null,
+					'capabilities'       => Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET,
+					'allowed_tools'      => array_values( Axtolab_AI_Connector_Capabilities::tools_for( Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET ) ),
+					'allowed_author_ids' => null,
+				)
+			);
 		}
 
 		$capabilities       = Axtolab_AI_Connector_Connections::get_capabilities( $connection_id );
 		$allowed_tools      = Axtolab_AI_Connector_Capabilities::tools_for( $capabilities );
 		$allowed_author_ids = Axtolab_AI_Connector_Connections::get_allowed_authors( $connection_id );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'connection_id'      => $connection_id,
-			'capabilities'       => array_values( $capabilities ),
-			'allowed_tools'      => array_values( $allowed_tools ),
-			'allowed_author_ids' => $allowed_author_ids,
-		) );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'connection_id'      => $connection_id,
+				'capabilities'       => array_values( $capabilities ),
+				'allowed_tools'      => array_values( $allowed_tools ),
+				'allowed_author_ids' => $allowed_author_ids,
+			)
+		);
 	}
 
 	/**
@@ -3835,7 +4244,8 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_request_review( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_request_review' );
-		if ( $denied ) { return $denied; }
+		if ( $denied ) {
+			return $denied; }
 
 		$post_id = (int) $request->get_param( 'id' );
 		$note    = sanitize_textarea_field( (string) $request->get_param( 'note' ) );
@@ -3867,7 +4277,7 @@ final class Axtolab_AI_Connector_REST {
 			$post_title
 		);
 
-		$body  = sprintf(
+		$body = sprintf(
 			/* translators: %s: post title */
 			__( 'A draft is ready for your review: "%s"', 'axtolab-ai-connector' ),
 			$post_title
@@ -3886,11 +4296,13 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'email_failed', 'Failed to send review notification email.', 500 );
 		}
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'sent_to'   => $to,
-			'post_id'   => $post_id,
-			'post_title' => $post_title,
-		) );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'sent_to'    => $to,
+				'post_id'    => $post_id,
+				'post_title' => $post_title,
+			)
+		);
 	}
 
 	private static function get_client_ip() {
@@ -3977,10 +4389,10 @@ final class Axtolab_AI_Connector_REST {
 	}
 
 	private static function to_media_record( int $media_id ): array {
-		$post = get_post( $media_id );
-		$metadata = wp_get_attachment_metadata( $media_id );
-		$width = is_array( $metadata ) && isset( $metadata['width'] ) ? intval( $metadata['width'] ) : 0;
-		$height = is_array( $metadata ) && isset( $metadata['height'] ) ? intval( $metadata['height'] ) : 0;
+		$post      = get_post( $media_id );
+		$metadata  = wp_get_attachment_metadata( $media_id );
+		$width     = is_array( $metadata ) && isset( $metadata['width'] ) ? intval( $metadata['width'] ) : 0;
+		$height    = is_array( $metadata ) && isset( $metadata['height'] ) ? intval( $metadata['height'] ) : 0;
 		$thumbnail = wp_get_attachment_image_src( $media_id, 'medium' );
 
 		return array(
@@ -4061,15 +4473,17 @@ final class Axtolab_AI_Connector_REST {
 		}
 		try {
 			$after = Axtolab_AI_Connector_Snapshots::capture_post( (int) $post_id );
-			Axtolab_AI_Connector_Changelog::record( array(
-				'target_type' => 'post',
-				'target_id'   => (string) (int) $post_id,
-				'action'      => $action,
-				'tool_name'   => $tool_name,
-				'before'      => $before,
-				'after'       => $after,
-				'session_id'  => self::current_mcp_session_id(),
-			) );
+			Axtolab_AI_Connector_Changelog::record(
+				array(
+					'target_type' => 'post',
+					'target_id'   => (string) (int) $post_id,
+					'action'      => $action,
+					'tool_name'   => $tool_name,
+					'before'      => $before,
+					'after'       => $after,
+					'session_id'  => self::current_mcp_session_id(),
+				)
+			);
 		} catch ( Exception $e ) {
 			// Capture-side failure must not break the tool. Audit log
 			// already records the call itself.
@@ -4095,15 +4509,17 @@ final class Axtolab_AI_Connector_REST {
 			return;
 		}
 		try {
-			Axtolab_AI_Connector_Changelog::record( array(
-				'target_type' => (string) $target_type,
-				'target_id'   => (string) $target_id,
-				'action'      => (string) $action,
-				'tool_name'   => (string) $tool_name,
-				'before'      => $before,
-				'after'       => $after,
-				'session_id'  => self::current_mcp_session_id(),
-			) );
+			Axtolab_AI_Connector_Changelog::record(
+				array(
+					'target_type' => (string) $target_type,
+					'target_id'   => (string) $target_id,
+					'action'      => (string) $action,
+					'tool_name'   => (string) $tool_name,
+					'before'      => $before,
+					'after'       => $after,
+					'session_id'  => self::current_mcp_session_id(),
+				)
+			);
 		} catch ( Exception $e ) {
 			return;
 		}
@@ -4126,16 +4542,20 @@ final class Axtolab_AI_Connector_REST {
 		$key = $request->get_param( 'key' );
 		if ( $key ) {
 			$value = get_post_meta( $post->ID, sanitize_key( $key ), true );
-			return Axtolab_AI_Connector_Response::success( array(
-				'post_id' => $post->ID,
-				'key'     => $key,
-				'value'   => $value,
-			), 200, self::audit_id() );
+			return Axtolab_AI_Connector_Response::success(
+				array(
+					'post_id' => $post->ID,
+					'key'     => $key,
+					'value'   => $value,
+				),
+				200,
+				self::audit_id()
+			);
 		}
 
-		$all_meta   = get_post_meta( $post->ID );
-		$filtered   = array();
-		$skip       = array( '_edit_lock', '_edit_last', '_encloseme', '_pingme' );
+		$all_meta = get_post_meta( $post->ID );
+		$filtered = array();
+		$skip     = array( '_edit_lock', '_edit_last', '_encloseme', '_pingme' );
 
 		foreach ( $all_meta as $meta_key => $meta_values ) {
 			if ( in_array( $meta_key, $skip, true ) ) {
@@ -4144,10 +4564,14 @@ final class Axtolab_AI_Connector_REST {
 			$filtered[ $meta_key ] = count( $meta_values ) === 1 ? $meta_values[0] : $meta_values;
 		}
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'post_id' => $post->ID,
-			'meta'    => $filtered,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'post_id' => $post->ID,
+				'meta'    => $filtered,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -4193,10 +4617,14 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		self::audit( 'update_post_meta', 'success', implode( ', ', array_keys( $updated ) ), $post->ID );
-		return Axtolab_AI_Connector_Response::success( array(
-			'post_id' => $post->ID,
-			'updated' => $updated,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'post_id' => $post->ID,
+				'updated' => $updated,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -4224,11 +4652,15 @@ final class Axtolab_AI_Connector_REST {
 			$after
 		);
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'post_id' => $post->ID,
-			'key'     => $key,
-			'deleted' => $deleted,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'post_id' => $post->ID,
+				'key'     => $key,
+				'deleted' => $deleted,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// ── Comments ────────────────────────────────────────────────────────────
@@ -4241,14 +4673,14 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	private static function format_comment( WP_Comment $comment ) {
 		return array(
-			'id'          => (int) $comment->comment_ID,
-			'post_id'     => (int) $comment->comment_post_ID,
-			'author'      => $comment->comment_author,
-			'date'        => $comment->comment_date,
-			'content'     => $comment->comment_content,
-			'status'      => wp_get_comment_status( $comment ),
-			'parent'      => (int) $comment->comment_parent,
-			'type'        => $comment->comment_type ?: 'comment',
+			'id'      => (int) $comment->comment_ID,
+			'post_id' => (int) $comment->comment_post_ID,
+			'author'  => $comment->comment_author,
+			'date'    => $comment->comment_date,
+			'content' => $comment->comment_content,
+			'status'  => wp_get_comment_status( $comment ),
+			'parent'  => (int) $comment->comment_parent,
+			'type'    => $comment->comment_type ?: 'comment',
 		);
 	}
 
@@ -4260,8 +4692,8 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_list_comments( WP_REST_Request $request ) {
 		$args = array(
-			'number' => min( (int) ( $request->get_param( 'per_page' ) ?: 20 ), 100 ),
-			'offset' => max( (int) $request->get_param( 'offset' ), 0 ),
+			'number'  => min( (int) ( $request->get_param( 'per_page' ) ?: 20 ), 100 ),
+			'offset'  => max( (int) $request->get_param( 'offset' ), 0 ),
 			'orderby' => 'comment_date',
 			'order'   => 'DESC',
 		);
@@ -4318,15 +4750,17 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$user       = wp_get_current_user();
-		$comment_id = wp_insert_comment( array(
-			'comment_post_ID' => $post_id,
-			'comment_content' => wp_kses_post( $content ),
-			'comment_author'  => $request->get_param( 'author' ) ?: $user->display_name,
-			'comment_author_email' => $user->user_email,
-			'comment_parent'  => (int) $request->get_param( 'parent' ),
-			'comment_approved' => current_user_can( 'moderate_comments' ) ? 1 : 0,
-			'user_id'         => $user->ID,
-		) );
+		$comment_id = wp_insert_comment(
+			array(
+				'comment_post_ID'      => $post_id,
+				'comment_content'      => wp_kses_post( $content ),
+				'comment_author'       => $request->get_param( 'author' ) ?: $user->display_name,
+				'comment_author_email' => $user->user_email,
+				'comment_parent'       => (int) $request->get_param( 'parent' ),
+				'comment_approved'     => current_user_can( 'moderate_comments' ) ? 1 : 0,
+				'user_id'              => $user->ID,
+			)
+		);
 
 		if ( ! $comment_id ) {
 			return Axtolab_AI_Connector_Response::error( 'create_failed', 'Failed to create comment.', 500, self::audit_id() );
@@ -4351,10 +4785,14 @@ final class Axtolab_AI_Connector_REST {
 
 		$deleted = wp_delete_comment( $comment->comment_ID, true );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'id'      => (int) $comment->comment_ID,
-			'deleted' => $deleted,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'id'      => (int) $comment->comment_ID,
+				'deleted' => $deleted,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -4401,18 +4839,24 @@ final class Axtolab_AI_Connector_REST {
 	 * @return WP_REST_Response
 	 */
 	public static function handle_get_audit_log( WP_REST_Request $request ) {
-		$entries = Axtolab_AI_Connector_Audit_Log::query( array(
-			'per_page'      => $request->get_param( 'per_page' ) ?: 50,
-			'offset'        => $request->get_param( 'offset' ) ?: 0,
-			'tool_name'     => $request->get_param( 'tool_name' ) ?: '',
-			'connection_id' => $request->get_param( 'connection_id' ) ?: '',
-			'outcome'       => $request->get_param( 'outcome' ) ?: '',
-		) );
+		$entries = Axtolab_AI_Connector_Audit_Log::query(
+			array(
+				'per_page'      => $request->get_param( 'per_page' ) ?: 50,
+				'offset'        => $request->get_param( 'offset' ) ?: 0,
+				'tool_name'     => $request->get_param( 'tool_name' ) ?: '',
+				'connection_id' => $request->get_param( 'connection_id' ) ?: '',
+				'outcome'       => $request->get_param( 'outcome' ) ?: '',
+			)
+		);
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'entries' => $entries,
-			'total'   => Axtolab_AI_Connector_Audit_Log::count(),
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'entries' => $entries,
+				'total'   => Axtolab_AI_Connector_Audit_Log::count(),
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -4511,7 +4955,7 @@ final class Axtolab_AI_Connector_REST {
 		$structure = (string) $request->get_param( 'structure' );
 
 		if ( '' !== $structure ) {
-			$valid_tags = array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%category%', '%author%' );
+			$valid_tags    = array( '%year%', '%monthnum%', '%day%', '%hour%', '%minute%', '%second%', '%post_id%', '%postname%', '%category%', '%author%' );
 			$has_valid_tag = false;
 			foreach ( $valid_tags as $tag ) {
 				if ( false !== strpos( $structure, $tag ) ) {
@@ -4568,11 +5012,15 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	public static function handle_list_abilities() {
 		if ( ! self::abilities_available() ) {
-			return Axtolab_AI_Connector_Response::success( array(
-				'available' => false,
-				'reason'    => 'WordPress Abilities API requires WP 6.9 or later. Upgrade WordPress or install a polyfill plugin.',
-				'abilities' => array(),
-			), 200, self::audit_id() );
+			return Axtolab_AI_Connector_Response::success(
+				array(
+					'available' => false,
+					'reason'    => 'WordPress Abilities API requires WP 6.9 or later. Upgrade WordPress or install a polyfill plugin.',
+					'abilities' => array(),
+				),
+				200,
+				self::audit_id()
+			);
 		}
 
 		$out       = array();
@@ -4590,11 +5038,15 @@ final class Axtolab_AI_Connector_REST {
 			$out[] = $entry;
 		}
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'available' => true,
-			'count'     => count( $out ),
-			'abilities' => $out,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'available' => true,
+				'count'     => count( $out ),
+				'abilities' => $out,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -4631,10 +5083,14 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		self::audit( 'invoke_ability', 'success', $name );
-		return Axtolab_AI_Connector_Response::success( array(
-			'name'   => $name,
-			'result' => $result,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'name'   => $name,
+				'result' => $result,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// =========================================================================
@@ -4644,17 +5100,21 @@ final class Axtolab_AI_Connector_REST {
 	public static function handle_get_active_theme() {
 		$theme  = wp_get_theme();
 		$parent = $theme->parent();
-		return Axtolab_AI_Connector_Response::success( array(
-			'name'         => (string) $theme->get( 'Name' ),
-			'stylesheet'   => $theme->get_stylesheet(),
-			'template'     => $theme->get_template(),
-			'version'      => (string) $theme->get( 'Version' ),
-			'author'       => wp_strip_all_tags( (string) $theme->get( 'Author' ) ),
-			'theme_uri'    => (string) $theme->get( 'ThemeURI' ),
-			'description'  => wp_strip_all_tags( (string) $theme->get( 'Description' ) ),
-			'parent'       => $parent ? (string) $parent->get_stylesheet() : null,
-			'parent_name'  => $parent ? (string) $parent->get( 'Name' ) : null,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'name'        => (string) $theme->get( 'Name' ),
+				'stylesheet'  => $theme->get_stylesheet(),
+				'template'    => $theme->get_template(),
+				'version'     => (string) $theme->get( 'Version' ),
+				'author'      => wp_strip_all_tags( (string) $theme->get( 'Author' ) ),
+				'theme_uri'   => (string) $theme->get( 'ThemeURI' ),
+				'description' => wp_strip_all_tags( (string) $theme->get( 'Description' ) ),
+				'parent'      => $parent ? (string) $parent->get_stylesheet() : null,
+				'parent_name' => $parent ? (string) $parent->get( 'Name' ) : null,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	public static function handle_get_theme_mods() {
@@ -4669,20 +5129,28 @@ final class Axtolab_AI_Connector_REST {
 				$out[ $key ] = self::redact_sensitive_in_value( $value );
 			}
 		}
-		return Axtolab_AI_Connector_Response::success( array(
-			'theme'      => get_stylesheet(),
-			'count'      => count( $out ),
-			'mods'       => $out,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'theme' => get_stylesheet(),
+				'count' => count( $out ),
+				'mods'  => $out,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	public static function handle_get_custom_css() {
 		$css = wp_get_custom_css();
-		return Axtolab_AI_Connector_Response::success( array(
-			'theme' => get_stylesheet(),
-			'css'   => (string) $css,
-			'bytes' => strlen( (string) $css ),
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'theme' => get_stylesheet(),
+				'css'   => (string) $css,
+				'bytes' => strlen( (string) $css ),
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// =========================================================================
@@ -4718,19 +5186,19 @@ final class Axtolab_AI_Connector_REST {
 		// title, url, type, object, object_id, target, classes, xfn, attr_title,
 		// description, menu_order, menu_item_parent.
 		return array(
-			'id'           => (int) $item->ID,
-			'title'        => isset( $item->title ) ? (string) $item->title : '',
-			'url'          => isset( $item->url ) ? (string) $item->url : '',
-			'type'         => isset( $item->type ) ? (string) $item->type : '',
-			'object'       => isset( $item->object ) ? (string) $item->object : '',
-			'object_id'    => isset( $item->object_id ) ? (int) $item->object_id : 0,
-			'parent'       => isset( $item->menu_item_parent ) ? (int) $item->menu_item_parent : 0,
-			'menu_order'   => isset( $item->menu_order ) ? (int) $item->menu_order : 0,
-			'target'       => isset( $item->target ) ? (string) $item->target : '',
-			'classes'      => isset( $item->classes ) ? (array) $item->classes : array(),
-			'attr_title'   => isset( $item->attr_title ) ? (string) $item->attr_title : '',
-			'description'  => isset( $item->description ) ? (string) $item->description : '',
-			'xfn'          => isset( $item->xfn ) ? (string) $item->xfn : '',
+			'id'          => (int) $item->ID,
+			'title'       => isset( $item->title ) ? (string) $item->title : '',
+			'url'         => isset( $item->url ) ? (string) $item->url : '',
+			'type'        => isset( $item->type ) ? (string) $item->type : '',
+			'object'      => isset( $item->object ) ? (string) $item->object : '',
+			'object_id'   => isset( $item->object_id ) ? (int) $item->object_id : 0,
+			'parent'      => isset( $item->menu_item_parent ) ? (int) $item->menu_item_parent : 0,
+			'menu_order'  => isset( $item->menu_order ) ? (int) $item->menu_order : 0,
+			'target'      => isset( $item->target ) ? (string) $item->target : '',
+			'classes'     => isset( $item->classes ) ? (array) $item->classes : array(),
+			'attr_title'  => isset( $item->attr_title ) ? (string) $item->attr_title : '',
+			'description' => isset( $item->description ) ? (string) $item->description : '',
+			'xfn'         => isset( $item->xfn ) ? (string) $item->xfn : '',
 		);
 	}
 
@@ -4745,25 +5213,36 @@ final class Axtolab_AI_Connector_REST {
 				'count' => (int) $menu->count,
 			);
 		}
-		return Axtolab_AI_Connector_Response::success( array( 'count' => count( $out ), 'menus' => $out ), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'count' => count( $out ),
+				'menus' => $out,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	public static function handle_get_menu( WP_REST_Request $request ) {
 		$id_or_slug = (string) $request->get_param( 'id_or_slug' );
-		$menu = wp_get_nav_menu_object( is_numeric( $id_or_slug ) ? (int) $id_or_slug : $id_or_slug );
+		$menu       = wp_get_nav_menu_object( is_numeric( $id_or_slug ) ? (int) $id_or_slug : $id_or_slug );
 		if ( ! $menu ) {
 			return Axtolab_AI_Connector_Response::error( 'not_found', 'Menu not found.', 404, self::audit_id() );
 		}
 		$items = wp_get_nav_menu_items( $menu->term_id );
 		$items = is_array( $items ) ? array_map( array( __CLASS__, 'format_menu_item' ), $items ) : array();
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'id'    => (int) $menu->term_id,
-			'name'  => (string) $menu->name,
-			'slug'  => (string) $menu->slug,
-			'count' => count( $items ),
-			'items' => $items,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'id'    => (int) $menu->term_id,
+				'name'  => (string) $menu->name,
+				'slug'  => (string) $menu->slug,
+				'count' => count( $items ),
+				'items' => $items,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	public static function handle_create_menu_item( WP_REST_Request $request ) {
@@ -4895,8 +5374,8 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'not_found', 'Menu item not found.', 404, self::audit_id() );
 		}
 
-		$menu_terms = wp_get_object_terms( $item_id, 'nav_menu' );
-		$menu_id    = ( ! is_wp_error( $menu_terms ) && ! empty( $menu_terms ) ) ? (int) $menu_terms[0]->term_id : 0;
+		$menu_terms  = wp_get_object_terms( $item_id, 'nav_menu' );
+		$menu_id     = ( ! is_wp_error( $menu_terms ) && ! empty( $menu_terms ) ) ? (int) $menu_terms[0]->term_id : 0;
 		$before_menu = $menu_id ? Axtolab_AI_Connector_Snapshots::capture_menu( $menu_id ) : null;
 
 		wp_delete_post( $item_id, true );
@@ -4914,7 +5393,14 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		self::audit( 'delete_menu_item', 'success', '', $item_id );
-		return Axtolab_AI_Connector_Response::success( array( 'id' => $item_id, 'deleted' => true ), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'id'      => $item_id,
+				'deleted' => true,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	public static function handle_reorder_menu_items( WP_REST_Request $request ) {
@@ -4929,7 +5415,7 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'not_found', 'Menu not found.', 404, self::audit_id() );
 		}
 
-		$body = $request->get_json_params();
+		$body  = $request->get_json_params();
 		$order = ( is_array( $body ) && isset( $body['order'] ) && is_array( $body['order'] ) ) ? $body['order'] : array();
 		if ( empty( $order ) ) {
 			return Axtolab_AI_Connector_Response::error(
@@ -4962,7 +5448,7 @@ final class Axtolab_AI_Connector_REST {
 			if ( isset( $entry['parent'] ) ) {
 				update_post_meta( $item_id, '_menu_item_menu_item_parent', (string) (int) $entry['parent'] );
 			}
-			$updated_count++;
+			++$updated_count;
 		}
 
 		$after_menu = Axtolab_AI_Connector_Snapshots::capture_menu( $menu_id );
@@ -4979,11 +5465,15 @@ final class Axtolab_AI_Connector_REST {
 		// Re-read the menu items so the response reflects new ordering.
 		$items = wp_get_nav_menu_items( $menu_id );
 		$items = is_array( $items ) ? array_map( array( __CLASS__, 'format_menu_item' ), $items ) : array();
-		return Axtolab_AI_Connector_Response::success( array(
-			'menu_id'         => $menu_id,
-			'updated_count'   => $updated_count,
-			'items'           => $items,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'menu_id'       => $menu_id,
+				'updated_count' => $updated_count,
+				'items'         => $items,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// =========================================================================
@@ -5011,11 +5501,15 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$result = Axtolab_AI_Connector_SEO_Adapter::get_meta( $post->ID );
-		return Axtolab_AI_Connector_Response::success( array(
-			'post_id' => $post->ID,
-			'plugin'  => $result['plugin'],
-			'fields'  => $result['fields'],
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'post_id' => $post->ID,
+				'plugin'  => $result['plugin'],
+				'fields'  => $result['fields'],
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -5031,7 +5525,7 @@ final class Axtolab_AI_Connector_REST {
 			return self::from_wp_error( $post );
 		}
 
-		$body = $request->get_json_params();
+		$body   = $request->get_json_params();
 		$fields = ( is_array( $body ) && isset( $body['fields'] ) && is_array( $body['fields'] ) )
 			? $body['fields']
 			: ( is_array( $body ) ? $body : array() );
@@ -5044,11 +5538,15 @@ final class Axtolab_AI_Connector_REST {
 		$result = Axtolab_AI_Connector_SEO_Adapter::update_meta( $post->ID, $fields );
 		self::audit( 'update_seo_meta', 'success', implode( ',', array_keys( $fields ) ), $post->ID );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'post_id' => $post->ID,
-			'plugin'  => $result['plugin'],
-			'written' => $result['written'],
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'post_id' => $post->ID,
+				'plugin'  => $result['plugin'],
+				'written' => $result['written'],
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// =========================================================================
@@ -5065,20 +5563,37 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	private static function option_hard_denylist() {
 		return array(
-			'exact' => array(
-				'siteurl', 'home',                   // would break the site URL routing
-				'admin_email', 'new_admin_email',    // ownership change
-				'auth_key', 'auth_salt', 'logged_in_key', 'logged_in_salt',
-				'nonce_key', 'nonce_salt', 'secure_auth_key', 'secure_auth_salt',
-				'active_plugins', 'template', 'stylesheet', // structural integrity
+			'exact'    => array(
+				'siteurl',
+				'home',                   // would break the site URL routing
+				'admin_email',
+				'new_admin_email',    // ownership change
+				'auth_key',
+				'auth_salt',
+				'logged_in_key',
+				'logged_in_salt',
+				'nonce_key',
+				'nonce_salt',
+				'secure_auth_key',
+				'secure_auth_salt',
+				'active_plugins',
+				'template',
+				'stylesheet', // structural integrity
 				'axtolab_ai_connector_settings',              // can't let AI flip its own gates
 			),
 			'patterns' => array(
-				'_secret', '_token', '_password',
-				'license_key', 'license_data', '_license_',
-				'_api_key', 'api_secret',
-				'_credentials', '_oauth_',
-				'_pwd_', '_passphrase',
+				'_secret',
+				'_token',
+				'_password',
+				'license_key',
+				'license_data',
+				'_license_',
+				'_api_key',
+				'api_secret',
+				'_credentials',
+				'_oauth_',
+				'_pwd_',
+				'_passphrase',
 			),
 		);
 	}
@@ -5093,7 +5608,7 @@ final class Axtolab_AI_Connector_REST {
 	 */
 	private static function is_sensitive_option_key( $key ) {
 		$patterns = array( 'api_key', 'secret', 'token', 'password', 'license', 'salt', '_pwd', 'passphrase', 'credentials' );
-		$lower = strtolower( (string) $key );
+		$lower    = strtolower( (string) $key );
 		foreach ( $patterns as $needle ) {
 			if ( false !== strpos( $lower, $needle ) ) {
 				return true;
@@ -5149,10 +5664,14 @@ final class Axtolab_AI_Connector_REST {
 			$value = self::redact_sensitive_in_value( $value );
 		}
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'key'   => $key,
-			'value' => $value,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'key'   => $key,
+				'value' => $value,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -5206,7 +5725,7 @@ final class Axtolab_AI_Connector_REST {
 
 		// Allowlist — built-in defaults, extensible via filter.
 		$default_allowlist = array( 'blogname', 'blogdescription', 'posts_per_page', 'date_format', 'time_format', 'start_of_week' );
-		$allowlist = apply_filters( 'axtolab_ai_connector_writable_options', $default_allowlist );
+		$allowlist         = apply_filters( 'axtolab_ai_connector_writable_options', $default_allowlist );
 		if ( ! is_array( $allowlist ) ) {
 			$allowlist = $default_allowlist;
 		}
@@ -5236,10 +5755,14 @@ final class Axtolab_AI_Connector_REST {
 
 		self::audit( 'update_option', 'success', $key );
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'key'   => $key,
-			'value' => $value,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'key'   => $key,
+				'value' => $value,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -5264,12 +5787,15 @@ final class Axtolab_AI_Connector_REST {
 		$like_prefix_dash       = $wpdb->esc_like( $slug . '-' ) . '%';
 		$exact                  = $slug;
 
-		$rows = $wpdb->get_results( $wpdb->prepare(
-			"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name = %s LIMIT 200",
-			$like_prefix_underscore,
-			$like_prefix_dash,
-			$exact
-		) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Enumerating option_name by prefix on the core options table. WP core exposes no get_options_by_prefix() helper; this is the documented way to discover a third-party plugin's stored settings. Restricted to an authenticated MCP caller, capped at 200 rows, and sensitive keys are redacted by self::is_sensitive_option_key() below.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name = %s LIMIT 200",
+				$like_prefix_underscore,
+				$like_prefix_dash,
+				$exact
+			)
+		);
 
 		$out = array();
 		foreach ( (array) $rows as $row ) {
@@ -5283,11 +5809,15 @@ final class Axtolab_AI_Connector_REST {
 			$out[ $opt_name ] = $value;
 		}
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'slug'    => $slug,
-			'count'   => count( $out ),
-			'options' => $out,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'slug'    => $slug,
+				'count'   => count( $out ),
+				'options' => $out,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// =========================================================================
@@ -5318,11 +5848,15 @@ final class Axtolab_AI_Connector_REST {
 		$key = $request->get_param( 'key' );
 		if ( $key ) {
 			$value = get_term_meta( $term_id, sanitize_key( (string) $key ), true );
-			return Axtolab_AI_Connector_Response::success( array(
-				'term_id' => $term_id,
-				'key'     => (string) $key,
-				'value'   => $value,
-			), 200, self::audit_id() );
+			return Axtolab_AI_Connector_Response::success(
+				array(
+					'term_id' => $term_id,
+					'key'     => (string) $key,
+					'value'   => $value,
+				),
+				200,
+				self::audit_id()
+			);
 		}
 
 		$all_meta = get_term_meta( $term_id );
@@ -5331,11 +5865,15 @@ final class Axtolab_AI_Connector_REST {
 			$filtered[ $meta_key ] = count( $meta_values ) === 1 ? $meta_values[0] : $meta_values;
 		}
 
-		return Axtolab_AI_Connector_Response::success( array(
-			'term_id'  => $term_id,
-			'taxonomy' => $term->taxonomy,
-			'meta'     => $filtered,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'term_id'  => $term_id,
+				'taxonomy' => $term->taxonomy,
+				'meta'     => $filtered,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -5385,11 +5923,15 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		self::audit( 'update_term_meta', 'success', implode( ', ', array_keys( $updated ) ), $term_id );
-		return Axtolab_AI_Connector_Response::success( array(
-			'term_id'  => $term_id,
-			'taxonomy' => $term->taxonomy,
-			'updated'  => $updated,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'term_id'  => $term_id,
+				'taxonomy' => $term->taxonomy,
+				'updated'  => $updated,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	/**
@@ -5419,11 +5961,15 @@ final class Axtolab_AI_Connector_REST {
 		);
 
 		self::audit( 'delete_term_meta', 'success', $key, $term_id );
-		return Axtolab_AI_Connector_Response::success( array(
-			'term_id' => $term_id,
-			'key'     => $key,
-			'deleted' => (bool) $deleted,
-		), 200, self::audit_id() );
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'term_id' => $term_id,
+				'key'     => $key,
+				'deleted' => (bool) $deleted,
+			),
+			200,
+			self::audit_id()
+		);
 	}
 
 	// =========================================================================
@@ -5494,7 +6040,7 @@ final class Axtolab_AI_Connector_REST {
 		$out = array();
 		foreach ( $installed as $stylesheet => $theme ) {
 			$parent = $theme->parent();
-			$out[] = array(
+			$out[]  = array(
 				'stylesheet'   => (string) $stylesheet,
 				'name'         => (string) $theme->get( 'Name' ),
 				'version'      => (string) $theme->get( 'Version' ),

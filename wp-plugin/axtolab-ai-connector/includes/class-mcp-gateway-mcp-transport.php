@@ -60,7 +60,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 *             Kept here temporarily; do not add new entries.
 	 */
 	private const CAPABILITY_TOOLS = array(
-		'read' => array(
+		'read'          => array(
 			'wp_getting_started',
 			'wp_site_info',
 			'wp_list_content_types',
@@ -75,13 +75,13 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'wp_get_yoast_head_preview',
 			'wp_get_preview_link',
 		),
-		'create_edit' => array(
+		'create_edit'   => array(
 			'wp_create_draft',
 			'wp_update_content',
 			'wp_clone_content',
 			'wp_request_review',
 		),
-		'publish' => array(
+		'publish'       => array(
 			'wp_publish_content',
 		),
 		'trash_restore' => array(
@@ -89,7 +89,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'wp_restore_content',
 			'wp_restore_revision',
 		),
-		'media_manage' => array(
+		'media_manage'  => array(
 			'wp_upload_media_from_url',
 			'wp_update_media',
 			'wp_set_featured_image',
@@ -97,17 +97,17 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'wp_replace_inline_image',
 			'wp_remove_inline_image',
 		),
-		'taxonomy' => array(
+		'taxonomy'      => array(
 			'wp_create_term',
 			'wp_assign_terms',
 		),
-		'authors' => array(
+		'authors'       => array(
 			'wp_assign_author',
 		),
-		'seo' => array(
+		'seo'           => array(
 			'wp_update_yoast_metadata',
 		),
-		'image' => array(
+		'image'         => array(
 			'wp_generate_image',
 			'wp_search_stock_photos',
 			'wp_import_stock_photo',
@@ -125,7 +125,15 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 * Everything except trash_restore.
 	 */
 	public const DEFAULT_CAPABILITIES = array(
-		'read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal',
+		'read',
+		'create_edit',
+		'publish',
+		'media_manage',
+		'taxonomy',
+		'authors',
+		'seo',
+		'image',
+		'upload_portal',
 	);
 
 	/**
@@ -177,7 +185,6 @@ class Axtolab_AI_Connector_MCP_Transport {
 				'show_in_index'       => false,
 			)
 		);
-
 	}
 
 	// =========================================================================
@@ -191,16 +198,20 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 * @return bool|WP_Error
 	 */
 	public static function check_bearer_auth( WP_REST_Request $request ) {
-		$auth_header            = $request->get_header( 'authorization' );
-		$resource_metadata_url  = rest_url( 'axtolab-ai-connector/v1/oauth/metadata/resource' );
+		$auth_header           = $request->get_header( 'authorization' );
+		$resource_metadata_url = rest_url( 'axtolab-ai-connector/v1/oauth/metadata/resource' );
 
 		if ( ! $auth_header || ! preg_match( '/Bearer\s+(.+)/i', $auth_header, $matches ) ) {
-			return new WP_Error( 'unauthorized', 'Bearer token required.', array(
-				'status'  => 401,
-				'headers' => array(
-					'WWW-Authenticate' => 'Bearer resource_metadata="' . $resource_metadata_url . '"',
-				),
-			) );
+			return new WP_Error(
+				'unauthorized',
+				'Bearer token required.',
+				array(
+					'status'  => 401,
+					'headers' => array(
+						'WWW-Authenticate' => 'Bearer resource_metadata="' . $resource_metadata_url . '"',
+					),
+				)
+			);
 		}
 
 		$provided_token = trim( $matches[1] );
@@ -254,12 +265,16 @@ class Axtolab_AI_Connector_MCP_Transport {
 			return true;
 		}
 
-		return new WP_Error( 'unauthorized', 'Invalid token.', array(
-			'status'  => 401,
-			'headers' => array(
-				'WWW-Authenticate' => 'Bearer resource_metadata="' . $resource_metadata_url . '"',
-			),
-		) );
+		return new WP_Error(
+			'unauthorized',
+			'Invalid token.',
+			array(
+				'status'  => 401,
+				'headers' => array(
+					'WWW-Authenticate' => 'Bearer resource_metadata="' . $resource_metadata_url . '"',
+				),
+			)
+		);
 	}
 
 	// =========================================================================
@@ -383,8 +398,8 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 * supported version. Claude Desktop / Claude Web reject the tool list
 	 * when this is older than what the client sent.
 	 *
-	 * @param mixed              $id         JSON-RPC request id.
-	 * @param string             $session_id Session id assigned for this client.
+	 * @param mixed               $id         JSON-RPC request id.
+	 * @param string              $session_id Session id assigned for this client.
 	 * @param array<string,mixed> $params    The `initialize` request params.
 	 * @return array<string,mixed>
 	 */
@@ -403,7 +418,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'name'    => 'Axtolab AI Connector - ' . get_bloginfo( 'name' ),
 					'version' => defined( 'AXTOLAB_AI_CONNECTOR_VERSION' ) ? AXTOLAB_AI_CONNECTOR_VERSION : '0.2.0',
 				),
-				'capabilities' => array(
+				'capabilities'    => array(
 					'tools' => new stdClass(),
 				),
 			),
@@ -416,15 +431,23 @@ class Axtolab_AI_Connector_MCP_Transport {
 	private static function handle_tools_list( $id ): array {
 		$all_tools = self::get_tool_definitions();
 		$allowed   = self::get_allowed_tools();
-		$filtered  = array_values( array_filter( $all_tools, function ( $tool ) use ( $allowed ) {
-			return in_array( $tool['name'], $allowed, true );
-		} ) );
+		$filtered  = array_values(
+			array_filter(
+				$all_tools,
+				function ( $tool ) use ( $allowed ) {
+					return in_array( $tool['name'], $allowed, true );
+				}
+			)
+		);
 
 		// Add securitySchemes when OAuth is enabled — tells ChatGPT every tool requires OAuth.
 		$settings = get_option( 'axtolab_ai_connector_settings', array() );
 		if ( ! empty( $settings['oauth_enabled'] ) ) {
 			$security_schemes = array(
-				array( 'type' => 'oauth2', 'scopes' => array( 'mcp:read', 'mcp:write' ) ),
+				array(
+					'type'   => 'oauth2',
+					'scopes' => array( 'mcp:read', 'mcp:write' ),
+				),
 			);
 			foreach ( $filtered as &$tool ) {
 				$tool['securitySchemes'] = $security_schemes;
@@ -461,7 +484,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 							'text' => 'Authentication required: insufficient permissions for this tool.',
 						),
 					),
-					'_meta' => array(
+					'_meta'   => array(
 						'mcp/www_authenticate' => array(
 							'Bearer resource_metadata="' . rest_url( 'axtolab-ai-connector/v1/oauth/metadata/resource' ) . '", error="insufficient_scope", error_description="OAuth authentication required to use this tool"',
 						),
@@ -527,10 +550,22 @@ class Axtolab_AI_Connector_MCP_Transport {
 	private static function dispatch_tool( string $tool_name, array $args ) {
 		// Handle destructive tools with confirmation flow.
 		$destructive_tools = array(
-			'wp_publish_content'  => array( 'action' => 'publish_content',  'key_tpl' => '{ct}:{id}:publish' ),
-			'wp_trash_content'    => array( 'action' => 'trash_content',    'key_tpl' => '{ct}:{id}:trash' ),
-			'wp_restore_content'  => array( 'action' => 'restore_content',  'key_tpl' => '{ct}:{id}:restore' ),
-			'wp_restore_revision' => array( 'action' => 'restore_revision', 'key_tpl' => '{ct}:{id}:revision:{rev}' ),
+			'wp_publish_content'  => array(
+				'action'  => 'publish_content',
+				'key_tpl' => '{ct}:{id}:publish',
+			),
+			'wp_trash_content'    => array(
+				'action'  => 'trash_content',
+				'key_tpl' => '{ct}:{id}:trash',
+			),
+			'wp_restore_content'  => array(
+				'action'  => 'restore_content',
+				'key_tpl' => '{ct}:{id}:restore',
+			),
+			'wp_restore_revision' => array(
+				'action'  => 'restore_revision',
+				'key_tpl' => '{ct}:{id}:revision:{rev}',
+			),
 		);
 
 		if ( isset( $destructive_tools[ $tool_name ] ) ) {
@@ -551,12 +586,12 @@ class Axtolab_AI_Connector_MCP_Transport {
 
 		$response = rest_do_request( $request );
 
-			if ( $response->is_error() ) {
-				$error      = $response->as_error();
-				$error_data = $error->get_error_data();
-				$status     = is_array( $error_data ) && isset( $error_data['status'] ) ? (int) $error_data['status'] : 500;
-				throw new Exception( esc_html( $error->get_error_message() ), absint( $status ) );
-			}
+		if ( $response->is_error() ) {
+			$error      = $response->as_error();
+			$error_data = $error->get_error_data();
+			$status     = is_array( $error_data ) && isset( $error_data['status'] ) ? (int) $error_data['status'] : 500;
+			throw new Exception( esc_html( $error->get_error_message() ), absint( $status ) );
+		}
 
 		return $response->get_data();
 	}
@@ -586,10 +621,21 @@ class Axtolab_AI_Connector_MCP_Transport {
 
 			case 'wp_find_content':
 				$request = new WP_REST_Request( 'GET', $ns . '/content' );
-				self::set_params( $request, $args, array(
-					'content_type', 'search', 'status', 'author', 'page', 'per_page',
-					'parent_term_slug', 'parent_taxonomy', 'solutions_only',
-				) );
+				self::set_params(
+					$request,
+					$args,
+					array(
+						'content_type',
+						'search',
+						'status',
+						'author',
+						'page',
+						'per_page',
+						'parent_term_slug',
+						'parent_taxonomy',
+						'solutions_only',
+					)
+				);
 				return $request;
 
 			case 'wp_get_content':
@@ -599,10 +645,20 @@ class Axtolab_AI_Connector_MCP_Transport {
 
 			case 'wp_create_draft':
 				$request = new WP_REST_Request( 'POST', $ns . '/content' );
-				self::set_params( $request, $args, array(
-					'content_type', 'title', 'content', 'excerpt', 'slug',
-					'content_format', 'author', 'date',
-				) );
+				self::set_params(
+					$request,
+					$args,
+					array(
+						'content_type',
+						'title',
+						'content',
+						'excerpt',
+						'slug',
+						'content_format',
+						'author',
+						'date',
+					)
+				);
 				if ( isset( $args['terms'] ) ) {
 					$request->set_param( 'terms', $args['terms'] );
 				}
@@ -657,8 +713,8 @@ class Axtolab_AI_Connector_MCP_Transport {
 				return $request;
 
 			case 'wp_restore_revision':
-				$id     = intval( $args['id'] ?? 0 );
-				$rev_id = intval( $args['revision_id'] ?? 0 );
+				$id      = intval( $args['id'] ?? 0 );
+				$rev_id  = intval( $args['revision_id'] ?? 0 );
 				$request = new WP_REST_Request( 'POST', $ns . '/content/' . $id . '/revisions/' . $rev_id . '/restore' );
 				$request->set_param( 'content_type', $args['content_type'] ?? 'post' );
 				return $request;
@@ -727,25 +783,50 @@ class Axtolab_AI_Connector_MCP_Transport {
 
 			case 'wp_insert_inline_image':
 				$request = new WP_REST_Request( 'POST', $ns . '/content/' . intval( $args['id'] ?? 0 ) . '/inline-image/insert' );
-				self::set_params( $request, $args, array(
-					'content_type', 'media_id', 'placement', 'heading_text',
-					'marker', 'align', 'size_slug', 'caption', 'alt_text',
-				) );
+				self::set_params(
+					$request,
+					$args,
+					array(
+						'content_type',
+						'media_id',
+						'placement',
+						'heading_text',
+						'marker',
+						'align',
+						'size_slug',
+						'caption',
+						'alt_text',
+					)
+				);
 				return $request;
 
 			case 'wp_replace_inline_image':
 				$request = new WP_REST_Request( 'POST', $ns . '/content/' . intval( $args['id'] ?? 0 ) . '/inline-image/replace' );
-				self::set_params( $request, $args, array(
-					'content_type', 'new_media_id', 'match_media_id',
-					'match_src_substring', 'alt_text', 'caption',
-				) );
+				self::set_params(
+					$request,
+					$args,
+					array(
+						'content_type',
+						'new_media_id',
+						'match_media_id',
+						'match_src_substring',
+						'alt_text',
+						'caption',
+					)
+				);
 				return $request;
 
 			case 'wp_remove_inline_image':
 				$request = new WP_REST_Request( 'POST', $ns . '/content/' . intval( $args['id'] ?? 0 ) . '/inline-image/remove' );
-				self::set_params( $request, $args, array(
-					'content_type', 'match_media_id', 'match_src_substring',
-				) );
+				self::set_params(
+					$request,
+					$args,
+					array(
+						'content_type',
+						'match_media_id',
+						'match_src_substring',
+					)
+				);
 				return $request;
 
 			// -- Yoast SEO --
@@ -808,12 +889,12 @@ class Axtolab_AI_Connector_MCP_Transport {
 				}
 				return $request;
 
-				case 'wp_get_upload_session':
-					return new WP_REST_Request( 'GET', $ns . '/upload/session/' . sanitize_text_field( $args['session_id'] ?? '' ) );
+			case 'wp_get_upload_session':
+				return new WP_REST_Request( 'GET', $ns . '/upload/session/' . sanitize_text_field( $args['session_id'] ?? '' ) );
 
-				default:
-					throw new Exception( esc_html( sprintf( 'Unknown tool: %s', sanitize_key( $tool_name ) ) ), -32601 );
-			}
+			default:
+				throw new Exception( esc_html( sprintf( 'Unknown tool: %s', sanitize_key( $tool_name ) ) ), -32601 );
+		}
 	}
 
 	// =========================================================================
@@ -828,7 +909,10 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 * @return array[]
 	 */
 	private static function get_tool_definitions(): array {
-		$ct_enum = array( 'type' => 'string', 'description' => 'WordPress content type (e.g. post, page).' );
+		$ct_enum = array(
+			'type'        => 'string',
+			'description' => 'WordPress content type (e.g. post, page).',
+		);
 
 		$tools = array();
 
@@ -837,21 +921,30 @@ class Axtolab_AI_Connector_MCP_Transport {
 		$tools[] = array(
 			'name'        => 'wp_getting_started',
 			'description' => 'Get site context, theme info, and editorial workflow guide. CALL THIS FIRST.',
-			'inputSchema' => array( 'type' => 'object', 'properties' => new stdClass() ),
+			'inputSchema' => array(
+				'type'       => 'object',
+				'properties' => new stdClass(),
+			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
 
 		$tools[] = array(
 			'name'        => 'wp_site_info',
 			'description' => 'Get site and capability metadata.',
-			'inputSchema' => array( 'type' => 'object', 'properties' => new stdClass() ),
+			'inputSchema' => array(
+				'type'       => 'object',
+				'properties' => new stdClass(),
+			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
 
 		$tools[] = array(
 			'name'        => 'wp_list_content_types',
 			'description' => 'List content types allowed for this site.',
-			'inputSchema' => array( 'type' => 'object', 'properties' => new stdClass() ),
+			'inputSchema' => array(
+				'type'       => 'object',
+				'properties' => new stdClass(),
+			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
 
@@ -865,7 +958,10 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'search'       => array( 'type' => 'string' ),
 					'status'       => array( 'type' => 'string' ),
 					'author'       => array( 'type' => 'integer' ),
-					'per_page'     => array( 'type' => 'integer', 'maximum' => 100 ),
+					'per_page'     => array(
+						'type'    => 'integer',
+						'maximum' => 100,
+					),
 					'page'         => array( 'type' => 'integer' ),
 				),
 			),
@@ -883,7 +979,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'id'           => array( 'type' => 'integer' ),
 					'content_type' => $ct_enum,
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -899,11 +995,14 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content'        => array( 'type' => 'string' ),
 					'excerpt'        => array( 'type' => 'string' ),
 					'slug'           => array( 'type' => 'string' ),
-					'content_format' => array( 'type' => 'string', 'enum' => array( 'html', 'markdown', 'auto' ) ),
+					'content_format' => array(
+						'type' => 'string',
+						'enum' => array( 'html', 'markdown', 'auto' ),
+					),
 					'author'         => array( 'type' => 'integer' ),
 					'date'           => array( 'type' => 'string' ),
 				),
-				'required' => array( 'content_type', 'title' ),
+				'required'   => array( 'content_type', 'title' ),
 			),
 		);
 
@@ -916,9 +1015,12 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'id'             => array( 'type' => 'integer' ),
 					'content_type'   => $ct_enum,
 					'patch'          => array( 'type' => 'object' ),
-					'content_format' => array( 'type' => 'string', 'enum' => array( 'html', 'markdown', 'auto' ) ),
+					'content_format' => array(
+						'type' => 'string',
+						'enum' => array( 'html', 'markdown', 'auto' ),
+					),
 				),
-				'required' => array( 'id', 'content_type', 'patch' ),
+				'required'   => array( 'id', 'content_type', 'patch' ),
 			),
 		);
 
@@ -930,10 +1032,13 @@ class Axtolab_AI_Connector_MCP_Transport {
 				'properties' => array(
 					'id'                 => array( 'type' => 'integer' ),
 					'content_type'       => $ct_enum,
-					'date'               => array( 'type' => 'string', 'description' => 'ISO 8601 UTC date for scheduling.' ),
+					'date'               => array(
+						'type'        => 'string',
+						'description' => 'ISO 8601 UTC date for scheduling.',
+					),
 					'confirmation_token' => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'destructiveHint' => true ),
 		);
@@ -948,7 +1053,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content_type'       => $ct_enum,
 					'confirmation_token' => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'destructiveHint' => true ),
 		);
@@ -963,7 +1068,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content_type'       => $ct_enum,
 					'confirmation_token' => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'destructiveHint' => true ),
 		);
@@ -978,7 +1083,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content_type' => $ct_enum,
 					'title'        => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 		);
 
@@ -993,7 +1098,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'id'           => array( 'type' => 'integer' ),
 					'content_type' => $ct_enum,
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -1009,7 +1114,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content_type'       => $ct_enum,
 					'confirmation_token' => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'revision_id', 'content_type' ),
+				'required'   => array( 'id', 'revision_id', 'content_type' ),
 			),
 			'annotations' => array( 'destructiveHint' => true ),
 		);
@@ -1019,7 +1124,10 @@ class Axtolab_AI_Connector_MCP_Transport {
 		$tools[] = array(
 			'name'        => 'wp_list_authors',
 			'description' => 'List allowlisted authors.',
-			'inputSchema' => array( 'type' => 'object', 'properties' => new stdClass() ),
+			'inputSchema' => array(
+				'type'       => 'object',
+				'properties' => new stdClass(),
+			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
 
@@ -1033,7 +1141,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content_type' => $ct_enum,
 					'author_id'    => array( 'type' => 'integer' ),
 				),
-				'required' => array( 'id', 'content_type', 'author_id' ),
+				'required'   => array( 'id', 'content_type', 'author_id' ),
 			),
 		);
 
@@ -1048,10 +1156,13 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'taxonomy' => array( 'type' => 'string' ),
 					'search'   => array( 'type' => 'string' ),
 					'parent'   => array( 'type' => 'integer' ),
-					'per_page' => array( 'type' => 'integer', 'maximum' => 100 ),
+					'per_page' => array(
+						'type'    => 'integer',
+						'maximum' => 100,
+					),
 					'page'     => array( 'type' => 'integer' ),
 				),
-				'required' => array( 'taxonomy' ),
+				'required'   => array( 'taxonomy' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -1068,7 +1179,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'parent'      => array( 'type' => 'integer' ),
 					'description' => array( 'type' => 'string' ),
 				),
-				'required' => array( 'taxonomy', 'name' ),
+				'required'   => array( 'taxonomy', 'name' ),
 			),
 		);
 
@@ -1080,9 +1191,12 @@ class Axtolab_AI_Connector_MCP_Transport {
 				'properties' => array(
 					'id'           => array( 'type' => 'integer' ),
 					'content_type' => $ct_enum,
-					'terms'        => array( 'type' => 'object', 'description' => 'Map of taxonomy slug to array of term IDs.' ),
+					'terms'        => array(
+						'type'        => 'object',
+						'description' => 'Map of taxonomy slug to array of term IDs.',
+					),
 				),
-				'required' => array( 'id', 'content_type', 'terms' ),
+				'required'   => array( 'id', 'content_type', 'terms' ),
 			),
 		);
 
@@ -1095,7 +1209,10 @@ class Axtolab_AI_Connector_MCP_Transport {
 				'type'       => 'object',
 				'properties' => array(
 					'search'    => array( 'type' => 'string' ),
-					'per_page'  => array( 'type' => 'integer', 'maximum' => 100 ),
+					'per_page'  => array(
+						'type'    => 'integer',
+						'maximum' => 100,
+					),
 					'page'      => array( 'type' => 'integer' ),
 					'mime_type' => array( 'type' => 'string' ),
 				),
@@ -1111,7 +1228,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 				'properties' => array(
 					'id' => array( 'type' => 'integer' ),
 				),
-				'required' => array( 'id' ),
+				'required'   => array( 'id' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -1128,7 +1245,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'description' => array( 'type' => 'string' ),
 					'title'       => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id' ),
+				'required'   => array( 'id' ),
 			),
 		);
 
@@ -1138,13 +1255,16 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'inputSchema' => array(
 				'type'       => 'object',
 				'properties' => array(
-					'url'         => array( 'type' => 'string', 'format' => 'uri' ),
+					'url'         => array(
+						'type'   => 'string',
+						'format' => 'uri',
+					),
 					'alt_text'    => array( 'type' => 'string' ),
 					'title'       => array( 'type' => 'string' ),
 					'caption'     => array( 'type' => 'string' ),
 					'description' => array( 'type' => 'string' ),
 				),
-				'required' => array( 'url' ),
+				'required'   => array( 'url' ),
 			),
 		);
 
@@ -1158,7 +1278,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content_type' => $ct_enum,
 					'media_id'     => array( 'type' => array( 'integer', 'null' ) ),
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 		);
 
@@ -1173,15 +1293,21 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'id'           => array( 'type' => 'integer' ),
 					'content_type' => $ct_enum,
 					'media_id'     => array( 'type' => 'integer' ),
-					'placement'    => array( 'type' => 'string', 'enum' => array( 'start', 'end', 'before_heading', 'after_heading', 'marker' ) ),
+					'placement'    => array(
+						'type' => 'string',
+						'enum' => array( 'start', 'end', 'before_heading', 'after_heading', 'marker' ),
+					),
 					'heading_text' => array( 'type' => 'string' ),
 					'marker'       => array( 'type' => 'string' ),
-					'align'        => array( 'type' => 'string', 'enum' => array( 'none', 'left', 'center', 'right', 'wide', 'full' ) ),
+					'align'        => array(
+						'type' => 'string',
+						'enum' => array( 'none', 'left', 'center', 'right', 'wide', 'full' ),
+					),
 					'size_slug'    => array( 'type' => 'string' ),
 					'caption'      => array( 'type' => 'string' ),
 					'alt_text'     => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'content_type', 'media_id', 'placement' ),
+				'required'   => array( 'id', 'content_type', 'media_id', 'placement' ),
 			),
 		);
 
@@ -1199,7 +1325,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'alt_text'            => array( 'type' => 'string' ),
 					'caption'             => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'content_type', 'new_media_id' ),
+				'required'   => array( 'id', 'content_type', 'new_media_id' ),
 			),
 		);
 
@@ -1214,7 +1340,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'match_media_id'      => array( 'type' => 'integer' ),
 					'match_src_substring' => array( 'type' => 'string' ),
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 		);
 
@@ -1229,7 +1355,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'id'           => array( 'type' => 'integer' ),
 					'content_type' => $ct_enum,
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -1244,7 +1370,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'content_type' => $ct_enum,
 					'yoast_meta'   => array( 'type' => 'object' ),
 				),
-				'required' => array( 'id', 'content_type', 'yoast_meta' ),
+				'required'   => array( 'id', 'content_type', 'yoast_meta' ),
 			),
 		);
 
@@ -1257,7 +1383,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'id'           => array( 'type' => 'integer' ),
 					'content_type' => $ct_enum,
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -1273,7 +1399,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'id'           => array( 'type' => 'integer' ),
 					'content_type' => $ct_enum,
 				),
-				'required' => array( 'id', 'content_type' ),
+				'required'   => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -1286,12 +1412,27 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'inputSchema' => array(
 				'type'       => 'object',
 				'properties' => array(
-					'prompt'       => array( 'type' => 'string', 'description' => 'Detailed description of the image to generate. Be specific about style, composition, lighting, and subject.' ),
-					'provider'     => array( 'type' => 'string', 'enum' => array( 'google_imagen', 'openai' ), 'description' => 'Which provider to use. Defaults to first enabled.' ),
-					'aspect_ratio' => array( 'type' => 'string', 'enum' => array( '1:1', '16:9', '9:16', '4:3', '3:4' ), 'description' => 'Aspect ratio. Default: 16:9.' ),
-					'quality'      => array( 'type' => 'string', 'enum' => array( 'low', 'medium', 'high' ), 'description' => 'Quality tier (affects cost for OpenAI). Default: medium.' ),
+					'prompt'       => array(
+						'type'        => 'string',
+						'description' => 'Detailed description of the image to generate. Be specific about style, composition, lighting, and subject.',
+					),
+					'provider'     => array(
+						'type'        => 'string',
+						'enum'        => array( 'google_imagen', 'openai' ),
+						'description' => 'Which provider to use. Defaults to first enabled.',
+					),
+					'aspect_ratio' => array(
+						'type'        => 'string',
+						'enum'        => array( '1:1', '16:9', '9:16', '4:3', '3:4' ),
+						'description' => 'Aspect ratio. Default: 16:9.',
+					),
+					'quality'      => array(
+						'type'        => 'string',
+						'enum'        => array( 'low', 'medium', 'high' ),
+						'description' => 'Quality tier (affects cost for OpenAI). Default: medium.',
+					),
 				),
-				'required' => array( 'prompt' ),
+				'required'   => array( 'prompt' ),
 			),
 		);
 
@@ -1301,12 +1442,28 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'inputSchema' => array(
 				'type'       => 'object',
 				'properties' => array(
-					'query'       => array( 'type' => 'string', 'description' => 'Search terms for finding relevant photos.' ),
-					'provider'    => array( 'type' => 'string', 'enum' => array( 'unsplash', 'pexels' ), 'description' => 'Which stock provider. Defaults to first enabled.' ),
-					'orientation' => array( 'type' => 'string', 'enum' => array( 'landscape', 'portrait', 'square' ), 'description' => 'Photo orientation filter.' ),
-					'per_page'    => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 10, 'description' => 'Number of results (1-10). Default: 5.' ),
+					'query'       => array(
+						'type'        => 'string',
+						'description' => 'Search terms for finding relevant photos.',
+					),
+					'provider'    => array(
+						'type'        => 'string',
+						'enum'        => array( 'unsplash', 'pexels' ),
+						'description' => 'Which stock provider. Defaults to first enabled.',
+					),
+					'orientation' => array(
+						'type'        => 'string',
+						'enum'        => array( 'landscape', 'portrait', 'square' ),
+						'description' => 'Photo orientation filter.',
+					),
+					'per_page'    => array(
+						'type'        => 'integer',
+						'minimum'     => 1,
+						'maximum'     => 10,
+						'description' => 'Number of results (1-10). Default: 5.',
+					),
 				),
-				'required' => array( 'query' ),
+				'required'   => array( 'query' ),
 			),
 			'annotations' => array( 'readOnlyHint' => true ),
 		);
@@ -1317,11 +1474,21 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'inputSchema' => array(
 				'type'       => 'object',
 				'properties' => array(
-					'provider'    => array( 'type' => 'string', 'enum' => array( 'unsplash', 'pexels' ), 'description' => 'The stock photo provider.' ),
-					'provider_id' => array( 'type' => 'string', 'description' => 'The photo ID from the search results.' ),
-					'alt_text'    => array( 'type' => 'string', 'description' => 'Override alt text (otherwise uses photo description).' ),
+					'provider'    => array(
+						'type'        => 'string',
+						'enum'        => array( 'unsplash', 'pexels' ),
+						'description' => 'The stock photo provider.',
+					),
+					'provider_id' => array(
+						'type'        => 'string',
+						'description' => 'The photo ID from the search results.',
+					),
+					'alt_text'    => array(
+						'type'        => 'string',
+						'description' => 'Override alt text (otherwise uses photo description).',
+					),
 				),
-				'required' => array( 'provider', 'provider_id' ),
+				'required'   => array( 'provider', 'provider_id' ),
 			),
 		);
 
@@ -1341,9 +1508,12 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'inputSchema' => array(
 				'type'       => 'object',
 				'properties' => array(
-					'media_id' => array( 'type' => 'integer', 'description' => 'The media ID of the generated image to confirm.' ),
+					'media_id' => array(
+						'type'        => 'integer',
+						'description' => 'The media ID of the generated image to confirm.',
+					),
 				),
-				'required' => array( 'media_id' ),
+				'required'   => array( 'media_id' ),
 			),
 		);
 
@@ -1355,7 +1525,10 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'inputSchema' => array(
 				'type'       => 'object',
 				'properties' => array(
-					'ip_binding' => array( 'type' => 'boolean', 'description' => 'Lock the session to the creator\'s IP address for extra security.' ),
+					'ip_binding' => array(
+						'type'        => 'boolean',
+						'description' => 'Lock the session to the creator\'s IP address for extra security.',
+					),
 				),
 			),
 		);
@@ -1366,9 +1539,12 @@ class Axtolab_AI_Connector_MCP_Transport {
 			'inputSchema' => array(
 				'type'       => 'object',
 				'properties' => array(
-					'session_id' => array( 'type' => 'string', 'description' => 'The session ID returned by wp_create_upload_session.' ),
+					'session_id' => array(
+						'type'        => 'string',
+						'description' => 'The session ID returned by wp_create_upload_session.',
+					),
 				),
-				'required' => array( 'session_id' ),
+				'required'   => array( 'session_id' ),
 			),
 		);
 

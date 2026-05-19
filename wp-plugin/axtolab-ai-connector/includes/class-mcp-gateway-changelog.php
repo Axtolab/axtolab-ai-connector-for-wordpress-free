@@ -97,6 +97,7 @@ class Axtolab_AI_Connector_Changelog {
 	public static function drop_table() {
 		global $wpdb;
 		$table = esc_sql( $wpdb->prefix . self::TABLE );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Dropping the plugin-owned changelog table on uninstall; no WP API exists for schema changes.
 		$wpdb->query( "DROP TABLE IF EXISTS $table" );
 	}
 
@@ -151,20 +152,21 @@ class Axtolab_AI_Connector_Changelog {
 		}
 
 		$row = array(
-			'created_by'         => get_current_user_id() ? (int) get_current_user_id() : null,
-			'connection_id'      => isset( $args['connection_id'] ) ? substr( (string) $args['connection_id'], 0, 64 ) : '',
-			'session_id'         => isset( $args['session_id'] ) ? substr( (string) $args['session_id'], 0, 128 ) : '',
-			'tool_name'          => substr( (string) $args['tool_name'], 0, 64 ),
-			'source'             => substr( (string) ( isset( $args['source'] ) ? $args['source'] : self::SOURCE_MCP ), 0, 32 ),
-			'target_type'        => substr( (string) $args['target_type'], 0, 32 ),
-			'target_id'          => substr( (string) $args['target_id'], 0, 64 ),
-			'action'             => substr( (string) $args['action'], 0, 32 ),
-			'before_snapshot'    => isset( $args['before'] ) ? wp_json_encode( $args['before'] ) : null,
-			'after_snapshot'     => isset( $args['after'] ) ? wp_json_encode( $args['after'] ) : null,
-			'redo_of_change_id'  => isset( $args['redo_of_change_id'] ) ? (int) $args['redo_of_change_id'] : null,
-			'note'               => isset( $args['note'] ) ? substr( (string) $args['note'], 0, 255 ) : '',
+			'created_by'        => get_current_user_id() ? (int) get_current_user_id() : null,
+			'connection_id'     => isset( $args['connection_id'] ) ? substr( (string) $args['connection_id'], 0, 64 ) : '',
+			'session_id'        => isset( $args['session_id'] ) ? substr( (string) $args['session_id'], 0, 128 ) : '',
+			'tool_name'         => substr( (string) $args['tool_name'], 0, 64 ),
+			'source'            => substr( (string) ( isset( $args['source'] ) ? $args['source'] : self::SOURCE_MCP ), 0, 32 ),
+			'target_type'       => substr( (string) $args['target_type'], 0, 32 ),
+			'target_id'         => substr( (string) $args['target_id'], 0, 64 ),
+			'action'            => substr( (string) $args['action'], 0, 32 ),
+			'before_snapshot'   => isset( $args['before'] ) ? wp_json_encode( $args['before'] ) : null,
+			'after_snapshot'    => isset( $args['after'] ) ? wp_json_encode( $args['after'] ) : null,
+			'redo_of_change_id' => isset( $args['redo_of_change_id'] ) ? (int) $args['redo_of_change_id'] : null,
+			'note'              => isset( $args['note'] ) ? substr( (string) $args['note'], 0, 255 ) : '',
 		);
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Insert into the plugin-owned changelog table; no WP API exists for custom tables and row-level cache would add invalidation complexity without correctness benefit.
 		$inserted = $wpdb->insert( $table, $row );
 		if ( false === $inserted ) {
 			return false;
@@ -185,6 +187,7 @@ class Axtolab_AI_Connector_Changelog {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLE;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Update on the plugin-owned changelog table; row-level cache would not improve correctness here.
 		$updated = $wpdb->update(
 			$table,
 			array(
@@ -207,9 +210,13 @@ class Axtolab_AI_Connector_Changelog {
 	public static function clear_rolled_back( $change_id ) {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLE;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Update on the plugin-owned changelog table; row-level cache would not improve correctness here.
 		$updated = $wpdb->update(
 			$table,
-			array( 'rolled_back_at' => null, 'rollback_change_id' => null ),
+			array(
+				'rolled_back_at'     => null,
+				'rollback_change_id' => null,
+			),
 			array( 'id' => (int) $change_id )
 		);
 		return false !== $updated;
@@ -225,6 +232,7 @@ class Axtolab_AI_Connector_Changelog {
 		global $wpdb;
 		$table = esc_sql( $wpdb->prefix . self::TABLE );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; no WP API exists for custom tables.
 		$row = $wpdb->get_row(
 			$wpdb->prepare( "SELECT * FROM $table WHERE id = %d", (int) $id ),
 			ARRAY_A
@@ -284,14 +292,14 @@ class Axtolab_AI_Connector_Changelog {
 		$where_sql = implode( ' AND ', $where );
 
 			$count_sql = "SELECT COUNT(*) FROM $table WHERE $where_sql";
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query fragments are built from fixed clauses above; values are prepared when present.
-			$total     = $vals ? (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $vals ) ) : (int) $wpdb->get_var( $count_sql );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; query fragments are built from fixed clauses above and values are prepared when present.
+			$total = $vals ? (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $vals ) ) : (int) $wpdb->get_var( $count_sql );
 
 		$select_cols = 'id, created_at, created_by, connection_id, session_id, tool_name, source, target_type, target_id, action, rolled_back_at, rollback_change_id, redo_of_change_id, note';
 		$list_sql    = "SELECT $select_cols FROM $table WHERE $where_sql ORDER BY id DESC LIMIT %d OFFSET %d";
 		$list_vals   = array_merge( $vals, array( $per_page, $offset ) );
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query fragments are built from fixed clauses above; values are prepared.
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; query fragments are built from fixed clauses above and values are prepared.
 			$rows = $wpdb->get_results( $wpdb->prepare( $list_sql, $list_vals ), ARRAY_A );
 		if ( ! $rows ) {
 			$rows = array();
@@ -321,8 +329,9 @@ class Axtolab_AI_Connector_Changelog {
 			return 0;
 		}
 
-		$table   = esc_sql( $wpdb->prefix . self::TABLE );
-		$cutoff  = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+		$table  = esc_sql( $wpdb->prefix . self::TABLE );
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Retention prune on the plugin-owned changelog table; runs from a daily cron, no cache layer applies.
 		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM $table WHERE created_at < %s", $cutoff ) );
 
 		return $deleted ? (int) $deleted : 0;
@@ -337,6 +346,7 @@ class Axtolab_AI_Connector_Changelog {
 	 */
 	private static function table_exists( $table ) {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Existence check for the plugin-owned changelog table; SHOW TABLES is the only way to verify table presence and is not cacheable.
 		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
 	}
 
@@ -349,27 +359,27 @@ class Axtolab_AI_Connector_Changelog {
 	 */
 	private static function hydrate_row( array $row, $include_snapshots ) {
 		$out = array(
-			'id'                  => (int) $row['id'],
-			'created_at'          => $row['created_at'],
-			'created_by'          => isset( $row['created_by'] ) ? (int) $row['created_by'] : null,
-			'connection_id'       => isset( $row['connection_id'] ) ? $row['connection_id'] : '',
-			'session_id'          => isset( $row['session_id'] ) ? $row['session_id'] : '',
-			'tool_name'           => isset( $row['tool_name'] ) ? $row['tool_name'] : '',
-			'source'              => isset( $row['source'] ) ? $row['source'] : '',
-			'target_type'         => isset( $row['target_type'] ) ? $row['target_type'] : '',
-			'target_id'           => isset( $row['target_id'] ) ? $row['target_id'] : '',
-			'action'              => isset( $row['action'] ) ? $row['action'] : '',
-			'rolled_back_at'      => isset( $row['rolled_back_at'] ) ? $row['rolled_back_at'] : null,
-			'rollback_change_id'  => isset( $row['rollback_change_id'] ) && $row['rollback_change_id'] ? (int) $row['rollback_change_id'] : null,
-			'redo_of_change_id'   => isset( $row['redo_of_change_id'] ) && $row['redo_of_change_id'] ? (int) $row['redo_of_change_id'] : null,
-			'note'                => isset( $row['note'] ) ? $row['note'] : '',
+			'id'                 => (int) $row['id'],
+			'created_at'         => $row['created_at'],
+			'created_by'         => isset( $row['created_by'] ) ? (int) $row['created_by'] : null,
+			'connection_id'      => isset( $row['connection_id'] ) ? $row['connection_id'] : '',
+			'session_id'         => isset( $row['session_id'] ) ? $row['session_id'] : '',
+			'tool_name'          => isset( $row['tool_name'] ) ? $row['tool_name'] : '',
+			'source'             => isset( $row['source'] ) ? $row['source'] : '',
+			'target_type'        => isset( $row['target_type'] ) ? $row['target_type'] : '',
+			'target_id'          => isset( $row['target_id'] ) ? $row['target_id'] : '',
+			'action'             => isset( $row['action'] ) ? $row['action'] : '',
+			'rolled_back_at'     => isset( $row['rolled_back_at'] ) ? $row['rolled_back_at'] : null,
+			'rollback_change_id' => isset( $row['rollback_change_id'] ) && $row['rollback_change_id'] ? (int) $row['rollback_change_id'] : null,
+			'redo_of_change_id'  => isset( $row['redo_of_change_id'] ) && $row['redo_of_change_id'] ? (int) $row['redo_of_change_id'] : null,
+			'note'               => isset( $row['note'] ) ? $row['note'] : '',
 		);
 
 		if ( $include_snapshots ) {
 			$out['before'] = isset( $row['before_snapshot'] ) && null !== $row['before_snapshot']
 				? json_decode( $row['before_snapshot'], true )
 				: null;
-			$out['after'] = isset( $row['after_snapshot'] ) && null !== $row['after_snapshot']
+			$out['after']  = isset( $row['after_snapshot'] ) && null !== $row['after_snapshot']
 				? json_decode( $row['after_snapshot'], true )
 				: null;
 		}

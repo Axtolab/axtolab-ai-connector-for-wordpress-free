@@ -43,9 +43,9 @@ class Axtolab_AI_Connector_Confirmation {
 		set_transient( 'axtolab_ai_connector_confirm_' . $token, $payload, self::$ttl );
 
 		return array(
-			'requires_confirmation'  => true,
-			'confirmation_token'     => $token,
-			'confirmation_payload'   => $payload,
+			'requires_confirmation' => true,
+			'confirmation_token'    => $token,
+			'confirmation_payload'  => $payload,
 		);
 	}
 
