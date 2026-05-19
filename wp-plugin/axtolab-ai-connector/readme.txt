@@ -189,7 +189,7 @@ This plugin connects to the following external services only when the correspond
 * **Endpoint:** API host `api.unsplash.com`, path `/search/photos` (HTTPS).
 * **When used:** When an AI agent searches for stock photos via the stock photo tool
 * **Data sent:** Search query, orientation preference
-* **Terms:** [Unsplash Terms](https://unsplash.com/terms) (general site Terms; the API-specific page at [Unsplash API Terms](https://unsplash.com/api-terms) extends these)
+* **Terms:** [Unsplash Terms](https://unsplash.com/terms)
 * **Privacy:** [Unsplash Privacy Policy](https://unsplash.com/privacy)
 
 = Pexels (Stock Photo Search) =

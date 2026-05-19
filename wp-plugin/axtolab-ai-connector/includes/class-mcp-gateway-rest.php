@@ -71,7 +71,7 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_get_change' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_view_changelog' ),
 			)
 		);
 
@@ -81,7 +81,7 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( __CLASS__, 'handle_rollback_change' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
 			)
 		);
 
@@ -91,7 +91,7 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( __CLASS__, 'handle_redo_change' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
 			)
 		);
 
@@ -101,7 +101,7 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( __CLASS__, 'handle_rollback_session' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
 			)
 		);
 
@@ -139,12 +139,12 @@ final class Axtolab_AI_Connector_REST {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( __CLASS__, 'handle_get_content' ),
-					'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+					'permission_callback' => array( __CLASS__, 'permission_read_post' ),
 				),
 				array(
 					'methods'             => 'PATCH',
 					'callback'            => array( __CLASS__, 'handle_update_content' ),
-					'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+					'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 				),
 			)
 		);
@@ -152,31 +152,31 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/publish', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_publish_content' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_publish_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/trash', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_trash_content' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_delete_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/restore', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_restore_content' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_delete_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/revisions', array(
 			'methods' => WP_REST_Server::READABLE,
 			'callback' => array( __CLASS__, 'handle_list_revisions' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_read_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/revisions/(?P<revision_id>\d+)/restore', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_restore_revision' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		register_rest_route( self::NS, '/authors', array(
@@ -188,7 +188,7 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/author', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_assign_author' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_assign_author' ),
 		) );
 
 		register_rest_route( self::NS, '/taxonomies/(?P<taxonomy>[a-zA-Z0-9_\-]+)/terms', array(
@@ -200,26 +200,26 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods' => WP_REST_Server::CREATABLE,
 				'callback' => array( __CLASS__, 'handle_create_term' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_manage_terms' ),
 			),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/terms', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_assign_terms' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		register_rest_route( self::NS, '/taxonomies/(?P<taxonomy>[a-zA-Z0-9_\-]+)/terms/(?P<term_id>\d+)', array(
 			array(
 				'methods' => WP_REST_Server::EDITABLE,
 				'callback' => array( __CLASS__, 'handle_update_term' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
 			),
 			array(
 				'methods' => WP_REST_Server::DELETABLE,
 				'callback' => array( __CLASS__, 'handle_delete_term' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_delete_term' ),
 			),
 		) );
 
@@ -244,7 +244,7 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods' => WP_REST_Server::CREATABLE,
 				'callback' => array( __CLASS__, 'handle_upload_media' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
 			),
 		) );
 
@@ -252,73 +252,73 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_get_media' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_get_media' ),
 			),
 			array(
 				'methods'             => 'PATCH',
 				'callback'            => array( __CLASS__, 'handle_update_media' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_media' ),
 			),
 		) );
 
 		register_rest_route( self::NS, '/media/from-url', array(
 		'methods'             => WP_REST_Server::CREATABLE,
 		'callback'            => array( __CLASS__, 'handle_upload_media_from_url' ),
-		'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+		'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
 	) );
 
 	register_rest_route( self::NS, '/content/(?P<id>\d+)/clone', array(
 		'methods'             => WP_REST_Server::CREATABLE,
 		'callback'            => array( __CLASS__, 'handle_clone_content' ),
-		'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+		'permission_callback' => array( __CLASS__, 'permission_read_post' ),
 	) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/featured-image', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_set_featured_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/inline-image/insert', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_insert_inline_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/inline-image/replace', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_replace_inline_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/inline-image/remove', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_remove_inline_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		register_rest_route( self::NS, '/yoast/analysis/(?P<id>\d+)', array(
 			'methods' => WP_REST_Server::READABLE,
 			'callback' => array( __CLASS__, 'handle_yoast_analysis' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_read_post' ),
 		) );
 
 		register_rest_route( self::NS, '/yoast/metadata/(?P<id>\d+)', array(
 			'methods' => 'PATCH',
 			'callback' => array( __CLASS__, 'handle_update_yoast_metadata' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		register_rest_route( self::NS, '/yoast/head/(?P<id>\d+)', array(
 			'methods' => WP_REST_Server::READABLE,
 			'callback' => array( __CLASS__, 'handle_yoast_head' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_read_post' ),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/preview-link', array(
 			'methods' => WP_REST_Server::CREATABLE,
 			'callback' => array( __CLASS__, 'handle_preview_link' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		// ── Post Meta / Custom Fields ───────────────────────────────────────────
@@ -327,19 +327,19 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_get_post_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
 			),
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( __CLASS__, 'handle_update_post_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 			),
 		) );
 
 		register_rest_route( self::NS, '/content/(?P<id>\d+)/meta/(?P<meta_key>[a-zA-Z0-9_\-]+)', array(
 			'methods'             => WP_REST_Server::DELETABLE,
 			'callback'            => array( __CLASS__, 'handle_delete_post_meta' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 		) );
 
 		// ── Comments ────────────────────────────────────────────────────────────
@@ -348,12 +348,12 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_list_comments' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
 			),
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( __CLASS__, 'handle_create_comment' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
 			),
 		) );
 
@@ -361,19 +361,19 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_get_comment' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
 			),
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( __CLASS__, 'handle_delete_comment' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
 			),
 		) );
 
 		register_rest_route( self::NS, '/comments/(?P<id>\d+)/moderate', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_moderate_comment' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
 		) );
 
 		// ── Audit Log ───────────────────────────────────────────────────────────
@@ -392,7 +392,7 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/image/generate', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_generate_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
 		) );
 
 		register_rest_route( self::NS, '/image/stock/search', array(
@@ -404,7 +404,7 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/image/stock/import', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_import_stock_photo' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
 		) );
 
 		register_rest_route( self::NS, '/image/providers', array(
@@ -416,7 +416,7 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/image/(?P<id>\d+)/confirm', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_confirm_image' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_media' ),
 		) );
 
 		// ── Upload Portal ──────────────────────────────────────────────────────
@@ -424,7 +424,7 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/upload/session', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_create_upload_session' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
 		) );
 
 		register_rest_route( self::NS, '/upload/session/(?P<id>[a-f0-9\-]{36})', array(
@@ -456,7 +456,7 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/content/(?P<id>[\d]+)/request-review', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_request_review' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 			'args'                => array(
 				'id'   => array(
 					'required'          => true,
@@ -515,10 +515,11 @@ final class Axtolab_AI_Connector_REST {
 		) );
 
 		// ── Navigation Menus (list / CRUD / reorder) ────────────────────────
-		// Reads (list, get) authenticated only. Writes (create, update,
-		// delete, reorder) require `edit_theme_options` capability —
-		// enforced in the handler since service-account users may not have
-		// the cap by default and we want a clear 403 explaining what to do.
+		// Reads (list, get) require authenticated access. Writes (create,
+		// update, delete, reorder) require the `edit_theme_options`
+		// capability via the dedicated permission callback so service-
+		// account users without the cap get a clear 403 before the handler
+		// runs.
 		register_rest_route( self::NS, '/menus', array(
 			'methods'             => WP_REST_Server::READABLE,
 			'callback'            => array( __CLASS__, 'handle_list_menus' ),
@@ -532,24 +533,24 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/menus/(?P<id>\d+)/items', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_create_menu_item' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
 		) );
 		register_rest_route( self::NS, '/menu-items/(?P<item_id>\d+)', array(
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( __CLASS__, 'handle_update_menu_item' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
 			),
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( __CLASS__, 'handle_delete_menu_item' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
 			),
 		) );
 		register_rest_route( self::NS, '/menus/(?P<id>\d+)/reorder', array(
 			'methods'             => WP_REST_Server::CREATABLE,
 			'callback'            => array( __CLASS__, 'handle_reorder_menu_items' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_theme_options' ),
 		) );
 
 		// ── Generic SEO meta (auto-detects Yoast / Rank Math / AIOSEO) ──────
@@ -564,12 +565,12 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_get_seo_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_read_post' ),
 			),
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( __CLASS__, 'handle_update_seo_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 			),
 		) );
 
@@ -586,7 +587,7 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_get_option' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
 			),
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -598,7 +599,7 @@ final class Axtolab_AI_Connector_REST {
 		register_rest_route( self::NS, '/plugin-settings/(?P<slug>[a-zA-Z0-9_\-]+)', array(
 			'methods'             => WP_REST_Server::READABLE,
 			'callback'            => array( __CLASS__, 'handle_get_plugin_settings' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_admin' ),
 		) );
 
 		// ── Term Meta (taxonomy term meta — Yoast/Rank Math/AIOSEO term SEO) ─
@@ -611,43 +612,44 @@ final class Axtolab_AI_Connector_REST {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( __CLASS__, 'handle_update_term_meta' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
 			),
 		) );
 		register_rest_route( self::NS, '/terms/(?P<term_id>\d+)/meta/(?P<meta_key>[a-zA-Z0-9_\-]+)', array(
 			'methods'             => WP_REST_Server::DELETABLE,
 			'callback'            => array( __CLASS__, 'handle_delete_term_meta' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_edit_term' ),
 		) );
 
 		// ── Plugins & Themes inventory ──────────────────────────────────────
 		// Read-only metadata (name, version, status, author, description) for
-		// installed plugins and themes. No install/activate/delete — that's
-		// security-heavy and AI Engine keeps it Pro-only. Authenticated read
-		// is sufficient since the data isn't sensitive in itself; it just
-		// gives AI agents context about what's running on the site.
+		// installed plugins and themes. The inventory leaks the active
+		// security-software footprint, so we gate behind `manage_options`
+		// rather than the broad authenticated check — matches WP core's
+		// own `/wp/v2/plugins` permission model.
 		register_rest_route( self::NS, '/plugins', array(
 			'methods'             => WP_REST_Server::READABLE,
 			'callback'            => array( __CLASS__, 'handle_list_plugins' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_admin' ),
 		) );
 
 		register_rest_route( self::NS, '/themes', array(
 			'methods'             => WP_REST_Server::READABLE,
 			'callback'            => array( __CLASS__, 'handle_list_themes' ),
-			'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+			'permission_callback' => array( __CLASS__, 'permission_admin' ),
 		) );
 
 		// ── Permalink structure ─────────────────────────────────────────────
-		// GET is authenticated-only (read is always safe). POST/PUT requires
-		// admin capability + an explicit admin toggle in axtolab_ai_connector_settings
-		// (`permalink_writes_enabled`, off by default) — three-gate pattern
-		// matching how Royal MCP gates wp_update_option.
+		// GET and write both require `manage_options`. The permalink
+		// structure is a site-wide setting and is gated identically to the
+		// `/options/{key}` endpoint above. Writes additionally require an
+		// explicit admin toggle in axtolab_ai_connector_settings
+		// (`permalink_writes_enabled`, off by default).
 		register_rest_route( self::NS, '/permalink-structure', array(
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'handle_get_permalink_structure' ),
-				'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+				'permission_callback' => array( __CLASS__, 'permission_admin' ),
 			),
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -685,11 +687,19 @@ final class Axtolab_AI_Connector_REST {
 	}
 
 	public static function permission_admin() {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error( 'forbidden', 'Administrator access required.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
 		}
 		return true;
 	}
@@ -761,6 +771,373 @@ final class Axtolab_AI_Connector_REST {
 		}
 		if ( ! current_user_can( 'axtolab_ai_connector_view_audit' ) && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error( 'forbidden', 'Viewing the audit log requires the axtolab_ai_connector_view_audit capability.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	// ── Per-object / per-capability permission callbacks ─────────────────────
+	//
+	// Each helper preserves the standard prelude that `permission_authenticated`
+	// uses (rate-limit → logged-in → cap check → multisite gate) and then runs
+	// a per-object `current_user_can()` against the specific resource the
+	// request targets. WP.org review feedback (round 4) required us to replace
+	// the broad `edit_posts` check on object-scoped routes with object-aware
+	// capability checks so a user with `edit_posts` cannot, for example, edit
+	// a post they are not allowed to touch under capability filters such as
+	// `map_meta_cap`.
+
+	/**
+	 * Permission callback for routes that read a single post object (by `id`).
+	 *
+	 * Capability: `read_post` on `$request['id']`.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_read_post( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$post_id = (int) $request['id'];
+		if ( $post_id <= 0 || ! current_user_can( 'read_post', $post_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to read this post.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that edit a single post object (by `id`).
+	 *
+	 * Capability: `edit_post` on `$request['id']`.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_edit_post( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$post_id = (int) $request['id'];
+		if ( $post_id <= 0 || ! current_user_can( 'edit_post', $post_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to edit this post.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that publish a single post object (by `id`).
+	 *
+	 * Capability: `publish_post` on `$request['id']`.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_publish_post( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$post_id = (int) $request['id'];
+		if ( $post_id <= 0 || ! current_user_can( 'publish_post', $post_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to publish this post.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that delete (trash/untrash) a single post.
+	 *
+	 * Capability: `delete_post` on `$request['id']`.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_delete_post( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$post_id = (int) $request['id'];
+		if ( $post_id <= 0 || ! current_user_can( 'delete_post', $post_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to delete this post.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that change a post's author.
+	 *
+	 * Capability: `edit_others_posts` (changing author requires this on top of
+	 * `edit_post` because you may be re-assigning to a user other than self).
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_assign_author( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$post_id = (int) $request['id'];
+		if ( $post_id <= 0 || ! current_user_can( 'edit_post', $post_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to edit this post.', array( 'status' => 403 ) );
+		}
+		if ( ! current_user_can( 'edit_others_posts' ) ) {
+			return new WP_Error( 'forbidden', 'Reassigning the author requires the edit_others_posts capability.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that read a single media attachment.
+	 *
+	 * Capability: `read_post` on the attachment ID (attachments are a CPT).
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_get_media( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$attachment_id = (int) $request['id'];
+		if ( $attachment_id <= 0 || ! current_user_can( 'read_post', $attachment_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to read this attachment.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that edit a single media attachment.
+	 *
+	 * Capability: `edit_post` on the attachment ID (attachments are a CPT).
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_edit_media( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$attachment_id = (int) $request['id'];
+		if ( $attachment_id <= 0 || ! current_user_can( 'edit_post', $attachment_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to edit this attachment.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that upload new files / create attachments.
+	 *
+	 * Capability: `upload_files`.
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function permission_upload_files() {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		if ( ! current_user_can( 'upload_files' ) ) {
+			return new WP_Error( 'forbidden', 'Uploading files requires the upload_files capability.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that create new taxonomy terms.
+	 *
+	 * Capability: `manage_terms` on the requested taxonomy. We resolve the
+	 * taxonomy from `$request['taxonomy']` and consult its registered caps
+	 * (defaults to `manage_categories` for built-in taxonomies).
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_manage_terms( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$taxonomy = sanitize_key( (string) $request['taxonomy'] );
+		$tax_obj  = $taxonomy ? get_taxonomy( $taxonomy ) : null;
+		$cap      = $tax_obj && isset( $tax_obj->cap->manage_terms ) ? $tax_obj->cap->manage_terms : 'manage_categories';
+		if ( ! current_user_can( $cap ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to manage terms for this taxonomy.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that edit a single taxonomy term.
+	 *
+	 * Capability: `edit_term` on the requested term ID. The term ID is read
+	 * from either `$request['term_id']` (taxonomy URL pattern) or
+	 * `$request['id']` (legacy alias).
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_edit_term( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$term_id = isset( $request['term_id'] ) ? (int) $request['term_id'] : (int) ( $request['id'] ?? 0 );
+		if ( $term_id <= 0 || ! current_user_can( 'edit_term', $term_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to edit this term.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that delete a single taxonomy term.
+	 *
+	 * Capability: `delete_term` on the requested term ID.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return true|WP_Error
+	 */
+	public static function permission_delete_term( $request ) {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		$term_id = isset( $request['term_id'] ) ? (int) $request['term_id'] : (int) ( $request['id'] ?? 0 );
+		if ( $term_id <= 0 || ! current_user_can( 'delete_term', $term_id ) ) {
+			return new WP_Error( 'forbidden', 'Insufficient capabilities to delete this term.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for comment-moderation routes.
+	 *
+	 * Capability: `moderate_comments`.
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function permission_moderate_comments() {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		if ( ! current_user_can( 'moderate_comments' ) ) {
+			return new WP_Error( 'forbidden', 'Moderating comments requires the moderate_comments capability.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for routes that write theme appearance / menu state.
+	 *
+	 * Capability: `edit_theme_options` — the standard cap for menu editing,
+	 * widgets, customizer, theme mods.
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function permission_edit_theme_options() {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			return new WP_Error( 'forbidden', 'Editing theme appearance requires the edit_theme_options capability.', array( 'status' => 403 ) );
 		}
 		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
 		if ( is_wp_error( $multisite_allowed ) ) {
