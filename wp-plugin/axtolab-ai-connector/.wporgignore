@@ -12,8 +12,10 @@ test-*.php
 .editorconfig
 .phpcs.xml
 phpcs.xml
+phpcs.xml.dist
 composer.json
 composer.lock
+vendor/
 node_modules/
 package.json
 package-lock.json

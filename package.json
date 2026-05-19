@@ -1,0 +1,11 @@
+{
+  "name": "axtolab-ai-connector-for-wordpress-free-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Root-level dev tooling wrapper for the Axtolab AI Connector for WordPress (Free) plugin. Not shipped with the published plugin zip.",
+  "scripts": {
+    "phpcs": "composer run phpcs",
+    "phpcs:fix": "composer run phpcs:fix"
+  },
+  "license": "GPL-2.0-or-later"
+}
