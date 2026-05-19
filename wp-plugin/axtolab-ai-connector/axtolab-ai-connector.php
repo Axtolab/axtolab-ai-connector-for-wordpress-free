@@ -3,7 +3,7 @@
  * Plugin Name:       Axtolab AI Connector
  * Description:       Let AI agents safely read, draft, edit, and publish WordPress content. Connects Claude, ChatGPT, and AI agents via MCP. One-click .mcpb installer and OAuth web-client flow included.
  * Version:           1.0.0
- * Requires at least: 6.0
+ * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Axtolab
  * License:           GPL-2.0-or-later
@@ -159,12 +159,20 @@ function axtolab_ai_connector_ensure_oauth_htaccess_rules(): void {
 	if ( ! function_exists( 'insert_with_markers' ) ) {
 		require_once ABSPATH . 'wp-admin/includes/misc.php';
 	}
+	if ( ! function_exists( 'WP_Filesystem' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
 
 	$htaccess_file = get_home_path() . '.htaccess';
 	if ( ! is_readable( $htaccess_file ) ) {
 		return;
 	}
-	$contents = file_get_contents( $htaccess_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local .htaccess for marker detection; wp_remote_get is for HTTP only. Phase B will switch to WP_Filesystem.
+
+	global $wp_filesystem;
+	if ( ! WP_Filesystem() || ! $wp_filesystem instanceof WP_Filesystem_Base ) {
+		return;
+	}
+	$contents = $wp_filesystem->get_contents( $htaccess_file );
 	if ( false === $contents ) {
 		return;
 	}

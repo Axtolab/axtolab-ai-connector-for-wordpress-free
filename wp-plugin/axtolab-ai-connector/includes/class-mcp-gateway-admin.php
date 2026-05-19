@@ -647,6 +647,7 @@ class Axtolab_AI_Connector_Admin {
 			$cached = 'dashicons-rest-api';
 			return $cached;
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading bundled plugin SVG asset (path is internal constant via plugin_dir_path, not user input); WP_Filesystem would add admin-init overhead with no benefit for a static plugin-owned file.
 		$svg = file_get_contents( $svg_path );
 		if ( $svg === false ) {
 			$cached = 'dashicons-rest-api';

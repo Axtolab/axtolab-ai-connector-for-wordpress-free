@@ -629,8 +629,15 @@ class Axtolab_AI_Connector_Upload_Portal {
 	 * @return true|WP_Error True on success, WP_Error on failure.
 	 */
 	private static function sanitize_svg( $file_path ) {
-		$contents = file_get_contents( $file_path );
-		if ( false === $contents || '' === trim( $contents ) ) {
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		global $wp_filesystem;
+		if ( ! WP_Filesystem() || ! $wp_filesystem instanceof WP_Filesystem_Base ) {
+			return new WP_Error( 'svg_fs_unavailable', 'Filesystem unavailable for SVG sanitization.', array( 'status' => 500 ) );
+		}
+		$contents = $wp_filesystem->get_contents( $file_path );
+		if ( false === $contents || '' === trim( (string) $contents ) ) {
 			return new WP_Error( 'svg_read_failed', 'Could not read SVG file.', array( 'status' => 400 ) );
 		}
 
@@ -686,7 +693,9 @@ class Axtolab_AI_Connector_Upload_Portal {
 			return new WP_Error( 'svg_save_failed', 'Failed to save sanitized SVG.', array( 'status' => 500 ) );
 		}
 
-		file_put_contents( $file_path, $clean );
+		if ( ! $wp_filesystem->put_contents( $file_path, $clean, FS_CHMOD_FILE ) ) {
+			return new WP_Error( 'svg_write_failed', 'Failed to write sanitized SVG.', array( 'status' => 500 ) );
+		}
 		return true;
 	}
 

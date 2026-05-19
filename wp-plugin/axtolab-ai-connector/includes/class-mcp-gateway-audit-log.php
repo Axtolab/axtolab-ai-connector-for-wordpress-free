@@ -70,9 +70,9 @@ class Axtolab_AI_Connector_Audit_Log {
 	 */
 	public static function drop_table() {
 		global $wpdb;
-		$table = esc_sql( $wpdb->prefix . self::TABLE );
+		$table = $wpdb->prefix . self::TABLE;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Dropping the plugin-owned audit-log table on uninstall; no WP API exists for schema changes.
-		$wpdb->query( "DROP TABLE IF EXISTS $table" );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 	}
 
 	/**
@@ -150,12 +150,11 @@ class Axtolab_AI_Connector_Audit_Log {
 		}
 
 		$where_sql = implode( ' AND ', $where );
-		$sql       = "SELECT * FROM $table WHERE $where_sql ORDER BY created_at DESC LIMIT %d OFFSET %d";
-		$vals[]    = $per_page;
-		$vals[]    = $offset;
+		$sql       = "SELECT * FROM %i WHERE $where_sql ORDER BY created_at DESC LIMIT %d OFFSET %d";
+		$prep_vals = array_merge( array( $table ), $vals, array( $per_page, $offset ) );
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned audit-log table; query fragments are built from fixed clauses above and values are prepared.
-			$results = $wpdb->get_results( $wpdb->prepare( $sql, $vals ), ARRAY_A );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned audit-log table; table name via %i, WHERE fragments are built from fixed clauses above and values are prepared.
+			$results = $wpdb->get_results( $wpdb->prepare( $sql, $prep_vals ), ARRAY_A );
 
 		return $results ? $results : array();
 	}
@@ -167,9 +166,9 @@ class Axtolab_AI_Connector_Audit_Log {
 	 */
 	public static function count() {
 		global $wpdb;
-		$table = esc_sql( $wpdb->prefix . self::TABLE );
+		$table = $wpdb->prefix . self::TABLE;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Count from the plugin-owned audit-log table; row-level cache would not improve correctness here.
-		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) );
 	}
 
 	/**
@@ -185,10 +184,10 @@ class Axtolab_AI_Connector_Audit_Log {
 			$days = self::RETENTION_DAYS;
 		}
 
-		$table  = esc_sql( $wpdb->prefix . self::TABLE );
+		$table  = $wpdb->prefix . self::TABLE;
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Retention prune on the plugin-owned audit-log table; runs from a daily cron, no cache layer applies.
-		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM $table WHERE created_at < %s", $cutoff ) );
+		$deleted = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE created_at < %s', $table, $cutoff ) );
 
 		return $deleted ? (int) $deleted : 0;
 	}

@@ -96,9 +96,9 @@ class Axtolab_AI_Connector_Changelog {
 	 */
 	public static function drop_table() {
 		global $wpdb;
-		$table = esc_sql( $wpdb->prefix . self::TABLE );
+		$table = $wpdb->prefix . self::TABLE;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Dropping the plugin-owned changelog table on uninstall; no WP API exists for schema changes.
-		$wpdb->query( "DROP TABLE IF EXISTS $table" );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 	}
 
 	/**
@@ -230,11 +230,11 @@ class Axtolab_AI_Connector_Changelog {
 	 */
 	public static function get( $id ) {
 		global $wpdb;
-		$table = esc_sql( $wpdb->prefix . self::TABLE );
+		$table = $wpdb->prefix . self::TABLE;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; no WP API exists for custom tables.
 		$row = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM $table WHERE id = %d", (int) $id ),
+			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, (int) $id ),
 			ARRAY_A
 		);
 
@@ -291,15 +291,15 @@ class Axtolab_AI_Connector_Changelog {
 
 		$where_sql = implode( ' AND ', $where );
 
-			$count_sql = "SELECT COUNT(*) FROM $table WHERE $where_sql";
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; query fragments are built from fixed clauses above and values are prepared when present.
-			$total = $vals ? (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $vals ) ) : (int) $wpdb->get_var( $count_sql );
+			$count_sql = "SELECT COUNT(*) FROM %i WHERE $where_sql";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; table name passed via %i identifier placeholder, WHERE fragments are built from fixed clauses above and values are prepared.
+			$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, array_merge( array( $table ), $vals ) ) );
 
 		$select_cols = 'id, created_at, created_by, connection_id, session_id, tool_name, source, target_type, target_id, action, rolled_back_at, rollback_change_id, redo_of_change_id, note';
-		$list_sql    = "SELECT $select_cols FROM $table WHERE $where_sql ORDER BY id DESC LIMIT %d OFFSET %d";
-		$list_vals   = array_merge( $vals, array( $per_page, $offset ) );
+		$list_sql    = "SELECT $select_cols FROM %i WHERE $where_sql ORDER BY id DESC LIMIT %d OFFSET %d";
+		$list_vals   = array_merge( array( $table ), $vals, array( $per_page, $offset ) );
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; query fragments are built from fixed clauses above and values are prepared.
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read from the plugin-owned changelog table; table name via %i, WHERE fragments are built from fixed clauses above and values are prepared.
 			$rows = $wpdb->get_results( $wpdb->prepare( $list_sql, $list_vals ), ARRAY_A );
 		if ( ! $rows ) {
 			$rows = array();
@@ -329,10 +329,10 @@ class Axtolab_AI_Connector_Changelog {
 			return 0;
 		}
 
-		$table  = esc_sql( $wpdb->prefix . self::TABLE );
+		$table  = $wpdb->prefix . self::TABLE;
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Retention prune on the plugin-owned changelog table; runs from a daily cron, no cache layer applies.
-		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM $table WHERE created_at < %s", $cutoff ) );
+		$deleted = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE created_at < %s', $table, $cutoff ) );
 
 		return $deleted ? (int) $deleted : 0;
 	}
