@@ -15,7 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_Bearer_Auth', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Bearer_Auth', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_Bearer_Auth {
 
 	/**
@@ -102,7 +105,6 @@ class Axtolab_AI_Connector_Bearer_Auth {
 		);
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Bearer_Auth', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Bearer_Auth', 'MCP_Gateway_Bearer_Auth' );

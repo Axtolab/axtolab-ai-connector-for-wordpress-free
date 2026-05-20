@@ -17,7 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_OAuth', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_OAuth', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_OAuth {
 
 	private const NS = 'axtolab-ai-connector/v1';
@@ -960,7 +963,6 @@ class Axtolab_AI_Connector_OAuth {
 		);
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_OAuth', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_OAuth', 'MCP_Gateway_OAuth' );

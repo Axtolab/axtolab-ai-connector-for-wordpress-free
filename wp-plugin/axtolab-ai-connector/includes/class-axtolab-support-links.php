@@ -25,7 +25,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_Support_Links', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Support_Links', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_Support_Links {
 
 	/**
@@ -269,7 +272,6 @@ class Axtolab_AI_Connector_Support_Links {
 // Back-compat alias for already-shipped add-on plugins that reference the
 // pre-rename class name. Safe to keep indefinitely — `class_alias` registers
 // a synonym without duplicating the implementation.
-endif;
 if ( ! class_exists( 'Axtolab_Support_Links', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Support_Links', 'Axtolab_Support_Links' );
 }

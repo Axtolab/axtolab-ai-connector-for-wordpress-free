@@ -4,7 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_Config', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Config', false ) ) {
+	return;
+}
+
 final class Axtolab_AI_Connector_Config {
 	private const OPTION_KEY = 'axtolab_ai_connector_settings';
 
@@ -47,7 +50,6 @@ final class Axtolab_AI_Connector_Config {
 		return apply_filters( 'axtolab_ai_connector_config', $config );
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Config', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Config', 'MCP_Gateway_Config' );

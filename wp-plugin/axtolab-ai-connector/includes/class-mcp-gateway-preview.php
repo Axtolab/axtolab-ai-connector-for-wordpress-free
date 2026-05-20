@@ -25,7 +25,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * build distributed separately at axtolab.com, where the implementation has
  * been re-architected to avoid `wp_set_current_user` entirely.
  */
-if ( ! class_exists( 'Axtolab_AI_Connector_Preview', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Preview', false ) ) {
+	return;
+}
+
 final class Axtolab_AI_Connector_Preview {
 
 	/**
@@ -53,7 +56,6 @@ final class Axtolab_AI_Connector_Preview {
 		);
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Preview', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Preview', 'MCP_Gateway_Preview' );

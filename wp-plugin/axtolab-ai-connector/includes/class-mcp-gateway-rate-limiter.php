@@ -15,7 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class Axtolab_AI_Connector_Rate_Limiter
  */
-if ( ! class_exists( 'Axtolab_AI_Connector_Rate_Limiter', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Rate_Limiter', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_Rate_Limiter {
 
 	/**
@@ -120,7 +123,6 @@ class Axtolab_AI_Connector_Rate_Limiter {
 		return $response;
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Rate_Limiter', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Rate_Limiter', 'MCP_Gateway_Rate_Limiter' );

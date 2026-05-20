@@ -19,7 +19,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class Axtolab_AI_Connector_Token_Auth
  */
-if ( ! class_exists( 'Axtolab_AI_Connector_Token_Auth', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Token_Auth', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_Token_Auth {
 
 	/**
@@ -126,7 +129,6 @@ class Axtolab_AI_Connector_Token_Auth {
 		return self::TOKEN_PREFIX . base64_encode( $json );
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Token_Auth', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Token_Auth', 'MCP_Gateway_Token_Auth' );

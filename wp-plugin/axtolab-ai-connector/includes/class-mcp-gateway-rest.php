@@ -4,7 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_REST', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_REST', false ) ) {
+	return;
+}
+
 final class Axtolab_AI_Connector_REST {
 	private const NS = 'axtolab-ai-connector/v1';
 
@@ -6026,7 +6029,6 @@ final class Axtolab_AI_Connector_REST {
 		return 'custom';
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_REST', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_REST', 'MCP_Gateway_REST' );

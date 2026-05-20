@@ -13,7 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_Confirmation', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Confirmation', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_Confirmation {
 
 	/**
@@ -76,7 +79,6 @@ class Axtolab_AI_Connector_Confirmation {
 		return $payload;
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Confirmation', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Confirmation', 'MCP_Gateway_Confirmation' );

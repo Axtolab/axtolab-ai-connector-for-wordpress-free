@@ -23,7 +23,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Free-core extension controls.
  */
-if ( ! class_exists( 'Axtolab_AI_Connector_Free_Gates', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Free_Gates', false ) ) {
+	return;
+}
+
 final class Axtolab_AI_Connector_Free_Gates {
 	/**
 	 * Whether this install may use AI Connector on WordPress multisite.
@@ -194,7 +197,6 @@ final class Axtolab_AI_Connector_Free_Gates {
 		unset( $reservation );
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Free_Gates', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Free_Gates', 'MCP_Gateway_Free_Gates' );

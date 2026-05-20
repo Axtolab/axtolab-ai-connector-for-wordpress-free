@@ -17,7 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Restrict service-account REST traffic to the plugin namespace.
  */
-if ( ! class_exists( 'Axtolab_AI_Connector_Service_Account_Guard', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Service_Account_Guard', false ) ) {
+	return;
+}
+
 final class Axtolab_AI_Connector_Service_Account_Guard {
 	/**
 	 * Supported connector REST namespace.
@@ -96,7 +99,6 @@ final class Axtolab_AI_Connector_Service_Account_Guard {
 		return self::REST_NAMESPACE === $route || 0 === strpos( $route, self::REST_NAMESPACE . '/' );
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Service_Account_Guard', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Service_Account_Guard', 'MCP_Gateway_Service_Account_Guard' );

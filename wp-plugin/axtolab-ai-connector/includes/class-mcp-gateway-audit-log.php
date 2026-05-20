@@ -15,7 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class Axtolab_AI_Connector_Audit_Log
  */
-if ( ! class_exists( 'Axtolab_AI_Connector_Audit_Log', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Audit_Log', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_Audit_Log {
 
 	/**
@@ -193,7 +196,6 @@ class Axtolab_AI_Connector_Audit_Log {
 		return $deleted ? (int) $deleted : 0;
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Audit_Log', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Audit_Log', 'MCP_Gateway_Audit_Log' );

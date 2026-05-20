@@ -14,7 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_Capabilities', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Capabilities', false ) ) {
+	return;
+}
+
 class Axtolab_AI_Connector_Capabilities {
 
 	/**
@@ -218,7 +221,6 @@ class Axtolab_AI_Connector_Capabilities {
 		return 'custom';
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Capabilities', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Capabilities', 'MCP_Gateway_Capabilities' );

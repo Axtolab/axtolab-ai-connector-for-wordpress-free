@@ -4,7 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! class_exists( 'Axtolab_AI_Connector_Response', false ) ) :
+if ( class_exists( 'Axtolab_AI_Connector_Response', false ) ) {
+	return;
+}
+
 final class Axtolab_AI_Connector_Response {
 	public static function success( $data, int $status = 200, ?string $audit_id = null ): WP_REST_Response {
 		$payload = array(
@@ -50,7 +53,6 @@ final class Axtolab_AI_Connector_Response {
 		);
 	}
 }
-endif;
 
 if ( ! class_exists( 'MCP_Gateway_Response', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Response', 'MCP_Gateway_Response' );
