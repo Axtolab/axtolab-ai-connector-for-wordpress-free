@@ -412,7 +412,9 @@ register_uninstall_hook( __FILE__, 'axtolab_ai_connector_uninstall' );
  * Removes everything the plugin created:
  *   - The `axtolab-connector-service` user (posts reassigned to user ID 1).
  *   - The `axtolab_ai_connector_editor` role.
+ *   - The custom audit-log and changelog database tables.
  *   - All plugin options.
+ *   - All plugin-set user meta keys (notice-dismissed flags, service-account marker).
  *   - All `axtolab_ai_connector_*` transients (rate limits, OAuth codes, upload sessions).
  *
  * @return void
@@ -442,20 +444,28 @@ function axtolab_ai_connector_uninstall(): void {
 		$admin->remove_cap( 'axtolab_ai_connector_view_audit' );
 	}
 
+	// ── Drop custom database tables ───────────────────────────────────────────
+	// Guarded with class_exists/method_exists because uninstall.php runs in a
+	// minimal WP context — the regular plugin includes may not have loaded.
+	if ( class_exists( 'Axtolab_AI_Connector_Audit_Log' ) && method_exists( 'Axtolab_AI_Connector_Audit_Log', 'drop_table' ) ) {
+		Axtolab_AI_Connector_Audit_Log::drop_table();
+	}
+	if ( class_exists( 'Axtolab_AI_Connector_Changelog' ) && method_exists( 'Axtolab_AI_Connector_Changelog', 'drop_table' ) ) {
+		Axtolab_AI_Connector_Changelog::drop_table();
+	}
+
 	// ── Delete plugin options ─────────────────────────────────────────────────
+	delete_option( 'axtolab_ai_connector_settings' );
 	delete_option( 'axtolab_ai_connector_service_user_id' );
 	delete_option( 'axtolab_ai_connector_htaccess_version' );
+	delete_option( 'axtolab_ai_connector_last_health_check' );
 
-	// Clean up legacy ChatGPT No-Auth URL settings from the main settings array.
-	$settings = get_option( 'axtolab_ai_connector_settings', array() );
-	unset( $settings['chatgpt_path_token_hash'] );
-	unset( $settings['chatgpt_path_token_created'] );
-	unset( $settings['chatgpt_path_token_prefix'] );
-	unset( $settings['chatgpt_noauth_enabled'] );
-	unset( $settings['chatgpt_capabilities'] );
-	if ( ! empty( $settings ) ) {
-		update_option( 'axtolab_ai_connector_settings', $settings );
-	}
+	// ── Delete plugin user meta across all users ──────────────────────────────
+	// $delete_all = true sweeps every user row in usermeta for the given key.
+	delete_metadata( 'user', 0, 'axtolab_ai_connector_core_deferral_dismissed', '', true );
+	delete_metadata( 'user', 0, 'axtolab_ai_connector_service_account', '', true );
+	delete_metadata( 'user', 0, 'axtolab_ai_connector_oauth_notice_dismissed', '', true );
+	delete_metadata( 'user', 0, 'axtolab_ai_connector_service_account_notice_dismissed', '', true );
 
 	// ── Delete all plugin transients ──────────────────────────────────────────
 	// WordPress stores transients in the options table as _transient_{key},

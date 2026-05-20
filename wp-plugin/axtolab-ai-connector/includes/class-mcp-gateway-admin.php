@@ -1161,8 +1161,7 @@ JS;
 					$discovery_result = wp_remote_get(
 						$discovery_url,
 						array(
-							'timeout'   => 5,
-							'sslverify' => false,
+							'timeout' => 5,
 						)
 					);
 					$discovery_ok     = false;
@@ -1205,8 +1204,7 @@ JS;
 						$wellknown_result = wp_remote_get(
 							$wellknown_url,
 							array(
-								'timeout'   => 5,
-								'sslverify' => false,
+								'timeout' => 5,
 							)
 						);
 						$wellknown_ok     = false;
