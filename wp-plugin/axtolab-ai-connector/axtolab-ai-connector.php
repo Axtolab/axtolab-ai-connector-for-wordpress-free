@@ -151,6 +151,30 @@ if ( ! defined( 'AXTOLAB_ADMIN_PARENT_SLUG' ) ) {
 	define( 'AXTOLAB_ADMIN_PARENT_SLUG', AXTOLAB_AI_CONNECTOR_ADMIN_PARENT_SLUG );
 }
 
+// ── i18n ─────────────────────────────────────────────────────────────────────
+
+if ( ! function_exists( 'axtolab_ai_connector_load_textdomain' ) ) {
+	/**
+	 * Load translations for the plugin's textdomain.
+	 *
+	 * WordPress auto-loads textdomains for plugins hosted on WordPress.org when
+	 * the plugin slug matches the textdomain, so this call is a defensive no-op
+	 * for the WP.org distribution. It exists to ensure translations also load
+	 * for installs outside WP.org (manual zip upload, dev mounts, etc.).
+	 *
+	 * @return void
+	 */
+	function axtolab_ai_connector_load_textdomain(): void {
+		load_plugin_textdomain(
+			'axtolab-ai-connector',
+			false,
+			dirname( plugin_basename( AXTOLAB_AI_CONNECTOR_FILE ) ) . '/languages'
+		);
+	}
+}
+
+add_action( 'init', 'axtolab_ai_connector_load_textdomain', 1 );
+
 // ── Includes ──────────────────────────────────────────────────────────────────
 
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-response.php';
