@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! class_exists( 'Axtolab_AI_Connector_Inline_Images', false ) ) :
 final class Axtolab_AI_Connector_Inline_Images {
 	public static function insert( WP_Post $post, array $args ) {
 		$content  = $post->post_content;
@@ -323,6 +324,7 @@ final class Axtolab_AI_Connector_Inline_Images {
 		return $content;
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Inline_Images', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Inline_Images', 'MCP_Gateway_Inline_Images' );

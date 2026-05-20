@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! class_exists( 'Axtolab_AI_Connector_Policy', false ) ) :
 final class Axtolab_AI_Connector_Policy {
 	/**
 	 * Validate a content type against the allowlist.
@@ -212,6 +213,7 @@ final class Axtolab_AI_Connector_Policy {
 		return $record;
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Policy', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Policy', 'MCP_Gateway_Policy' );

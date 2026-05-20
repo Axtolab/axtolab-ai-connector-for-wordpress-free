@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! class_exists( 'Axtolab_AI_Connector_Snapshots', false ) ) :
 class Axtolab_AI_Connector_Snapshots {
 
 	/**
@@ -550,6 +551,7 @@ class Axtolab_AI_Connector_Snapshots {
 		return true;
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Snapshots', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Snapshots', 'MCP_Gateway_Snapshots' );

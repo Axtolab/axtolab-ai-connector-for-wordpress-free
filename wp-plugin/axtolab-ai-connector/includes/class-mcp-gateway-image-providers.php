@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! class_exists( 'Axtolab_AI_Connector_Image_Providers', false ) ) :
 final class Axtolab_AI_Connector_Image_Providers {
 
 	/** WordPress option key for all image provider settings. */
@@ -916,6 +917,7 @@ final class Axtolab_AI_Connector_Image_Providers {
 		update_option( self::OPTION_KEY, $current, false );
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Image_Providers', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Image_Providers', 'MCP_Gateway_Image_Providers' );

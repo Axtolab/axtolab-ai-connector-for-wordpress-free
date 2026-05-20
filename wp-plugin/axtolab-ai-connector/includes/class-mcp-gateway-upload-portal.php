@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! class_exists( 'Axtolab_AI_Connector_Upload_Portal', false ) ) :
 class Axtolab_AI_Connector_Upload_Portal {
 
 	const SESSION_TTL       = 900;   // 15 minutes.
@@ -717,6 +718,7 @@ class Axtolab_AI_Connector_Upload_Portal {
 		);
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Upload_Portal', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Upload_Portal', 'MCP_Gateway_Upload_Portal' );

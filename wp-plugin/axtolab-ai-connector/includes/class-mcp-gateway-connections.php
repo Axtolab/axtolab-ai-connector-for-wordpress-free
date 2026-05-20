@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Static methods for listing, renaming, revoking, and tracking connections.
  */
+if ( ! class_exists( 'Axtolab_AI_Connector_Connections', false ) ) :
 class Axtolab_AI_Connector_Connections {
 
 	/**
@@ -680,6 +681,7 @@ class Axtolab_AI_Connector_Connections {
 		return $count;
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Connections', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Connections', 'MCP_Gateway_Connections' );

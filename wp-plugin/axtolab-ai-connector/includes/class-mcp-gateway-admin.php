@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Handles all wp-admin integration: menu, settings page, AJAX handlers.
  */
+if ( ! class_exists( 'Axtolab_AI_Connector_Admin', false ) ) :
 class Axtolab_AI_Connector_Admin {
 
 	/**
@@ -3495,6 +3496,7 @@ JS;
 JS;
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Admin', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Admin', 'MCP_Gateway_Admin' );

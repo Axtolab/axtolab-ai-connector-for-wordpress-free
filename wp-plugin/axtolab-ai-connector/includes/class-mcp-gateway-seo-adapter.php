@@ -24,6 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! class_exists( 'Axtolab_AI_Connector_SEO_Adapter', false ) ) :
 final class Axtolab_AI_Connector_SEO_Adapter {
 
 	/**
@@ -218,6 +219,7 @@ final class Axtolab_AI_Connector_SEO_Adapter {
 		);
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_SEO_Adapter', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_SEO_Adapter', 'MCP_Gateway_SEO_Adapter' );

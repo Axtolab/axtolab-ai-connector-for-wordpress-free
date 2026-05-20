@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! class_exists( 'Axtolab_AI_Connector_Changelog', false ) ) :
 class Axtolab_AI_Connector_Changelog {
 
 	const TABLE = 'axtolab_ai_connector_changelog';
@@ -387,6 +388,7 @@ class Axtolab_AI_Connector_Changelog {
 		return $out;
 	}
 }
+endif;
 
 if ( ! class_exists( 'MCP_Gateway_Changelog', false ) ) {
 	class_alias( 'Axtolab_AI_Connector_Changelog', 'MCP_Gateway_Changelog' );

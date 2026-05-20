@@ -17,6 +17,115 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// ── Core-precedence handoff ──────────────────────────────────────────────────
+//
+// If "Axtolab AI Connector for WordPress" (the axtolab.com-distributed build,
+// referred to internally as Core) is loaded, this Free build defers to it.
+// Core includes features that aren't permitted on the WordPress.org build
+// under the plugin directory guidelines, but is otherwise the same plugin
+// (same author, same code quality). When Core is active, the Free build
+// should not load any classes, register any hooks, or expose any UI — it
+// shows a dismissible admin notice instead.
+//
+// Both builds declare identically-named classes under the
+// `Axtolab_AI_Connector_*` namespace. If Free were to also load its includes,
+// PHP would fatal with "Cannot declare class Axtolab_AI_Connector_Response,
+// name is already in use" on activation.
+//
+// Detection has to be load-order independent. WordPress loads active plugins
+// in alphabetical order, so depending on directory name `axtolab-ai-connector`
+// (Free) may load before or after `axtolab-ai-core` (Core). We therefore
+// check both:
+//   1. Constants/classes Core defines very early in its main file — catches
+//      the case where Core already loaded.
+//   2. The `active_plugins` option — catches the case where Free loads first
+//      but Core is also active and will load after us.
+//
+// On match, we register a dismissible admin notice and `return;` before any
+// includes, hook registrations, or activation hooks run. The activating admin
+// sees a one-time notice explaining that Core is in charge and Free can be
+// deactivated. Nothing else in this file executes.
+
+$axtolab_ai_connector_core_active_plugins = function_exists( 'get_option' ) ? (array) get_option( 'active_plugins', array() ) : array();
+$axtolab_ai_connector_core_basenames      = array(
+	'axtolab-ai-core/wp-mcp-gateway.php',
+	'axtolab-ai-core/axtolab-ai-core.php',
+	'wp-mcp-gateway/wp-mcp-gateway.php',
+);
+$axtolab_ai_connector_core_is_active      = (bool) array_intersect( $axtolab_ai_connector_core_basenames, $axtolab_ai_connector_core_active_plugins );
+
+if (
+	$axtolab_ai_connector_core_is_active
+	|| defined( 'AXTOLAB_AI_CORE_VERSION' )
+	|| defined( 'AXTOLAB_AI_CORE_FILE' )
+) {
+	unset( $axtolab_ai_connector_core_active_plugins, $axtolab_ai_connector_core_basenames, $axtolab_ai_connector_core_is_active );
+
+	// Core is loaded (or will be) — bail before any class declarations, hook
+	// registrations, or activation hooks run. Surface a dismissible admin
+	// notice so site admins know Free is deferring intentionally.
+	if ( ! function_exists( 'axtolab_ai_connector_free_core_deferral_notice' ) ) {
+		/**
+		 * Admin notice shown when Free is active alongside Core.
+		 *
+		 * @return void
+		 */
+		function axtolab_ai_connector_free_core_deferral_notice() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+
+			$user_id = get_current_user_id();
+			if ( get_user_meta( $user_id, 'axtolab_ai_connector_core_deferral_dismissed', true ) ) {
+				return;
+			}
+
+			$nonce = wp_create_nonce( 'axtolab_ai_connector_dismiss_core_deferral_notice' );
+			?>
+			<div class="notice notice-info is-dismissible" data-axtolab-deferral-notice>
+				<p>
+					<strong><?php esc_html_e( 'Axtolab AI Connector for WordPress is active.', 'axtolab-ai-connector' ); ?></strong>
+					<?php esc_html_e( 'Axtolab AI Connector for WordPress Free is deferring to it, since the axtolab.com-distributed build includes additional features not permitted on the WordPress.org build under the plugin directory guidelines. You can safely deactivate the Free plugin from the Plugins page.', 'axtolab-ai-connector' ); ?>
+				</p>
+			</div>
+			<script>
+			document.addEventListener( 'click', function ( e ) {
+				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
+				var notice = e.target.closest( '[data-axtolab-deferral-notice]' );
+				if ( ! notice ) { return; }
+				var form = new FormData();
+				form.append( 'action', 'axtolab_ai_connector_dismiss_core_deferral_notice' );
+				form.append( 'nonce', <?php echo wp_json_encode( $nonce ); ?> );
+				fetch( ajaxurl, { method: 'POST', body: form, credentials: 'same-origin' } );
+			} );
+			</script>
+			<?php
+		}
+	}
+
+	if ( ! function_exists( 'axtolab_ai_connector_free_dismiss_core_deferral_notice' ) ) {
+		/**
+		 * AJAX handler — remembers that the user dismissed the deferral notice.
+		 *
+		 * @return void
+		 */
+		function axtolab_ai_connector_free_dismiss_core_deferral_notice() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( null, 403 );
+			}
+			check_ajax_referer( 'axtolab_ai_connector_dismiss_core_deferral_notice', 'nonce' );
+			update_user_meta( get_current_user_id(), 'axtolab_ai_connector_core_deferral_dismissed', 1 );
+			wp_send_json_success();
+		}
+	}
+
+	add_action( 'admin_notices', 'axtolab_ai_connector_free_core_deferral_notice' );
+	add_action( 'wp_ajax_axtolab_ai_connector_dismiss_core_deferral_notice', 'axtolab_ai_connector_free_dismiss_core_deferral_notice' );
+
+	return;
+}
+unset( $axtolab_ai_connector_core_active_plugins, $axtolab_ai_connector_core_basenames, $axtolab_ai_connector_core_is_active );
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 define( 'AXTOLAB_AI_CONNECTOR_VERSION', '1.0.0' );
