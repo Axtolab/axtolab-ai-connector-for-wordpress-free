@@ -19,18 +19,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Core-precedence handoff ──────────────────────────────────────────────────
 //
-// If "Axtolab AI Connector for WordPress" (the axtolab.com-distributed build,
-// referred to internally as Core) is loaded, this Free build defers to it.
-// Core includes features that aren't permitted on the WordPress.org build
-// under the plugin directory guidelines, but is otherwise the same plugin
-// (same author, same code quality). When Core is active, the Free build
-// should not load any classes, register any hooks, or expose any UI — it
-// shows a dismissible admin notice instead.
-//
-// Both builds declare identically-named classes under the
-// `Axtolab_AI_Connector_*` namespace. If Free were to also load its includes,
-// PHP would fatal with "Cannot declare class Axtolab_AI_Connector_Response,
-// name is already in use" on activation.
+// If "Axtolab AI Connector for WordPress" (referred to internally as Core) is
+// active alongside this Free build, defer to it. Both builds declare
+// identically-named classes under the `Axtolab_AI_Connector_*` namespace, so
+// loading both would fatal with "Cannot declare class … name is already in
+// use" on activation. Deferring also ensures the Axtolab add-on plugins bind
+// to a single Connector instance rather than two competing ones.
 //
 // Detection has to be load-order independent. WordPress loads active plugins
 // in alphabetical order, so depending on directory name `axtolab-ai-connector`
@@ -42,9 +36,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 //      but Core is also active and will load after us.
 //
 // On match, we register a dismissible admin notice and `return;` before any
-// includes, hook registrations, or activation hooks run. The activating admin
-// sees a one-time notice explaining that Core is in charge and Free can be
-// deactivated. Nothing else in this file executes.
+// includes, hook registrations, or activation hooks run. Nothing else in this
+// file executes.
 
 $axtolab_ai_connector_core_active_plugins = function_exists( 'get_option' ) ? (array) get_option( 'active_plugins', array() ) : array();
 $axtolab_ai_connector_core_basenames      = array(
@@ -85,7 +78,7 @@ if (
 			<div class="notice notice-info is-dismissible" data-axtolab-deferral-notice>
 				<p>
 					<strong><?php esc_html_e( 'Axtolab AI Connector for WordPress is active.', 'axtolab-ai-connector' ); ?></strong>
-					<?php esc_html_e( 'Axtolab AI Connector for WordPress Free is deferring to it, since the axtolab.com-distributed build includes additional features not permitted on the WordPress.org build under the plugin directory guidelines. You can safely deactivate the Free plugin from the Plugins page.', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'The Free plugin is deferring to ensure add-on compatibility and can be safely deactivated.', 'axtolab-ai-connector' ); ?>
 				</p>
 			</div>
 			<script>
