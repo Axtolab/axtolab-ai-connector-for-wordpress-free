@@ -86,9 +86,8 @@ The Claude Desktop installer bundle (`.mcpb`) is distributed as a GitHub Release
 
 = Requirements =
 
-* WordPress 6.0 or later
+* WordPress 6.2 or later
 * PHP 7.4 or later
-* Node.js 18+ only for local desktop MCP usage; it is not required to install or run the WordPress plugin itself
 
 == Frequently Asked Questions ==
 
@@ -180,7 +179,7 @@ This plugin connects to the following external services only when the correspond
 = Local MCP clients (Claude Desktop, Cursor, Claude Code, VS Code) =
 
 * **Service:** A local AI client running on the site administrator's own computer.
-* **When used:** When the site administrator runs the plugin's Setup CLI from their local machine to connect a desktop MCP client to the WordPress site. The plugin does not initiate any outbound network call to these clients; the local client connects inbound to the site's REST API using credentials issued during setup.
+* **When used:** When the site administrator installs the `.mcpb` bundle (downloaded from GitHub Releases via the AI Connector setup page) into a local AI client such as Claude Desktop. That client then connects inbound to the site's REST API using credentials issued during setup. The plugin does not initiate any outbound network call to these clients.
 * **Data sent:** Only what the AI client requests through tool calls the administrator has approved. The plugin does not send unsolicited data.
 
 = Unsplash (Stock Photo Search) =
