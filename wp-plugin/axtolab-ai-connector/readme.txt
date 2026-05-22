@@ -2,7 +2,7 @@
 Contributors: axtolab
 Tags: ai, mcp, claude, chatgpt, automation
 Requires at least: 6.2
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
@@ -245,7 +245,7 @@ First public WordPress.org release.
 
 Highlights:
 
-* **WordPress 6.9 QA verified.** Tested on a real WordPress 6.9 testbed, including the Abilities API bridge, admin UI, media/upload flows, auth methods, and deactivate/reactivate behaviour.
+* **WordPress 7.0 QA verified.** Tested on a real WordPress 7.0 testbed, including the Abilities API bridge, admin UI, media/upload flows, auth methods, and deactivate/reactivate behaviour.
 * **Health and ping endpoints.** `/wp-json/axtolab-ai-connector/v1/ping` and `/health-check` report connection status and the installed plugin version.
 * **Roll Back / Undo on every write.** Every AI-driven create, update, publish, trash, or restore action captures a before/after snapshot. Revert any change with one click from the Logs & Roll Back admin page.
 * **MCP tools** across content authoring, media management, taxonomy, authors, Yoast SEO, stock photos, image generation, upload portal, connection introspection, and Roll Back.
