@@ -464,7 +464,7 @@ final class Axtolab_AI_Connector_REST {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( __CLASS__, 'handle_create_comment' ),
-					'permission_callback' => array( __CLASS__, 'permission_moderate_comments' ),
+					'permission_callback' => array( __CLASS__, 'permission_create_comment' ),
 				),
 			)
 		);
@@ -1347,6 +1347,41 @@ final class Axtolab_AI_Connector_REST {
 		}
 		if ( ! current_user_can( 'moderate_comments' ) ) {
 			return new WP_Error( 'forbidden', 'Moderating comments requires the moderate_comments capability.', array( 'status' => 403 ) );
+		}
+		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
+		if ( is_wp_error( $multisite_allowed ) ) {
+			return $multisite_allowed;
+		}
+		return true;
+	}
+
+	/**
+	 * Permission callback for creating a comment.
+	 *
+	 * Distinct from `permission_moderate_comments` — comment CREATION is a
+	 * standard end-user action that WordPress itself does not gate on the
+	 * `moderate_comments` capability. Reviewers explicitly flagged the prior
+	 * use of `moderate_comments` here as overly restrictive (it blocked the
+	 * service account from posting comments even though service account has
+	 * `read` + `edit_posts`).
+	 *
+	 * The handler additionally checks `comments_open( $post_id )` so the
+	 * site's per-post comment setting is still respected.
+	 *
+	 * Capability: `read` (any authenticated user).
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function permission_create_comment() {
+		$rate_check = Axtolab_AI_Connector_Rate_Limiter::check();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
+		}
+		if ( ! current_user_can( 'read' ) ) {
+			return new WP_Error( 'forbidden', 'Posting a comment requires at least the read capability.', array( 'status' => 403 ) );
 		}
 		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
 		if ( is_wp_error( $multisite_allowed ) ) {
@@ -4736,6 +4771,14 @@ final class Axtolab_AI_Connector_REST {
 		$post    = get_post( $post_id );
 		if ( ! $post ) {
 			return Axtolab_AI_Connector_Response::error( 'not_found', 'Post not found.', 404, self::audit_id() );
+		}
+
+		// Respect the site's per-post comment setting. WordPress closes
+		// comments automatically after the discussion-settings age limit; we
+		// honour that here so the REST endpoint does not allow comments on
+		// posts where comments are not open.
+		if ( ! comments_open( $post_id ) ) {
+			return Axtolab_AI_Connector_Response::error( 'comments_closed', 'Comments are not open for this post.', 403, self::audit_id() );
 		}
 
 		$content = (string) $request->get_param( 'content' );

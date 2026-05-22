@@ -257,7 +257,6 @@ class Axtolab_AI_Connector_Upload_Portal {
 
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
 
 		// Set the service account as current user for upload permissions.
 		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
@@ -626,7 +625,7 @@ class Axtolab_AI_Connector_Upload_Portal {
 	/**
 	 * Sanitize an SVG file by stripping dangerous elements and attributes.
 	 *
-	 * Removes <script>, event handlers (on*), xlink:href to data/javascript URIs,
+	 * Removes script tags, event handlers (on*), xlink:href to data/javascript URIs,
 	 * and other potentially dangerous SVG content.
 	 *
 	 * @param string $file_path Path to the SVG temp file.

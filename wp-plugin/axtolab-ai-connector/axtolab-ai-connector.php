@@ -61,59 +61,30 @@ if (
 		/**
 		 * Admin notice shown when Free is active alongside Core.
 		 *
+		 * In practice this notice flashes for a single page load because
+		 * Core's reciprocal handoff auto-deactivates Free on the next
+		 * request. WordPress renders the `is-dismissible` X button
+		 * automatically; we deliberately do not ship any inline JS or AJAX
+		 * dismiss handler.
+		 *
 		 * @return void
 		 */
 		function axtolab_ai_connector_free_core_deferral_notice() {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return;
 			}
-
-			$user_id = get_current_user_id();
-			if ( get_user_meta( $user_id, 'axtolab_ai_connector_core_deferral_dismissed', true ) ) {
-				return;
-			}
-
-			$nonce = wp_create_nonce( 'axtolab_ai_connector_dismiss_core_deferral_notice' );
 			?>
-			<div class="notice notice-info is-dismissible" data-axtolab-deferral-notice>
+			<div class="notice notice-info is-dismissible">
 				<p>
 					<strong><?php esc_html_e( 'Axtolab AI Connector for WordPress is active.', 'axtolab-ai-connector' ); ?></strong>
 					<?php esc_html_e( 'The Free plugin is deferring to ensure add-on compatibility and can be safely deactivated.', 'axtolab-ai-connector' ); ?>
 				</p>
 			</div>
-			<script>
-			document.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				var notice = e.target.closest( '[data-axtolab-deferral-notice]' );
-				if ( ! notice ) { return; }
-				var form = new FormData();
-				form.append( 'action', 'axtolab_ai_connector_dismiss_core_deferral_notice' );
-				form.append( 'nonce', <?php echo wp_json_encode( $nonce ); ?> );
-				fetch( ajaxurl, { method: 'POST', body: form, credentials: 'same-origin' } );
-			} );
-			</script>
 			<?php
 		}
 	}
 
-	if ( ! function_exists( 'axtolab_ai_connector_free_dismiss_core_deferral_notice' ) ) {
-		/**
-		 * AJAX handler — remembers that the user dismissed the deferral notice.
-		 *
-		 * @return void
-		 */
-		function axtolab_ai_connector_free_dismiss_core_deferral_notice() {
-			if ( ! current_user_can( 'manage_options' ) ) {
-				wp_send_json_error( null, 403 );
-			}
-			check_ajax_referer( 'axtolab_ai_connector_dismiss_core_deferral_notice', 'nonce' );
-			update_user_meta( get_current_user_id(), 'axtolab_ai_connector_core_deferral_dismissed', 1 );
-			wp_send_json_success();
-		}
-	}
-
 	add_action( 'admin_notices', 'axtolab_ai_connector_free_core_deferral_notice' );
-	add_action( 'wp_ajax_axtolab_ai_connector_dismiss_core_deferral_notice', 'axtolab_ai_connector_free_dismiss_core_deferral_notice' );
 
 	return;
 }
@@ -719,7 +690,7 @@ function axtolab_ai_connector_bootstrap(): void {
 	// Defensively sanitize SVG uploads through ANY path. WordPress disallows
 	// SVG by default, but the moment another plugin (or the host) flips
 	// that on, an unsanitized SVG upload becomes a stored-XSS vector. We
-	// strip <script>, animation tags, on* handlers and javascript:/data:
+	// strip script/animation tags, on* handlers and javascript:/data:
 	// hrefs before WP moves the file into the uploads dir. Priority 1 so
 	// we run before any other prefilter.
 	add_filter( 'wp_handle_upload_prefilter', array( 'Axtolab_AI_Connector_Upload_Portal', 'sanitize_uploaded_svg_filter' ), 1 );
