@@ -3641,10 +3641,10 @@ final class Axtolab_AI_Connector_REST {
 		$caption     = (string) $request->get_param( 'caption' );
 		$description = (string) $request->get_param( 'description' );
 
-		// Download to temp file
+		// Download to temp file. file.php provides download_url();
+		// media.php provides media_handle_sideload() called below.
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
 
 		$tmp = download_url( $url, 30 );
 		if ( is_wp_error( $tmp ) ) {
