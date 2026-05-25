@@ -583,7 +583,10 @@ class Axtolab_AI_Connector_OAuth {
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding of random bytes for an OAuth 2.0 authorization code; not obfuscation.
 		$code = rtrim( strtr( base64_encode( random_bytes( 32 ) ), '+/', '-_' ), '=' );
 
-		// Store code with all context (10-minute TTL, single-use).
+		// Store code with all context (10-minute TTL, single-use). The
+		// approving admin's WP user ID is captured here so the resulting
+		// access token authenticates the MCP transport as that admin —
+		// previously this was a shared service account.
 		set_transient(
 			'axtolab_ai_connector_oauth_code_' . $code,
 			array(
@@ -592,6 +595,7 @@ class Axtolab_AI_Connector_OAuth {
 				'code_challenge' => sanitize_text_field( $post_params['code_challenge'] ?? '' ),
 				'scope'          => sanitize_text_field( $post_params['scope'] ?? '' ),
 				'resource'       => esc_url_raw( $post_params['resource'] ?? '' ),
+				'wp_user_id'     => get_current_user_id(),
 				'created_at'     => time(),
 			),
 			self::CODE_EXPIRY
@@ -706,11 +710,17 @@ class Axtolab_AI_Connector_OAuth {
 			$client_type = 'claude_web';
 		}
 
-		Axtolab_AI_Connector_Connections::register_meta(
+		// Record the OAuth connection in the registry with the approving
+		// admin's wp_user_id so the MCP transport can set_current_user() to
+		// the right person when verifying access tokens later.
+		$approving_user_id = isset( $code_data['wp_user_id'] ) ? (int) $code_data['wp_user_id'] : 0;
+		Axtolab_AI_Connector_Connections::register_connection(
 			Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID,
+			$approving_user_id,
 			array(
 				'client_type'  => $client_type,
 				'client_label' => $client_name,
+				'auth_method'  => 'oauth',
 			)
 		);
 

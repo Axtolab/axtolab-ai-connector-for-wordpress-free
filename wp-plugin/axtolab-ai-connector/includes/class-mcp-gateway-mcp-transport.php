@@ -230,11 +230,15 @@ class Axtolab_AI_Connector_MCP_Transport {
 
 		// Try bearer token first.
 		if ( Axtolab_AI_Connector_Bearer_Auth::verify_token( $provided_token ) ) {
-			$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-			if ( ! $service_user_id || ! get_user_by( 'id', $service_user_id ) ) {
-				return new WP_Error( 'server_error', 'Service account not found.', array( 'status' => 500 ) );
+			$bearer_user_id = Axtolab_AI_Connector_Bearer_Auth::get_token_user_id();
+			if ( ! $bearer_user_id || ! get_user_by( 'id', $bearer_user_id ) ) {
+				return new WP_Error(
+					'bearer_user_invalid',
+					'The Bearer token is no longer associated with a valid WordPress user. Recreate the token.',
+					array( 'status' => 401 )
+				);
 			}
-			wp_set_current_user( $service_user_id );
+			wp_set_current_user( $bearer_user_id );
 			self::$current_auth_type = 'bearer';
 
 			$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
@@ -247,11 +251,17 @@ class Axtolab_AI_Connector_MCP_Transport {
 
 		// Try OAuth token as fallback.
 		if ( Axtolab_AI_Connector_OAuth::verify_access_token( $provided_token ) ) {
-			$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-			if ( ! $service_user_id || ! get_user_by( 'id', $service_user_id ) ) {
-				return new WP_Error( 'server_error', 'Service account not found.', array( 'status' => 500 ) );
+			$oauth_user_id = Axtolab_AI_Connector_Connections::get_wp_user_id(
+				Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID
+			);
+			if ( ! $oauth_user_id || ! get_user_by( 'id', $oauth_user_id ) ) {
+				return new WP_Error(
+					'oauth_user_invalid',
+					'The OAuth connection is no longer associated with a valid WordPress user. Re-authorize the connection.',
+					array( 'status' => 401 )
+				);
 			}
-			wp_set_current_user( $service_user_id );
+			wp_set_current_user( $oauth_user_id );
 			self::$current_auth_type = 'oauth';
 
 			$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
@@ -262,9 +272,8 @@ class Axtolab_AI_Connector_MCP_Transport {
 			// Update last_active for the OAuth connection.
 			// The application_password_did_authenticate hook only fires for
 			// app-password auth, so OAuth connections need an explicit touch().
-			if ( class_exists( 'Axtolab_AI_Connector_Connections' ) ) {
-				Axtolab_AI_Connector_Connections::touch( Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID );
-			}
+			Axtolab_AI_Connector_Connections::set_current_connection_id( Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID );
+			Axtolab_AI_Connector_Connections::touch( Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID );
 
 			return true;
 		}

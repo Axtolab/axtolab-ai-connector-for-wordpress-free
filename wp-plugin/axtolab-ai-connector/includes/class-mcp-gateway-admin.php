@@ -3,8 +3,10 @@
  * MCP Gateway Admin
  *
  * Registers the admin menu page and renders all admin UI for the plugin,
- * including the "Connect AI Client" connection-token section, setup
- * checklist, and service-account management.
+ * including the "Connect AI Client" wizard, setup checklist, and per-
+ * connection management. The plugin does not create WordPress users; admins
+ * paste an Application Password (generated under WordPress's native
+ * Profile > Application Passwords UI) into the connection wizard.
  *
  * @package WP_MCP_Gateway
  * @since   0.1.0
@@ -42,25 +44,26 @@ class Axtolab_AI_Connector_Admin {
 	const PARENT_MENU_SLUG = 'axtolab';
 
 	/**
-	 * AJAX action for revoking all service-account app passwords.
+	 * AJAX action for revoking all known MCP connections.
 	 *
 	 * @var string
 	 */
 	const AJAX_REVOKE_ALL = 'axtolab_ai_connector_revoke_all_passwords';
 
 	/**
-	 * AJAX action for recreating the service account.
+	 * AJAX action for verifying a pasted Application Password against the
+	 * site's own REST API. Step 3 of the connection wizard.
 	 *
 	 * @var string
 	 */
-	const AJAX_RECREATE_SERVICE_ACCOUNT = 'axtolab_ai_connector_recreate_service_account';
+	const AJAX_WIZARD_VERIFY = 'axtolab_ai_connector_wizard_verify';
 
 	/**
-	 * AJAX action for generating a connection token.
+	 * AJAX action for finalising the wizard and creating a connection.
 	 *
 	 * @var string
 	 */
-	const AJAX_GENERATE_TOKEN = 'axtolab_ai_connector_generate_token';
+	const AJAX_WIZARD_CREATE = 'axtolab_ai_connector_wizard_create';
 
 	/**
 	 * AJAX action for toggling the Remote MCP feature.
@@ -184,42 +187,6 @@ class Axtolab_AI_Connector_Admin {
 	const OAUTH_NOTICE_DISMISSED_META = 'axtolab_ai_connector_oauth_notice_dismissed';
 
 	/**
-	 * admin-post.php action name for the explicit "Create service user"
-	 * consent click. WP.org plugin review forbids creating WordPress users
-	 * silently on activation, so the service account is materialised only
-	 * after an administrator clicks this consent button.
-	 *
-	 * @var string
-	 */
-	const SERVICE_ACCOUNT_CREATE_ACTION = 'axtolab_ai_connector_create_service_account';
-
-	/**
-	 * admin-post.php action name for dismissing the service-account consent
-	 * notice without creating the user. Sets a per-user dismissal flag so the
-	 * notice stops appearing for the admin who clicked Dismiss.
-	 *
-	 * @var string
-	 */
-	const SERVICE_ACCOUNT_DISMISS_ACTION = 'axtolab_ai_connector_dismiss_service_notice';
-
-	/**
-	 * Nonce action used by both consent-notice buttons (Create / Dismiss).
-	 *
-	 * @var string
-	 */
-	const SERVICE_ACCOUNT_NONCE_ACTION = 'axtolab_ai_connector_service_account_notice';
-
-	/**
-	 * User-meta key recording per-user dismissal of the service-account
-	 * consent notice. Stored per-user so other admins on the same site still
-	 * see the notice until they either create the user or dismiss it
-	 * themselves.
-	 *
-	 * @var string
-	 */
-	const SERVICE_ACCOUNT_NOTICE_DISMISSED_META = 'axtolab_ai_connector_service_account_notice_dismissed';
-
-	/**
 	 * Bind all WordPress hooks.
 	 *
 	 * @return void
@@ -232,14 +199,11 @@ class Axtolab_AI_Connector_Admin {
 
 		// Service-account consent notice + admin-post handlers (WP.org review:
 		// no silent user creation on activation; admin must explicitly opt in).
-		add_action( 'admin_notices', array( $this, 'render_service_account_consent_notice' ) );
-		add_action( 'admin_post_' . self::SERVICE_ACCOUNT_CREATE_ACTION, array( $this, 'handle_service_account_create' ) );
-		add_action( 'admin_post_' . self::SERVICE_ACCOUNT_DISMISS_ACTION, array( $this, 'handle_service_account_dismiss' ) );
 
 		// AJAX handlers — logged-in users only (nonce checked inside each handler).
 		add_action( 'wp_ajax_' . self::AJAX_REVOKE_ALL, array( $this, 'ajax_revoke_all_passwords' ) );
-		add_action( 'wp_ajax_' . self::AJAX_RECREATE_SERVICE_ACCOUNT, array( $this, 'ajax_recreate_service_account' ) );
-		add_action( 'wp_ajax_' . self::AJAX_GENERATE_TOKEN, array( $this, 'ajax_generate_token' ) );
+		add_action( 'wp_ajax_' . self::AJAX_WIZARD_VERIFY, array( $this, 'ajax_wizard_verify' ) );
+		add_action( 'wp_ajax_' . self::AJAX_WIZARD_CREATE, array( $this, 'ajax_wizard_create' ) );
 		add_action( 'wp_ajax_' . self::AJAX_TOGGLE_REMOTE, array( $this, 'ajax_toggle_remote' ) );
 		add_action( 'wp_ajax_' . self::AJAX_GENERATE_BEARER, array( $this, 'ajax_generate_bearer' ) );
 		add_action( 'wp_ajax_' . self::AJAX_REVOKE_BEARER, array( $this, 'ajax_revoke_bearer' ) );
@@ -357,199 +321,6 @@ class Axtolab_AI_Connector_Admin {
 			wp_safe_redirect( admin_url( 'plugins.php' ) );
 			exit;
 		}
-	}
-
-	// ── Service-account consent notice ───────────────────────────────────────
-	//
-	// WP.org plugin review (round 3) flagged automatic creation of a
-	// WordPress user on plugin activation as a security risk: a plugin must
-	// not create user accounts on a site without explicit administrator
-	// consent. We keep the dedicated service-account architecture (so AI
-	// edits are attributed to a minimal-permission identity that's
-	// independent of any human admin) but defer creation until the admin
-	// explicitly clicks "Create service user" on the AI Connector page.
-
-	/**
-	 * Whether the deferred service account still needs to be created.
-	 *
-	 * Returns true when the stored service-user option is missing, or when
-	 * the stored ID no longer resolves to a real WP user (e.g. someone
-	 * deleted it manually). Used to gate both the consent notice and
-	 * defensive UI fall-backs.
-	 *
-	 * @return bool
-	 */
-	public static function service_account_needs_creation(): bool {
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-		if ( $service_user_id <= 0 ) {
-			return true;
-		}
-		$user = get_user_by( 'id', $service_user_id );
-		return ! ( $user instanceof WP_User );
-	}
-
-	/**
-	 * Render the admin notice that asks the administrator for explicit
-	 * consent to create the AI Connector service user + role.
-	 *
-	 * Shown only when:
-	 *
-	 *   - the viewer can manage_options;
-	 *   - the current admin screen is an AI Connector / Axtolab page;
-	 *   - the service user does NOT yet exist;
-	 *   - the current admin hasn't dismissed the notice for themselves.
-	 *
-	 * The notice has two buttons:
-	 *
-	 *   - "Create service user" — POSTs to admin-post.php with a nonce and
-	 *     manage_options gate, which calls the shared idempotent
-	 *     {@see axtolab_ai_connector_ensure_service_account()} helper.
-	 *   - "Dismiss"             — POSTs to admin-post.php with a nonce, sets a
-	 *     per-user meta flag so the notice stops re-appearing for that user.
-	 *
-	 * @return void
-	 */
-	public function render_service_account_consent_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( null === $screen ) {
-			return;
-		}
-
-		// Limit the notice to AI Connector / Axtolab admin pages so we don't
-		// pollute unrelated wp-admin screens. Hook formats:
-		// toplevel_page_axtolab          (parent menu direct nav)
-		// axtolab_page_axtolab-ai-connector       (AI Connector submenu)
-		// axtolab_page_axtolab-ai-connector-logs  (Logs & Roll Back submenu)
-		$allowed_screens = array(
-			'toplevel_page_' . self::PARENT_MENU_SLUG,
-			self::PARENT_MENU_SLUG . '_page_' . self::MENU_SLUG,
-			self::PARENT_MENU_SLUG . '_page_' . self::MENU_SLUG . '-logs',
-		);
-		if ( ! in_array( $screen->id, $allowed_screens, true ) ) {
-			return;
-		}
-
-		if ( ! self::service_account_needs_creation() ) {
-			return;
-		}
-
-		if ( get_user_meta( get_current_user_id(), self::SERVICE_ACCOUNT_NOTICE_DISMISSED_META, true ) ) {
-			return;
-		}
-
-		$create_url = admin_url( 'admin-post.php' );
-		?>
-		<div class="notice notice-info">
-			<p>
-				<strong><?php esc_html_e( 'Axtolab AI Connector — one-time setup:', 'axtolab-ai-connector' ); ?></strong>
-				<?php esc_html_e( 'AI tool calls run as a dedicated service account so changes are auditable and never tied to your personal admin user.', 'axtolab-ai-connector' ); ?>
-			</p>
-			<p>
-				<?php
-				printf(
-					/* translators: 1: WP user login the plugin will create, 2: name of the WP role the plugin will create */
-					esc_html__( 'Click %1$s to create a WordPress user named %2$s with a custom %3$s role limited to editing posts, pages, media, and categories. The user has no admin / settings / user-management permissions. You can remove it any time by uninstalling the plugin.', 'axtolab-ai-connector' ),
-					'<strong>' . esc_html__( 'Create service user', 'axtolab-ai-connector' ) . '</strong>',
-					'<code>axtolab-connector-service</code>',
-					'<code>axtolab_ai_connector_editor</code>'
-				);
-				?>
-			</p>
-			<p>
-				<form method="post" action="<?php echo esc_url( $create_url ); ?>" style="display:inline;">
-					<input type="hidden" name="action" value="<?php echo esc_attr( self::SERVICE_ACCOUNT_CREATE_ACTION ); ?>" />
-					<?php wp_nonce_field( self::SERVICE_ACCOUNT_NONCE_ACTION ); ?>
-					<button type="submit" class="button button-primary">
-						<?php esc_html_e( 'Create service user', 'axtolab-ai-connector' ); ?>
-					</button>
-				</form>
-				<form method="post" action="<?php echo esc_url( $create_url ); ?>" style="display:inline; margin-left:6px;">
-					<input type="hidden" name="action" value="<?php echo esc_attr( self::SERVICE_ACCOUNT_DISMISS_ACTION ); ?>" />
-					<?php wp_nonce_field( self::SERVICE_ACCOUNT_NONCE_ACTION ); ?>
-					<button type="submit" class="button button-secondary">
-						<?php esc_html_e( 'Dismiss', 'axtolab-ai-connector' ); ?>
-					</button>
-				</form>
-			</p>
-			<p class="description">
-				<?php esc_html_e( 'If you dismiss this, you can still create the service user later from the "Service Account" row in the Setup Status panel below.', 'axtolab-ai-connector' ); ?>
-			</p>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Handle the "Create service user" consent click.
-	 *
-	 * POST → admin-post.php, nonce-protected, manage_options gated. Calls the
-	 * shared idempotent ensure-helper, then redirects back to the AI
-	 * Connector settings page with a status query arg.
-	 *
-	 * @return void
-	 */
-	public function handle_service_account_create(): void {
-		check_admin_referer( self::SERVICE_ACCOUNT_NONCE_ACTION );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die(
-				esc_html__( 'You do not have permission to perform this action.', 'axtolab-ai-connector' ),
-				esc_html__( 'Permission denied', 'axtolab-ai-connector' ),
-				array( 'response' => 403 )
-			);
-		}
-
-		$result   = axtolab_ai_connector_ensure_service_account();
-		$redirect = admin_url( 'admin.php?page=' . self::MENU_SLUG );
-
-		if ( is_wp_error( $result ) ) {
-			$redirect = add_query_arg(
-				array(
-					'axtolab_service_account' => 'error',
-					'axtolab_error'           => rawurlencode( $result->get_error_code() ),
-				),
-				$redirect
-			);
-		} else {
-			$redirect = add_query_arg( array( 'axtolab_service_account' => 'created' ), $redirect );
-		}
-
-		wp_safe_redirect( $redirect );
-		exit;
-	}
-
-	/**
-	 * Handle the "Dismiss" click on the service-account consent notice.
-	 *
-	 * POST → admin-post.php, nonce-protected, manage_options gated. Sets a
-	 * per-user meta flag so the notice stops appearing for the current admin
-	 * (other admins on the same site will still see it until they make their
-	 * own choice).
-	 *
-	 * @return void
-	 */
-	public function handle_service_account_dismiss(): void {
-		check_admin_referer( self::SERVICE_ACCOUNT_NONCE_ACTION );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die(
-				esc_html__( 'You do not have permission to perform this action.', 'axtolab-ai-connector' ),
-				esc_html__( 'Permission denied', 'axtolab-ai-connector' ),
-				array( 'response' => 403 )
-			);
-		}
-
-		update_user_meta( get_current_user_id(), self::SERVICE_ACCOUNT_NOTICE_DISMISSED_META, 1 );
-
-		$redirect = add_query_arg(
-			array( 'axtolab_service_account' => 'dismissed' ),
-			admin_url( 'admin.php?page=' . self::MENU_SLUG )
-		);
-		wp_safe_redirect( $redirect );
-		exit;
 	}
 
 	// ── Plugin-row Support / Docs links ──────────────────────────────────────
@@ -686,6 +457,19 @@ class Axtolab_AI_Connector_Admin {
 		wp_enqueue_style( 'axtolab-ai-connector-admin' );
 		wp_add_inline_style( 'axtolab-ai-connector-admin', $this->get_inline_styles() );
 
+		// Connection wizard stylesheet (lives under assets/ as required by
+		// the round-6 refactor). Ships separately from the inline admin CSS
+		// so it stays diffable and so the wizard's class names don't bleed
+		// into other admin screens.
+		if ( $is_settings ) {
+			wp_enqueue_style(
+				'axtolab-ai-connector-wizard',
+				plugins_url( 'assets/connection-wizard.css', AXTOLAB_AI_CONNECTOR_FILE ),
+				array(),
+				AXTOLAB_AI_CONNECTOR_VERSION
+			);
+		}
+
 		// Localized data for AJAX calls.
 		wp_register_script( 'axtolab-ai-connector-admin', false, array( 'jquery' ), AXTOLAB_AI_CONNECTOR_VERSION, true );
 		wp_enqueue_script( 'axtolab-ai-connector-admin' );
@@ -699,8 +483,9 @@ class Axtolab_AI_Connector_Admin {
 				'ajaxNonce'     => wp_create_nonce( self::MENU_SLUG . '-ajax' ),
 				'strings'       => array(
 					'revoking'      => __( 'Revoking…', 'axtolab-ai-connector' ),
-					'recreating'    => __( 'Recreating…', 'axtolab-ai-connector' ),
 					'confirmRevoke' => __( 'Revoke all active connections? Connected AI clients will lose access until re-authorized.', 'axtolab-ai-connector' ),
+					'verifying'     => __( 'Verifying…', 'axtolab-ai-connector' ),
+					'creating'      => __( 'Creating…', 'axtolab-ai-connector' ),
 				),
 				'mcpbAvailable' => true,
 				'actions'       => array(
@@ -712,11 +497,20 @@ class Axtolab_AI_Connector_Admin {
 					'saveReviewEmail'         => self::AJAX_SAVE_REVIEW_EMAIL,
 					'updateConnectionAuthors' => self::AJAX_UPDATE_CONNECTION_AUTHORS,
 					'toggleAdvancedWrite'     => self::AJAX_TOGGLE_ADVANCED_WRITE,
+					'wizardVerify'            => self::AJAX_WIZARD_VERIFY,
+					'wizardCreate'            => self::AJAX_WIZARD_CREATE,
 				),
 			)
 		);
 		if ( $is_settings ) {
 			wp_add_inline_script( 'axtolab-ai-connector-admin', $this->get_inline_script() );
+			wp_enqueue_script(
+				'axtolab-ai-connector-wizard',
+				plugins_url( 'assets/connection-wizard.js', AXTOLAB_AI_CONNECTOR_FILE ),
+				array( 'jquery', 'axtolab-ai-connector-admin' ),
+				AXTOLAB_AI_CONNECTOR_VERSION,
+				true
+			);
 		}
 		if ( $is_logs ) {
 			wp_add_inline_script( 'axtolab-ai-connector-admin', $this->get_logs_inline_script() );
@@ -1101,34 +895,18 @@ JS;
 					<span class="mcp-status-detail">v<?php echo esc_html( AXTOLAB_AI_CONNECTOR_VERSION ); ?></span>
 				</li>
 
-				<?php // 2. Service Account. ?>
-				<?php if ( $status['service_account_exists'] && $status['service_account_role'] ) : ?>
+				<?php // 2. App Passwords supported. ?>
+				<?php if ( class_exists( 'WP_Application_Passwords' ) && wp_is_application_passwords_available() ) : ?>
 					<li class="status-ok">
 						<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
-						<span class="mcp-status-label"><?php esc_html_e( 'Service Account', 'axtolab-ai-connector' ); ?></span>
-						<span class="mcp-status-detail"><?php esc_html_e( 'axtolab-connector-service', 'axtolab-ai-connector' ); ?></span>
-					</li>
-				<?php elseif ( $status['service_account_exists'] && ! $status['service_account_role'] ) : ?>
-					<li class="status-warn">
-						<span class="mcp-status-icon dashicons dashicons-warning"></span>
-						<span class="mcp-status-label"><?php esc_html_e( 'Service Account', 'axtolab-ai-connector' ); ?></span>
-						<span class="mcp-status-detail"><?php esc_html_e( 'Wrong role assigned', 'axtolab-ai-connector' ); ?></span>
-						<button type="button" class="button button-small mcp-ajax-btn"
-							data-action="<?php echo esc_attr( self::AJAX_RECREATE_SERVICE_ACCOUNT ); ?>"
-							data-loading="<?php esc_attr_e( 'Recreating…', 'axtolab-ai-connector' ); ?>">
-							<?php esc_html_e( 'Fix', 'axtolab-ai-connector' ); ?>
-						</button>
+						<span class="mcp-status-label"><?php esc_html_e( 'Application Passwords', 'axtolab-ai-connector' ); ?></span>
+						<span class="mcp-status-detail"><?php esc_html_e( 'Available', 'axtolab-ai-connector' ); ?></span>
 					</li>
 				<?php else : ?>
 					<li class="status-error">
 						<span class="mcp-status-icon dashicons dashicons-dismiss"></span>
-						<span class="mcp-status-label"><?php esc_html_e( 'Service Account', 'axtolab-ai-connector' ); ?></span>
-						<span class="mcp-status-detail"><?php esc_html_e( 'Missing', 'axtolab-ai-connector' ); ?></span>
-						<button type="button" class="button button-small mcp-ajax-btn"
-							data-action="<?php echo esc_attr( self::AJAX_RECREATE_SERVICE_ACCOUNT ); ?>"
-							data-loading="<?php esc_attr_e( 'Recreating…', 'axtolab-ai-connector' ); ?>">
-							<?php esc_html_e( 'Recreate', 'axtolab-ai-connector' ); ?>
-						</button>
+						<span class="mcp-status-label"><?php esc_html_e( 'Application Passwords', 'axtolab-ai-connector' ); ?></span>
+						<span class="mcp-status-detail"><?php esc_html_e( 'Disabled — enable Application Passwords on this site to use the AI Connector.', 'axtolab-ai-connector' ); ?></span>
 					</li>
 				<?php endif; ?>
 
@@ -1252,9 +1030,8 @@ JS;
 	 * @return void
 	 */
 	private function render_connect_claude_section( array $status ): void {
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-		$app_pwd_count   = $status['active_app_passwords'];
-		$hostname        = wp_parse_url( home_url(), PHP_URL_HOST );
+		unset( $status ); // Reserved for future per-status badges; intentionally unused right now.
+		$hostname = wp_parse_url( home_url(), PHP_URL_HOST );
 		?>
 		<div class="mcp-gateway-card mcp-gateway-connect">
 			<h2><?php esc_html_e( 'Connect AI Client', 'axtolab-ai-connector' ); ?></h2>
@@ -1273,7 +1050,7 @@ JS;
 				</button>
 			</div>
 
-			<?php // ── Tab 1: Quick Connect (token-based, no HTTP needed) ─────────── ?>
+			<?php // ── Tab 1: Quick Connect (Application Password wizard) ────────── ?>
 			<div class="mcp-tab-content mcp-tab-content-active" data-tab="quick-connect">
 
 				<p class="mcp-help-text"><?php esc_html_e( 'Set up Claude Desktop, Claude Code, or compatible local AI clients for the best experience — full filesystem access and local image uploads.', 'axtolab-ai-connector' ); ?></p>
@@ -1297,32 +1074,15 @@ JS;
 					</a>
 				</p>
 
-				<p class="mcp-field-label"><?php esc_html_e( 'Step 2: Generate a connection token', 'axtolab-ai-connector' ); ?></p>
+				<p class="mcp-field-label"><?php esc_html_e( 'Step 2: Add a new connection', 'axtolab-ai-connector' ); ?></p>
 				<p class="mcp-help-text">
-					<?php esc_html_e( 'This creates a one-time token with the credentials your AI client needs to connect to your site.', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'Each AI client connects with its own Application Password, created in your WordPress profile. The "+ Add new connection" wizard in the Connected Clients section below walks you through it.', 'axtolab-ai-connector' ); ?>
 				</p>
 				<p>
-					<button type="button" id="mcp-generate-token-btn" class="button button-primary">
-						<?php esc_html_e( 'Generate Connection Token', 'axtolab-ai-connector' ); ?>
-					</button>
+					<a href="#mcp-connections-card" class="button button-primary" id="mcp-jump-to-connections">
+						<?php esc_html_e( 'Add new connection', 'axtolab-ai-connector' ); ?>
+					</a>
 				</p>
-				<p id="mcp-token-message" class="mcp-feedback" aria-live="polite"></p>
-
-				<div id="mcp-token-result" style="display:none;">
-					<p class="mcp-field-label"><?php esc_html_e( 'Step 3: Paste the token into the extension settings', 'axtolab-ai-connector' ); ?></p>
-					<p class="mcp-help-text">
-						<?php esc_html_e( 'In Claude Desktop → Settings → Extensions → Axtolab AI Connector, paste the token.', 'axtolab-ai-connector' ); ?>
-					</p>
-					<div class="mcp-copy-block">
-						<pre class="mcp-code-block" id="mcp-token-prompt"></pre>
-						<button type="button" class="button button-small mcp-copy-btn" data-target="mcp-token-prompt">
-							<?php esc_html_e( 'Copy', 'axtolab-ai-connector' ); ?>
-						</button>
-					</div>
-					<p class="mcp-help-text">
-						<?php esc_html_e( 'Treat this token like a password — do not share it.', 'axtolab-ai-connector' ); ?>
-					</p>
-				</div>
 
 			</div><!-- tab: quick-connect -->
 
@@ -1724,7 +1484,15 @@ JS;
 		? $settings['review_notification_email']
 		: '';
 		?>
-		<h3><?php esc_html_e( 'Connected Clients', 'axtolab-ai-connector' ); ?></h3>
+		<h3 id="mcp-connections-card"><?php esc_html_e( 'Connected Clients', 'axtolab-ai-connector' ); ?></h3>
+
+		<div class="mcp-connections-toolbar" style="display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+			<button type="button" class="button button-primary" id="mcp-wizard-open-btn" aria-controls="mcp-wizard-panel" aria-expanded="false">
+				<span aria-hidden="true">+ </span><?php esc_html_e( 'Add new connection', 'axtolab-ai-connector' ); ?>
+			</button>
+		</div>
+
+		<?php $this->render_connection_wizard_panel(); ?>
 
 		<div class="mcp-review-email-row" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 			<label for="mcp-review-email" style="font-weight: 500; white-space: nowrap;">
@@ -1747,13 +1515,14 @@ JS;
 
 		<?php if ( 0 === $count ) : ?>
 			<p class="mcp-help-text">
-				<?php esc_html_e( 'No clients are currently connected. Use the setup tabs above to connect your first client.', 'axtolab-ai-connector' ); ?>
+				<?php esc_html_e( 'No clients are connected yet. Click "+ Add new connection" above to create your first one.', 'axtolab-ai-connector' ); ?>
 			</p>
 		<?php else : ?>
 			<table class="mcp-connections-table" id="mcp-connections-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Label', 'axtolab-ai-connector' ); ?></th>
+						<th><?php esc_html_e( 'WP user', 'axtolab-ai-connector' ); ?></th>
 						<th><?php esc_html_e( 'Client Type', 'axtolab-ai-connector' ); ?></th>
 						<th><?php esc_html_e( 'Auth Method', 'axtolab-ai-connector' ); ?></th>
 						<th><?php esc_html_e( 'Created', 'axtolab-ai-connector' ); ?></th>
@@ -1767,6 +1536,17 @@ JS;
 							<td class="mcp-conn-label" title="<?php echo esc_attr( $conn['label'] ); ?>">
 								<span class="mcp-conn-label-text"><?php echo esc_html( $conn['label'] ); ?></span>
 								<input type="text" class="mcp-conn-label-input" value="<?php echo esc_attr( $conn['label'] ); ?>" maxlength="200" style="display:none;" />
+							</td>
+							<td>
+								<?php if ( ! empty( $conn['needs_reauth'] ) ) : ?>
+									<span style="color:#d63638;" title="<?php esc_attr_e( 'The underlying WordPress user no longer exists. Revoke this connection and create a new one.', 'axtolab-ai-connector' ); ?>">
+										<?php esc_html_e( 'Needs re-auth', 'axtolab-ai-connector' ); ?>
+									</span>
+								<?php elseif ( ! empty( $conn['wp_user_login'] ) ) : ?>
+									<code><?php echo esc_html( $conn['wp_user_login'] ); ?></code>
+								<?php else : ?>
+									&mdash;
+								<?php endif; ?>
 							</td>
 							<td>
 								<span class="mcp-conn-type-badge mcp-conn-type-<?php echo esc_attr( $conn['client_type'] ); ?>">
@@ -1787,7 +1567,7 @@ JS;
 							</td>
 						</tr>
 						<tr class="mcp-connection-caps-row" data-id="<?php echo esc_attr( $conn['id'] ); ?>" style="display:none;">
-							<td colspan="6">
+							<td colspan="7">
 								<div class="mcp-conn-caps-editor">
 									<div style="margin-bottom: 8px;">
 										<label><?php esc_html_e( 'Preset:', 'axtolab-ai-connector' ); ?>
@@ -1877,10 +1657,183 @@ JS;
 	}
 
 	/**
-	 * Render the informational "How it works" section.
+	 * Render the inline "+ Add new connection" wizard panel.
+	 *
+	 * The panel is hidden until the toolbar button toggles it open. Steps are
+	 * stacked inside; the small JS in {@see self::get_inline_script()} only
+	 * handles open/close + step transitions and Verify / Create AJAX calls.
 	 *
 	 * @return void
 	 */
+	private function render_connection_wizard_panel(): void {
+		$app_pwd_url   = admin_url( 'profile.php#application-passwords-section' );
+		$client_types  = array(
+			'claude_desktop' => __( 'Claude Desktop', 'axtolab-ai-connector' ),
+			'cli'            => __( 'Claude Code / CLI', 'axtolab-ai-connector' ),
+			'cowork'         => __( 'Cowork', 'axtolab-ai-connector' ),
+			'chatgpt'        => __( 'ChatGPT', 'axtolab-ai-connector' ),
+			'claude_web'     => __( 'Claude Web', 'axtolab-ai-connector' ),
+			'other'          => __( 'Other MCP client', 'axtolab-ai-connector' ),
+		);
+		$cap_groups    = Axtolab_AI_Connector_Capabilities::group_labels();
+		$preset_labels = Axtolab_AI_Connector_Capabilities::preset_labels();
+		$default_caps  = Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
+		?>
+		<div class="axtolab-wizard-panel" id="mcp-wizard-panel" role="region" aria-label="<?php esc_attr_e( 'Add a new MCP connection', 'axtolab-ai-connector' ); ?>" hidden>
+
+			<h4 class="axtolab-wizard-title"><?php esc_html_e( 'Add a new MCP connection', 'axtolab-ai-connector' ); ?></h4>
+
+			<div class="axtolab-callout">
+				<p>
+					<strong><?php esc_html_e( 'How permissions work', 'axtolab-ai-connector' ); ?></strong>
+				</p>
+				<ul style="margin:6px 0 0 18px; padding:0;">
+					<li><?php esc_html_e( 'Connection capabilities (set in Step 4) — what the AI is allowed to attempt.', 'axtolab-ai-connector' ); ?></li>
+					<li><?php esc_html_e( 'WP role of the underlying user — what that user can do at the per-object level (per-post / per-media / per-term).', 'axtolab-ai-connector' ); ?></li>
+					<li><?php esc_html_e( 'Both layers must allow an action for it to succeed.', 'axtolab-ai-connector' ); ?></li>
+				</ul>
+			</div>
+
+			<?php // ── Step 1 — Who will the AI act as ─────────────────────────── ?>
+			<section class="axtolab-wizard-step" data-step="1">
+				<h5 class="axtolab-wizard-step-title"><?php esc_html_e( 'Step 1 — Who will the AI act as?', 'axtolab-ai-connector' ); ?></h5>
+				<div class="axtolab-grid">
+					<label class="axtolab-path-card">
+						<input type="radio" name="mcp-wizard-path" value="admin" checked="checked" />
+						<strong><?php esc_html_e( 'Your admin account', 'axtolab-ai-connector' ); ?></strong>
+						<p><?php esc_html_e( 'Simple setup. The per-connection capabilities below are the only effective limit.', 'axtolab-ai-connector' ); ?></p>
+					</label>
+					<label class="axtolab-path-card">
+						<input type="radio" name="mcp-wizard-path" value="dedicated" />
+						<strong><?php esc_html_e( 'A dedicated WP user', 'axtolab-ai-connector' ); ?></strong>
+						<p><?php esc_html_e( 'Recommended for production sites. Limits blast radius if the App Password leaks.', 'axtolab-ai-connector' ); ?></p>
+						<p>
+							<a href="<?php echo esc_url( admin_url( 'user-new.php' ) ); ?>" target="_blank" rel="noopener">
+								<?php esc_html_e( 'How to create one →', 'axtolab-ai-connector' ); ?>
+							</a>
+						</p>
+					</label>
+				</div>
+			</section>
+
+			<?php // ── Step 2 — Create an Application Password ─────────────────── ?>
+			<section class="axtolab-wizard-step" data-step="2">
+				<h5 class="axtolab-wizard-step-title"><?php esc_html_e( 'Step 2 — Create an Application Password', 'axtolab-ai-connector' ); ?></h5>
+				<ol class="axtolab-wizard-list">
+					<li>
+						<?php
+						printf(
+							/* translators: %s: HTML link to WordPress Application Passwords settings */
+							wp_kses_post( __( 'Open %s in your WordPress profile (it opens in a new tab).', 'axtolab-ai-connector' ) ),
+							'<a href="' . esc_url( $app_pwd_url ) . '" target="_blank" rel="noopener">' . esc_html__( 'Application Passwords settings ↗', 'axtolab-ai-connector' ) . '</a>'
+						);
+						?>
+					</li>
+					<li><?php esc_html_e( 'Create a new password named, for example, "Axtolab AI Connector — Claude Desktop".', 'axtolab-ai-connector' ); ?></li>
+					<li><?php esc_html_e( 'Copy the generated password (WordPress shows it only once).', 'axtolab-ai-connector' ); ?></li>
+				</ol>
+			</section>
+
+			<?php // ── Step 3 — Connect ────────────────────────────────────────── ?>
+			<section class="axtolab-wizard-step" data-step="3">
+				<h5 class="axtolab-wizard-step-title"><?php esc_html_e( 'Step 3 — Connect', 'axtolab-ai-connector' ); ?></h5>
+
+				<p class="axtolab-wizard-field">
+					<label for="mcp-wizard-label"><?php esc_html_e( 'Connection label', 'axtolab-ai-connector' ); ?></label>
+					<input type="text" id="mcp-wizard-label" class="regular-text" maxlength="200" placeholder="<?php esc_attr_e( 'Claude Desktop', 'axtolab-ai-connector' ); ?>" />
+				</p>
+
+				<p class="axtolab-wizard-field">
+					<label for="mcp-wizard-client-type"><?php esc_html_e( 'Client type', 'axtolab-ai-connector' ); ?></label>
+					<select id="mcp-wizard-client-type">
+						<?php foreach ( $client_types as $value => $label ) : ?>
+							<option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+
+				<p class="axtolab-wizard-field">
+					<label for="mcp-wizard-app-password"><?php esc_html_e( 'Paste Application Password', 'axtolab-ai-connector' ); ?></label>
+					<input type="text" id="mcp-wizard-app-password" class="regular-text" autocomplete="off" spellcheck="false" placeholder="xxxx xxxx xxxx xxxx xxxx xxxx" />
+				</p>
+
+				<p class="axtolab-wizard-field" data-path="dedicated" hidden>
+					<label for="mcp-wizard-username"><?php esc_html_e( 'WordPress username (login)', 'axtolab-ai-connector' ); ?></label>
+					<input type="text" id="mcp-wizard-username" class="regular-text" autocomplete="off" spellcheck="false" placeholder="<?php esc_attr_e( 'e.g. ai-editor', 'axtolab-ai-connector' ); ?>" />
+					<span class="description"><?php esc_html_e( 'Required when the App Password belongs to a different WordPress user than the one you are logged in as.', 'axtolab-ai-connector' ); ?></span>
+				</p>
+
+				<p>
+					<button type="button" class="button button-secondary" id="mcp-wizard-verify-btn">
+						<?php esc_html_e( 'Verify', 'axtolab-ai-connector' ); ?>
+					</button>
+					<span id="mcp-wizard-verify-result" class="mcp-feedback" aria-live="polite"></span>
+				</p>
+			</section>
+
+			<?php // ── Step 4 — Capabilities ───────────────────────────────────── ?>
+			<section class="axtolab-wizard-step" data-step="4">
+				<h5 class="axtolab-wizard-step-title"><?php esc_html_e( 'Step 4 — Capabilities', 'axtolab-ai-connector' ); ?></h5>
+				<p>
+					<label><?php esc_html_e( 'Preset:', 'axtolab-ai-connector' ); ?>
+						<select id="mcp-wizard-preset">
+							<?php foreach ( $preset_labels as $key => $label ) : ?>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( 'standard', $key ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</label>
+				</p>
+				<div class="mcp-conn-caps-checkboxes" id="mcp-wizard-caps">
+					<?php foreach ( $cap_groups as $cap_key => $cap_label ) : ?>
+						<label class="mcp-conn-cap-label">
+							<input type="checkbox"
+								class="mcp-wizard-cap-checkbox"
+								data-cap="<?php echo esc_attr( $cap_key ); ?>"
+								<?php checked( in_array( $cap_key, $default_caps, true ) ); ?>
+								<?php disabled( 'read' === $cap_key ); ?>
+							/>
+							<?php echo esc_html( $cap_label ); ?>
+							<?php if ( 'read' === $cap_key ) : ?>
+								<em class="mcp-conn-cap-note">(<?php esc_html_e( 'always on', 'axtolab-ai-connector' ); ?>)</em>
+							<?php endif; ?>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</section>
+
+			<?php // ── Footer buttons + token-display area ──────────────────────── ?>
+			<div class="axtolab-wizard-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:18px; gap:10px;">
+				<button type="button" class="button" id="mcp-wizard-cancel-btn">
+					<?php esc_html_e( 'Cancel', 'axtolab-ai-connector' ); ?>
+				</button>
+				<button type="button" class="button button-primary" id="mcp-wizard-create-btn" disabled>
+					<?php esc_html_e( 'Create connection', 'axtolab-ai-connector' ); ?>
+				</button>
+			</div>
+			<p id="mcp-wizard-create-message" class="mcp-feedback" aria-live="polite"></p>
+
+			<div class="axtolab-wizard-success" id="mcp-wizard-success" hidden>
+				<h5><?php esc_html_e( 'Connection created.', 'axtolab-ai-connector' ); ?></h5>
+				<p class="description">
+					<?php esc_html_e( 'Copy the connection token below and paste it into your MCP client. It bundles the site URL, the WordPress user login, and the Application Password — treat it like a password.', 'axtolab-ai-connector' ); ?>
+				</p>
+				<div class="mcp-copy-block">
+					<pre class="mcp-code-block" id="mcp-wizard-token"></pre>
+					<button type="button" class="button button-small mcp-copy-btn" data-target="mcp-wizard-token">
+						<?php esc_html_e( 'Copy', 'axtolab-ai-connector' ); ?>
+					</button>
+				</div>
+				<p style="margin-top:10px;">
+					<button type="button" class="button" id="mcp-wizard-done-btn">
+						<?php esc_html_e( 'Done', 'axtolab-ai-connector' ); ?>
+					</button>
+				</p>
+			</div>
+
+		</div><!-- .axtolab-wizard-panel -->
+		<?php
+	}
+
 	/**
 	 * Advanced write gates: permalink_writes_enabled + options_writes_enabled.
 	 *
@@ -1999,34 +1952,18 @@ JS;
 	 *
 	 * Returns an associative array with the following keys:
 	 *
-	 *   `service_account_exists`  bool  — option + user record both present
-	 *   `service_account_role`    bool  — user has the axtolab_ai_connector_editor role
-	 *   `active_app_passwords`    int   — number of application passwords on the service account
+	 *   `active_app_passwords`  int  — total number of active MCP connections
+	 *                                  (App Password + OAuth)
 	 *
 	 * @return array{
-	 *     service_account_exists: bool,
-	 *     service_account_role:   bool,
-	 *     active_app_passwords:   int,
+	 *     active_app_passwords: int,
 	 * }
 	 */
 	public function get_setup_status(): array {
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-		$service_user    = $service_user_id ? get_user_by( 'id', $service_user_id ) : false;
-
-		$account_exists = ( $service_user instanceof WP_User );
-		$account_role   = false;
-
-		if ( $account_exists ) {
-			$account_role = in_array( 'axtolab_ai_connector_editor', (array) $service_user->roles, true );
-		}
-
-		// Count all connections (app passwords + OAuth).
 		$connections = Axtolab_AI_Connector_Connections::get_all_connections();
 
 		return array(
-			'service_account_exists' => $account_exists,
-			'service_account_role'   => $account_role,
-			'active_app_passwords'   => count( $connections ),
+			'active_app_passwords' => count( $connections ),
 		);
 	}
 
@@ -2235,71 +2172,272 @@ JS;
 	}
 
 	/**
-	 * AJAX: Generate a connection token.
+	 * AJAX: Verify a pasted Application Password against the site's own REST API.
 	 *
-	 * Creates an Application Password and encodes all credentials into a
-	 * self-contained token that can be decoded offline by the MCP CLI.
+	 * The wizard's "Verify" button calls this. We make a Basic-auth GET against
+	 * `/wp-json/wp/v2/users/me` so WordPress's native Application Password
+	 * verification path runs end-to-end (no parallel password store, no
+	 * trust-on-paste shortcuts). On success we return the resolved user's id,
+	 * login, display name, role labels, and a non-blocking warning when the
+	 * underlying user has very limited capabilities (e.g. Subscriber).
+	 *
+	 * The plaintext App Password is read from $_POST and never persisted at
+	 * this step — it is only passed back to WordPress over loopback.
 	 *
 	 * Nonce: `{MENU_SLUG}-ajax`.
 	 *
 	 * @return void Sends JSON and exits.
 	 */
-	public function ajax_generate_token(): void {
+	public function ajax_wizard_verify(): void {
 		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ),
-				403
-			);
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
 		}
 
-		$token = Axtolab_AI_Connector_Token_Auth::generate_connection_token();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified above. Application Passwords are space-separated alphanumeric strings; sanitize_text_field() would collapse the whitespace WordPress's own validator needs.
+		$app_password = isset( $_POST['app_password'] ) ? trim( wp_unslash( (string) $_POST['app_password'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via check_ajax_referer.
+		$username = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( (string) $_POST['username'] ), true ) : '';
 
-		if ( is_wp_error( $token ) ) {
-			$error_data = $token->get_error_data();
-			$status     = is_array( $error_data ) && isset( $error_data['status'] ) ? (int) $error_data['status'] : 500;
-			wp_send_json_error(
-				array( 'message' => $token->get_error_message() ),
-				$status
-			);
+		if ( '' === $app_password ) {
+			wp_send_json_error( array( 'message' => __( 'Paste the Application Password before verifying.', 'axtolab-ai-connector' ) ), 400 );
+		}
+
+		// Default to the currently logged-in admin's login when none provided.
+		if ( '' === $username ) {
+			$current_user = wp_get_current_user();
+			$username     = $current_user instanceof WP_User ? $current_user->user_login : '';
+		}
+
+		if ( '' === $username ) {
+			wp_send_json_error( array( 'message' => __( 'Enter the WordPress username the Application Password belongs to.', 'axtolab-ai-connector' ) ), 400 );
+		}
+
+		// Round-trip through the site's own REST API so we exercise the
+		// standard wp_validate_application_password() code path.
+		$url = rest_url( 'wp/v2/users/me' );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Standard HTTP Basic Auth header construction, not obfuscation.
+		$authorization = 'Basic ' . base64_encode( $username . ':' . $app_password );
+
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout'   => 10,
+				'sslverify' => false, // Loopback may be HTTP or self-signed.
+				'headers'   => array(
+					'Authorization' => $authorization,
+					'Accept'        => 'application/json',
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( array( 'message' => $response->get_error_message() ), 500 );
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+		$json = json_decode( $body, true );
+
+		if ( 200 !== $code || ! is_array( $json ) || empty( $json['id'] ) ) {
+			$message = is_array( $json ) && ! empty( $json['message'] )
+				? (string) $json['message']
+				: __( 'WordPress rejected the username + Application Password combination.', 'axtolab-ai-connector' );
+			wp_send_json_error( array( 'message' => $message ), 401 );
+		}
+
+		$user_id = (int) $json['id'];
+		$user    = get_user_by( 'id', $user_id );
+		if ( ! $user instanceof WP_User ) {
+			wp_send_json_error( array( 'message' => __( 'The resolved user could not be loaded.', 'axtolab-ai-connector' ) ), 500 );
+		}
+
+		// Check for App Password collisions against existing registered MCP connections.
+		$collision      = null;
+		$user_passwords = class_exists( 'WP_Application_Passwords' )
+			? WP_Application_Passwords::get_user_application_passwords( $user_id )
+			: array();
+		if ( is_array( $user_passwords ) ) {
+			foreach ( $user_passwords as $pwd ) {
+				if ( ! wp_check_password( $app_password, $pwd['password'], $user_id ) ) {
+					continue;
+				}
+				$existing = Axtolab_AI_Connector_Connections::get_by_uuid( $pwd['uuid'] );
+				if ( $existing ) {
+					$collision = array(
+						'connection_id' => $pwd['uuid'],
+						'label'         => isset( $existing['client_label'] ) ? $existing['client_label'] : '',
+					);
+				}
+				break;
+			}
+		}
+
+		$role_labels = array();
+		global $wp_roles;
+		foreach ( (array) $user->roles as $role_key ) {
+			$role_labels[] = isset( $wp_roles->role_names[ $role_key ] )
+				? translate_user_role( $wp_roles->role_names[ $role_key ] )
+				: $role_key;
+		}
+
+		$warning = '';
+		if ( ! user_can( $user, 'edit_posts' ) ) {
+			$warning = __( 'This user has very limited WordPress capabilities — the AI may be blocked from most actions even when the connection allows them. Editor or higher is usually the right floor.', 'axtolab-ai-connector' );
 		}
 
 		wp_send_json_success(
-			array( 'token' => $token )
+			array(
+				'user_id'      => $user_id,
+				'user_login'   => $user->user_login,
+				'user_display' => $user->display_name,
+				'user_roles'   => $role_labels,
+				'warning'      => $warning,
+				'collision'    => $collision,
+			)
 		);
 	}
 
 	/**
-	 * AJAX: Recreate the service account and role.
+	 * AJAX: Finalise the wizard and create the connection.
 	 *
-	 * Runs the same idempotent provisioning logic as the activation hook.
+	 * Re-verifies the App Password against WordPress's REST API (so the
+	 * plaintext is never trusted from session state), then records the
+	 * connection in the registry with the resolved wp_user_id, capabilities,
+	 * and client metadata. Returns a wmcp1_ connection token built from the
+	 * same credentials so the admin can paste it into Claude Desktop / the
+	 * MCP client.
 	 *
 	 * Nonce: `{MENU_SLUG}-ajax`.
 	 *
 	 * @return void Sends JSON and exits.
 	 */
-	public function ajax_recreate_service_account(): void {
+	public function ajax_wizard_create(): void {
 		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ),
-				403
-			);
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
 		}
 
-		$result = axtolab_ai_connector_provision_service_account();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified above. Application Passwords are space-separated alphanumeric strings; sanitize_text_field() would collapse the whitespace WordPress's own validator needs.
+		$app_password = isset( $_POST['app_password'] ) ? trim( wp_unslash( (string) $_POST['app_password'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via check_ajax_referer.
+		$username = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( (string) $_POST['username'] ), true ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via check_ajax_referer.
+		$label = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['label'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via check_ajax_referer.
+		$client_type = isset( $_POST['client_type'] ) ? sanitize_key( wp_unslash( (string) $_POST['client_type'] ) ) : 'other';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via check_ajax_referer.
+		$capabilities = isset( $_POST['capabilities'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['capabilities'] ) ) : array();
 
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error(
-				array( 'message' => $result->get_error_message() ),
-				500
-			);
+		if ( '' === $app_password ) {
+			wp_send_json_error( array( 'message' => __( 'Application Password is required.', 'axtolab-ai-connector' ) ), 400 );
+		}
+
+		if ( '' === $username ) {
+			$current_user = wp_get_current_user();
+			$username     = $current_user instanceof WP_User ? $current_user->user_login : '';
+		}
+
+		// Resolve the user via WordPress's own REST API + Application Password validation.
+		$url = rest_url( 'wp/v2/users/me' );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Standard HTTP Basic Auth header construction, not obfuscation.
+		$authorization = 'Basic ' . base64_encode( $username . ':' . $app_password );
+
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout'   => 10,
+				'sslverify' => false,
+				'headers'   => array(
+					'Authorization' => $authorization,
+					'Accept'        => 'application/json',
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( array( 'message' => $response->get_error_message() ), 500 );
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$json = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $code || ! is_array( $json ) || empty( $json['id'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'WordPress rejected the username + Application Password combination.', 'axtolab-ai-connector' ) ), 401 );
+		}
+
+		$wp_user_id = (int) $json['id'];
+		$user       = get_user_by( 'id', $wp_user_id );
+		if ( ! $user instanceof WP_User ) {
+			wp_send_json_error( array( 'message' => __( 'The resolved user could not be loaded.', 'axtolab-ai-connector' ) ), 500 );
+		}
+
+		// Locate the UUID of the App Password we just verified by hashing
+		// against the user's stored App Passwords. WordPress does not return
+		// the UUID over /users/me, so we walk the list here.
+		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Application Passwords are not available on this site.', 'axtolab-ai-connector' ) ), 500 );
+		}
+
+		$matched_uuid = '';
+		$passwords    = WP_Application_Passwords::get_user_application_passwords( $wp_user_id );
+		if ( is_array( $passwords ) ) {
+			foreach ( $passwords as $pwd ) {
+				if ( wp_check_password( $app_password, $pwd['password'], $wp_user_id ) ) {
+					$matched_uuid = $pwd['uuid'];
+					break;
+				}
+			}
+		}
+
+		if ( '' === $matched_uuid ) {
+			wp_send_json_error( array( 'message' => __( 'Could not match the Application Password to a stored record. Try again.', 'axtolab-ai-connector' ) ), 500 );
+		}
+
+		// Sanitise client type against the known set.
+		$allowed_types = array( 'claude_desktop', 'cli', 'cowork', 'chatgpt', 'claude_web', 'other', 'unknown' );
+		if ( ! in_array( $client_type, $allowed_types, true ) ) {
+			$client_type = 'other';
+		}
+
+		if ( '' === $label ) {
+			/* translators: %s: client type label */
+			$label = sprintf( __( 'MCP Connection (%s)', 'axtolab-ai-connector' ), Axtolab_AI_Connector_Connections::client_type_label( $client_type ) );
+		}
+
+		Axtolab_AI_Connector_Connections::register_connection(
+			$matched_uuid,
+			$wp_user_id,
+			array(
+				'client_type'  => $client_type,
+				'client_label' => $label,
+				'auth_method'  => 'app_password',
+			)
+		);
+
+		// Persist the caller's capability selection (defaults to Standard
+		// preset when none supplied).
+		if ( empty( $capabilities ) ) {
+			$capabilities = Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
+		}
+		Axtolab_AI_Connector_Connections::set_capabilities( $matched_uuid, $capabilities );
+
+		// Build the connection token using the same credentials.
+		$token = Axtolab_AI_Connector_Token_Auth::build_connection_token( $user->user_login, $app_password );
+		if ( is_wp_error( $token ) ) {
+			wp_send_json_error( array( 'message' => $token->get_error_message() ), 500 );
 		}
 
 		wp_send_json_success(
-			array( 'message' => __( 'Service account recreated successfully.', 'axtolab-ai-connector' ) )
+			array(
+				'message'       => __( 'Connection created.', 'axtolab-ai-connector' ),
+				'connection_id' => $matched_uuid,
+				'token'         => $token,
+				'wp_user_id'    => $wp_user_id,
+				'wp_user_login' => $user->user_login,
+			)
 		);
 	}
 
@@ -3058,37 +3196,18 @@ JS;
         $('.mcp-tab-content[data-tab="' + tab + '"]').addClass('mcp-tab-content-active');
     });
 
-    // ── Generate Token button ────────────────────────────────────────────────
-    $(document).on('click', '#mcp-generate-token-btn', function () {
-        var $btn = $(this);
-        var $msg = $('#mcp-token-message');
-        var $result = $('#mcp-token-result');
-
-        $btn.prop('disabled', true).text('Generating…');
-        $msg.text('').removeClass('is-success is-error');
-        $result.hide();
-
-        doAjax(
-            'axtolab_ai_connector_generate_token',
-            {},
-			function (data) {
-				$btn.prop('disabled', false).text('Generate Connection Token');
-				var prompt;
-				if (cfg.mcpbAvailable) {
-					prompt = data.token;
-					$msg.text('Token generated! Paste it into the Axtolab AI Connector extension settings in Claude Desktop.').removeClass('is-error').addClass('is-success');
-				} else {
-					prompt = data.token;
-					$msg.text('Token generated! Copy the token below and paste it into your compatible AI client.').removeClass('is-error').addClass('is-success');
-				}
-				$('#mcp-token-prompt').text(prompt);
-				$result.show();
-			},
-            function (errMsg) {
-                $btn.prop('disabled', false).text('Generate Connection Token');
-                $msg.text(errMsg).removeClass('is-success').addClass('is-error');
-            }
-        );
+    // ── "Add new connection" jump link from quick-connect tab ────────────────
+    $(document).on('click', '#mcp-jump-to-connections', function (e) {
+        e.preventDefault();
+        var target = document.getElementById('mcp-connections-card');
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        // Auto-open the wizard so the admin lands on it directly.
+        var $openBtn = $('#mcp-wizard-open-btn');
+        if ($openBtn.length) {
+            $openBtn.trigger('click');
+        }
     });
 
     // ── Copy button ──────────────────────────────────────────────────────────

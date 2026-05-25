@@ -160,7 +160,6 @@ require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-token-auth.p
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-bearer-auth.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-confirmation.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-capabilities.php';
-require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-service-account-guard.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-mcp-transport.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-oauth.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-image-providers.php';
@@ -318,20 +317,15 @@ register_activation_hook( __FILE__, 'axtolab_ai_connector_activate' );
  * Plugin activation callback.
  *
  * Performs only the activation work that does NOT require creating WordPress
- * users or custom roles:
+ * users or custom roles. The plugin never creates WordPress users — admins
+ * connect AI clients by pasting an Application Password they create
+ * themselves under their own (or a dedicated) WordPress user.
  *
  *   - Grants the changelog/audit caps to the administrator role (so the
  *     admin who activated the plugin can immediately see the Logs page).
  *   - Creates the audit + changelog database tables.
  *   - Writes .htaccess rules for OAuth .well-known discovery.
  *   - Schedules cron events.
- *
- * The `axtolab_ai_connector_editor` role and the `axtolab-connector-service`
- * WordPress user are NOT created here. WP.org plugin review requires that we
- * never silently create WordPress users on activation; both are created later
- * via an explicit admin-initiated consent action ("Create service user")
- * surfaced as an admin notice on the AI Connector settings page. See
- * {@see axtolab_ai_connector_ensure_service_account()} for the deferred path.
  *
  * @return void
  */
@@ -405,32 +399,19 @@ register_uninstall_hook( __FILE__, 'axtolab_ai_connector_uninstall' );
  * Plugin uninstall callback.
  *
  * Removes everything the plugin created:
- *   - The `axtolab-connector-service` user (posts reassigned to user ID 1).
- *   - The `axtolab_ai_connector_editor` role.
  *   - The custom audit-log and changelog database tables.
- *   - All plugin options.
- *   - All plugin-set user meta keys (notice-dismissed flags, service-account marker).
+ *   - All plugin options (including the connections registry).
+ *   - All plugin-set user meta keys (notice-dismissed flags).
  *   - All `axtolab_ai_connector_*` transients (rate limits, OAuth codes, upload sessions).
+ *
+ * The plugin does NOT create WordPress users or roles, so there is nothing
+ * to remove on that side. Application Passwords are owned by the WordPress
+ * users that created them and are managed under each user's profile.
  *
  * @return void
  */
 function axtolab_ai_connector_uninstall(): void {
 	global $wpdb;
-
-	// ── Delete service account user ───────────────────────────────────────────
-	$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-
-	if ( $service_user_id && get_user_by( 'id', $service_user_id ) ) {
-		// Require the user-management functions.
-		if ( ! function_exists( 'wp_delete_user' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/user.php';
-		}
-		// Reassign any content to the default admin (user ID 1).
-		wp_delete_user( $service_user_id, 1 );
-	}
-
-	// ── Remove role ───────────────────────────────────────────────────────────
-	remove_role( 'axtolab_ai_connector_editor' );
 
 	// ── Strip plugin caps from administrator role ─────────────────────────────
 	$admin = get_role( 'administrator' );
@@ -451,16 +432,14 @@ function axtolab_ai_connector_uninstall(): void {
 
 	// ── Delete plugin options ─────────────────────────────────────────────────
 	delete_option( 'axtolab_ai_connector_settings' );
-	delete_option( 'axtolab_ai_connector_service_user_id' );
+	delete_option( 'axtolab_ai_connector_connections' );
 	delete_option( 'axtolab_ai_connector_htaccess_version' );
 	delete_option( 'axtolab_ai_connector_last_health_check' );
 
 	// ── Delete plugin user meta across all users ──────────────────────────────
 	// $delete_all = true sweeps every user row in usermeta for the given key.
 	delete_metadata( 'user', 0, 'axtolab_ai_connector_core_deferral_dismissed', '', true );
-	delete_metadata( 'user', 0, 'axtolab_ai_connector_service_account', '', true );
 	delete_metadata( 'user', 0, 'axtolab_ai_connector_oauth_notice_dismissed', '', true );
-	delete_metadata( 'user', 0, 'axtolab_ai_connector_service_account_notice_dismissed', '', true );
 
 	// ── Delete all plugin transients ──────────────────────────────────────────
 	// WordPress stores transients in the options table as _transient_{key},
@@ -513,57 +492,7 @@ function axtolab_ai_connector_uninstall(): void {
 	flush_rewrite_rules();
 }
 
-// ── Shared provisioning helpers ───────────────────────────────────────────────
-
-/**
- * Create (or verify) the `axtolab_ai_connector_editor` role.
- *
- * Idempotent: if the role already exists its capabilities are refreshed.
- *
- * @return WP_Role The role object.
- */
-function axtolab_ai_connector_provision_role(): WP_Role {
-	$capabilities = array(
-		// Core access.
-		'read'                                => true,
-		// Posts.
-		'edit_posts'                          => true,
-		'edit_published_posts'                => true,
-		'edit_others_posts'                   => true,
-		'publish_posts'                       => true,
-		// Pages.
-		'edit_pages'                          => true,
-		'edit_published_pages'                => true,
-		'edit_others_pages'                   => true,
-		'publish_pages'                       => true,
-		// Media.
-		'upload_files'                        => true,
-		// Taxonomy.
-		'manage_categories'                   => true,
-		// User directory (granted so /users/{id} lookups work for the
-		// service account; required by `permission_list_users`).
-		'list_users'                          => true,
-		// Custom plugin caps — gate /changelog and /audit-log routes
-		// without requiring the service account to be administrator.
-		'axtolab_ai_connector_view_changelog' => true,
-		'axtolab_ai_connector_view_audit'     => true,
-	);
-
-	$existing = get_role( 'axtolab_ai_connector_editor' );
-
-	if ( $existing instanceof WP_Role ) {
-		// Role exists — refresh capabilities in case they changed between versions.
-		foreach ( $capabilities as $cap => $grant ) {
-			$existing->add_cap( $cap, $grant );
-		}
-		return $existing;
-	}
-
-	$role = add_role( 'axtolab_ai_connector_editor', __( 'Axtolab AI Connector Editor', 'axtolab-ai-connector' ), $capabilities );
-
-	// add_role() returns null if the role already exists (race condition guard).
-	return $role instanceof WP_Role ? $role : get_role( 'axtolab_ai_connector_editor' );
-}
+// ── Admin capability helpers ──────────────────────────────────────────────────
 
 /**
  * Grant the plugin's custom view-changelog / view-audit capabilities to the
@@ -580,94 +509,6 @@ function axtolab_ai_connector_grant_admin_caps(): void {
 	}
 	$admin->add_cap( 'axtolab_ai_connector_view_changelog' );
 	$admin->add_cap( 'axtolab_ai_connector_view_audit' );
-}
-
-/**
- * Ensure the `axtolab-connector-service` WordPress user and supporting
- * `axtolab_ai_connector_editor` role both exist.
- *
- * This is the single shared "create the service account on consent" entry
- * point. It is invoked from:
- *
- *   - the admin-initiated consent notice (admin-post action below);
- *   - the "Recreate" / "Fix" AJAX handler on the setup checklist;
- *
- * and is NOT called from the plugin activation hook (deferred consent — see
- * {@see axtolab_ai_connector_activate()}).
- *
- * Idempotent: if the user already exists (by login or by stored option), the
- * function ensures it has the correct role and returns without creating a
- * duplicate. Safe to call any number of times.
- *
- * @return int|WP_Error User ID on success, WP_Error on failure.
- */
-function axtolab_ai_connector_provision_service_account() {
-	// Ensure the role exists before assigning it.
-	axtolab_ai_connector_provision_role();
-
-	$service_login = 'axtolab-connector-service';
-
-	// Check stored option first.
-	$stored_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-
-	if ( $stored_id ) {
-		$user = get_user_by( 'id', $stored_id );
-		if ( $user instanceof WP_User ) {
-			// User exists — make sure the role is correct.
-			if ( ! in_array( 'axtolab_ai_connector_editor', (array) $user->roles, true ) ) {
-				$user->set_role( 'axtolab_ai_connector_editor' );
-			}
-			return $stored_id;
-		}
-	}
-
-	// Check by login name (user may exist without the option).
-	$existing = get_user_by( 'login', $service_login );
-
-	if ( $existing instanceof WP_User ) {
-		update_option( 'axtolab_ai_connector_service_user_id', $existing->ID );
-
-		if ( ! in_array( 'axtolab_ai_connector_editor', (array) $existing->roles, true ) ) {
-			$existing->set_role( 'axtolab_ai_connector_editor' );
-		}
-		return $existing->ID;
-	}
-
-	// Create the user.
-	$user_id = wp_create_user(
-		$service_login,
-		wp_generate_password( 32, true, true ),
-		sanitize_email( $service_login . '@' . wp_parse_url( home_url(), PHP_URL_HOST ) )
-	);
-
-	if ( is_wp_error( $user_id ) ) {
-		return $user_id;
-	}
-
-	$user = new WP_User( $user_id );
-	$user->set_role( 'axtolab_ai_connector_editor' );
-
-	// Prevent the service account from logging in via the normal login form —
-	// it authenticates exclusively through Application Passwords.
-	update_user_meta( $user_id, 'axtolab_ai_connector_service_account', true );
-
-	update_option( 'axtolab_ai_connector_service_user_id', $user_id );
-
-	return $user_id;
-}
-
-/**
- * Public, consent-flow-named alias of {@see axtolab_ai_connector_provision_service_account()}.
- *
- * Kept as a thin wrapper so the consent click-handler and any other call site
- * that wants to lazily materialise the service account on demand reads
- * naturally ("ensure" not "provision"). The underlying implementation stays
- * fully idempotent.
- *
- * @return int|WP_Error User ID on success, WP_Error on failure.
- */
-function axtolab_ai_connector_ensure_service_account() {
-	return axtolab_ai_connector_provision_service_account();
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
@@ -695,9 +536,6 @@ function axtolab_ai_connector_bootstrap(): void {
 	// we run before any other prefilter.
 	add_filter( 'wp_handle_upload_prefilter', array( 'Axtolab_AI_Connector_Upload_Portal', 'sanitize_uploaded_svg_filter' ), 1 );
 	add_filter( 'wp_handle_sideload_prefilter', array( 'Axtolab_AI_Connector_Upload_Portal', 'sanitize_uploaded_svg_filter' ), 1 );
-
-	// Prevent generated service-account credentials from bypassing connector policy via core REST routes.
-	Axtolab_AI_Connector_Service_Account_Guard::bootstrap();
 
 	// Cleanup expired connections daily.
 	add_action( 'axtolab_ai_connector_cleanup_expired', array( 'Axtolab_AI_Connector_Connections', 'cleanup_expired_connections' ) );

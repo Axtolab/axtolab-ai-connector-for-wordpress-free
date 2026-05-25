@@ -24,7 +24,7 @@ Axtolab AI Connector for WordPress connects your WordPress site to AI agents lik
 * **Stock Photos** — Search and import free stock photos from Unsplash and Pexels with automatic attribution.
 * **Yoast SEO** — Read SEO and readability scores. Update focus keyphrase, SEO title, and meta description. Preview rendered meta tags.
 * **Authors & Taxonomies** — Assign authors from an allowlist. Create and assign categories, tags, and custom taxonomy terms.
-* **Secure by Design** — Dedicated service account with minimal permissions, created only after explicit administrator consent (no silent user creation on activation). Confirmation tokens required for publish, trash, and restore operations. Allowlist-driven content type and taxonomy controls. Rate limiting on authentication endpoints.
+* **Per-connection privilege model** — every MCP connection authenticates as a WordPress user via Application Password. The connection's capability set determines which AI tools can be called; the user's WP role determines which objects they can act on. Both layers must allow an action for it to succeed. The plugin never creates WordPress users — admins create the Application Password under their own (or a dedicated) WordPress profile and paste it into the connection wizard. Confirmation tokens required for publish, trash, and restore operations. Allowlist-driven content type and taxonomy controls. Rate limiting on authentication endpoints.
 * **Multiple Auth Methods** — Application Passwords, OAuth 2.1 with PKCE, and Bearer Token for MCP-over-HTTP transport.
 * **Upload Portal** — Drag-and-drop media uploads with time-limited tokens. No WordPress login required for the upload session.
 
@@ -67,18 +67,21 @@ The free core is feature-complete and useful on its own. Separate plugins may ex
 = Getting Started =
 
 1. Install and activate the plugin
-2. Go to AI Connector in wp-admin and generate a connection token
-3. Click the "Download Extension (.mcpb)" button on the setup page to grab the Claude Desktop bundle from GitHub Releases, then drag it into Claude Desktop's Extensions panel — or connect a compatible client through MCP-over-HTTP
-4. Start using your AI agent with WordPress
+2. Go to AI Connector > Connections in wp-admin
+3. Click "+ Add new connection" and follow the wizard — it walks you through creating an Application Password on your WordPress profile (or on a dedicated WP user if you prefer the production-grade setup), pasting it into the connection, and choosing what that connection can do
+4. Click the "Download Extension (.mcpb)" button on the setup page to grab the Claude Desktop bundle from GitHub Releases, then drag it into Claude Desktop's Extensions panel — or connect a compatible client through MCP-over-HTTP
+5. Start using your AI agent with WordPress
 
 == Installation ==
 
 1. Upload the `axtolab-ai-connector` folder to `/wp-content/plugins/`
 2. Activate the plugin through the Plugins menu
-3. Go to Settings > AI Connector
-4. Click **Create service user** when the one-time consent notice appears at the top of the page
+3. Go to AI Connector > Connections
+4. Click "+ Add new connection" and follow the wizard
 
-The plugin uses a dedicated WordPress user (`axtolab-connector-service`) with a custom limited-permission role (`axtolab_ai_connector_editor`) as the API actor for every AI tool call. By design, this user is **not** created on plugin activation — the AI Connector waits for an administrator to give explicit consent on the settings page first, in line with WordPress.org plugin review guidelines. Once you click "Create service user", the plugin creates the user + role and you can immediately generate connection tokens. The user has no admin / settings / user-management permissions; uninstalling the plugin removes it.
+The wizard walks you through creating an Application Password on your WordPress profile (or on a dedicated WP user if you prefer the production-grade setup), pasting it into the connection, and choosing what that connection can do.
+
+The plugin does not create WordPress users on activation or at any later step. Every MCP connection authenticates as a WordPress user that already exists on the site — the user creates an Application Password under their own profile (using WordPress's native UI) and then pastes that password into the connection wizard. The connection records which user it belongs to so the AI's tool calls run with that user's WordPress capabilities, layered with the per-connection capability set the admin chose in the wizard.
 
 = About the `.mcpb` Claude Desktop installer =
 
@@ -109,13 +112,13 @@ Yes. Single-site and multisite installations are supported by the free core.
 
 = How is authentication handled? =
 
-The plugin supports three authentication methods: WordPress Application Passwords, OAuth 2.1 with PKCE, and Bearer Tokens. All methods use a single dedicated service account (`axtolab-connector-service`) that an administrator must explicitly create from the AI Connector settings page after activation — the plugin never creates WordPress users without your consent. The role assigned to the service user (`axtolab_ai_connector_editor`) is limited to editing posts, pages, media, and categories.
+The plugin supports three authentication methods: WordPress Application Passwords, OAuth 2.1 with PKCE, and Bearer Tokens. Each MCP connection authenticates as a WordPress user that the administrator chose during setup — either their own admin account (simple) or a dedicated WP user they created themselves (recommended for production sites). The plugin never creates WordPress users or roles. Each tool call runs with that user's WordPress capabilities, layered with the per-connection capability set (read / publish / trash / media / SEO / etc.) the administrator chose for the connection. Both layers must allow an action for it to succeed.
 
 = Which auth method works for which endpoint? =
 
 Each method has a specific scope. Pick the one that matches what your client needs to do:
 
-* **Application Password** (HTTP Basic Auth) — works against every plugin REST endpoint (`/site-info`, `/content/*`, `/media/*`, `/yoast/*`, `/abilities/*`, etc.). This is available for custom clients and local MCP clients that need direct REST access. The wp-admin connection-token flow can create the necessary credentials without manually copying a WordPress password.
+* **Application Password** (HTTP Basic Auth) — works against every plugin REST endpoint (`/site-info`, `/content/*`, `/media/*`, `/yoast/*`, `/abilities/*`, etc.). This is available for custom clients and local MCP clients that need direct REST access. The connection wizard packages the username + Application Password into a single `wmcp1_` token you can paste into Claude Desktop / Claude Code without copying credentials manually.
 * **OAuth 2.1 with PKCE + Bearer Token** — issued tokens are scoped to the **MCP-over-HTTP transport only** (`/wp-json/axtolab-ai-connector/v1/mcp`). They do not authenticate the ordinary REST API surface. This scope split is intentional: OAuth is the path remote/web MCP clients (ChatGPT, Claude Web) use to access the JSON-RPC tool surface, while ordinary REST is reserved for trusted local MCP servers using Application Passwords. If you need OAuth-issued credentials to call ordinary REST endpoints directly, contact support — we can extend the scope on request once your use case is documented.
 
 = The AI Connector admin shows "Host-root .well-known discovery: Blocked by your web server". What does this mean? =
@@ -224,7 +227,7 @@ All API keys are stored encrypted using AES-256-CBC with WordPress security salt
 
 1. AI Connector setup page with desktop AI client quick connect and connection status.
 2. Logs & Roll Back admin page where AI-driven writes appear for review and revert.
-3. Connection-token tab for desktop clients — paste the wmcp1_... token into the AI client's extension settings.
+3. Connection wizard — paste an Application Password and the wizard returns the wmcp1_... token to paste into the AI client's extension settings.
 4. Web client setup tab for ChatGPT, Claude Web, and MCP-compatible clients.
 5. Image Providers tab for stock-photo and AI image provider configuration.
 6. Connection capabilities tab for choosing what each AI client can do.
@@ -253,7 +256,7 @@ Highlights:
 * **Capability-group-driven tool filtering** on the MCP transport — operators choose what AI agents on each connection are allowed to do (read, create_edit, publish, trash_restore, media_manage, taxonomy, authors, seo, image, upload_portal).
 * **Provider-neutral SEO tools** that auto-detect Yoast or Rank Math, with the legacy Yoast-specific tools retained for backwards compatibility.
 * **Confirmation-token flow** required for destructive operations (publish, trash, restore) — a single-use token must be issued before the action proceeds.
-* **Service account isolation** — a dedicated `axtolab-connector-service` user with the minimal `axtolab_ai_connector_editor` role; the plugin's REST routes never run as the logged-in admin.
+* **Per-connection privilege model** — every MCP connection authenticates as a WordPress user (chosen by the administrator during setup, via the Application Password wizard); the plugin never creates WordPress users or roles. Connection capability set and the user's WordPress role layer to determine what each tool call can do.
 * **Submission readiness pass** — feature settings stand alone (no inline upsells), all third-party services disclosed in the External Services section, the `.mcpb` Claude Desktop installer is hosted as a GitHub Release asset and linked from the setup page.
 
 == Upgrade Notice ==

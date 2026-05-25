@@ -54,7 +54,7 @@ Let AI agents safely write, edit, and manage your WordPress site. This plugin pr
 The plugin supports three authentication methods:
 
 ### 1. Application Passwords (Default)
-WordPress built-in Application Passwords via HTTP Basic Auth. Issued to the dedicated `axtolab-connector-service` user via the connection-token flow (token starts with `wmcp1_...`). The token is generated in the AI Connector setup page and consumed by the `wp_connect_site` MCP tool inside Claude Desktop's `.mcpb` extension.
+WordPress built-in Application Passwords via HTTP Basic Auth. Admins create the Application Password under their own (or a dedicated) WordPress user profile, paste it into the "+ Add new connection" wizard, and the wizard returns a `wmcp1_...` connection token bundling the same credentials. The token is consumed by the `wp_connect_site` MCP tool inside Claude Desktop's `.mcpb` extension. The plugin does not create WordPress users.
 
 ### 2. OAuth 2.1
 For web-based clients (ChatGPT, Claude Web). Supports:
@@ -71,16 +71,16 @@ For remote MCP-over-HTTP transport connections. Enable in Settings → AI Connec
 
 Navigate to **Settings → AI Connector** to configure:
 
-- **Connect AI Client** — generate connection tokens for desktop clients
-- **Service Account** — status of the `axtolab-connector-service` user (explicit-consent creation)
+- **Connect AI Client** — install the .mcpb extension and jump to the connection wizard
+- **Connected Clients** — list, rename, revoke, and re-permission existing MCP connections; "+ Add new connection" launches the App Password wizard
 - **Remote AI Access** — enable/disable bearer token transport
 - **OAuth** — enable/disable OAuth 2.1 authorization server
 - **Image Providers** — API keys for Google Imagen, OpenAI, Unsplash, Pexels
-- **Revoke All** — clear all Application Passwords for the service account
+- **Revoke All** — clear all MCP connections (App Passwords + OAuth)
 
 ## Security
 
-- **Service account isolation** — dedicated `axtolab-connector-service` user with `axtolab_ai_connector_editor` role (no admin access)
+- **Per-connection privilege model** — every MCP connection authenticates as a WordPress user the administrator chose during setup (their own admin or a dedicated user). Connection capability set + the user's WP role both gate every action.
 - **Confirmation tokens** — destructive operations (publish, trash, restore) require explicit confirmation
 - **Rate limiting** — per-IP limits on OAuth registration and token endpoints
 - **SVG sanitization** — DOMDocument-based stripping of scripts, event handlers, and dangerous URIs
@@ -91,15 +91,16 @@ Navigate to **Settings → AI Connector** to configure:
 ## Uninstallation
 
 When the plugin is deleted (not just deactivated), it removes:
-- The `axtolab-connector-service` user (content reassigned to admin)
-- The `axtolab_ai_connector_editor` role
-- All plugin options and settings
+- All plugin options and settings (including the connections registry)
 - All plugin transients (upload sessions, rate limits, OAuth tokens)
+- The plugin's custom WordPress capabilities from the administrator role
 - .htaccess rules for OAuth discovery
+
+WordPress users and Application Passwords are NOT removed on uninstall — the plugin never created them. Admins can revoke Application Passwords from each user's profile page if they want to clean those up.
 
 ## Identifier conventions
 
-All identifiers use the `axtolab_ai_connector_*` / `Axtolab_AI_Connector_*` / `AXTOLAB_AI_CONNECTOR_*` prefix family. The REST namespace is `/wp-json/axtolab-ai-connector/v1`, the service account user is `axtolab-connector-service`, the role is `axtolab_ai_connector_editor`, and stored-option keys are `axtolab_ai_connector_*`.
+All identifiers use the `axtolab_ai_connector_*` / `Axtolab_AI_Connector_*` / `AXTOLAB_AI_CONNECTOR_*` prefix family. The REST namespace is `/wp-json/axtolab-ai-connector/v1`. Stored-option keys are `axtolab_ai_connector_*`; the connections registry lives at `axtolab_ai_connector_connections`.
 
 ## License
 

@@ -7,6 +7,11 @@
  *
  * Tokens are stored as HMAC-SHA256 hashes — the raw token is shown once and never persisted.
  *
+ * Each token is bound to the WordPress user that was logged in when the
+ * token was generated. That user must continue to exist with the underlying
+ * WP capabilities required by any tool the client calls; the per-connection
+ * capability set in {@see Axtolab_AI_Connector_Connections} narrows further.
+ *
  * @package WP_MCP_Gateway
  * @since   0.2.0
  */
@@ -24,7 +29,8 @@ class Axtolab_AI_Connector_Bearer_Auth {
 	/**
 	 * Generate a new bearer token.
 	 *
-	 * Returns the raw token (show to user ONCE) and stores the HMAC hash.
+	 * Returns the raw token (show to user ONCE) and stores the HMAC hash plus
+	 * the wp_user_id of the admin that generated it.
 	 *
 	 * @return string|WP_Error The raw bearer token, or a gate error.
 	 */
@@ -32,6 +38,14 @@ class Axtolab_AI_Connector_Bearer_Auth {
 		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
 		if ( is_wp_error( $multisite_allowed ) ) {
 			return $multisite_allowed;
+		}
+
+		$current_user_id = get_current_user_id();
+		if ( $current_user_id <= 0 ) {
+			return new WP_Error(
+				'no_current_user',
+				__( 'A WordPress administrator must be logged in to generate a Bearer token.', 'axtolab-ai-connector' )
+			);
 		}
 
 		$raw_bytes = random_bytes( 32 );
@@ -44,6 +58,7 @@ class Axtolab_AI_Connector_Bearer_Auth {
 		$settings['remote_bearer_token_hash']    = $hash;
 		$settings['remote_bearer_token_created'] = current_time( 'mysql' );
 		$settings['remote_bearer_token_prefix']  = substr( $token, 0, 8 );
+		$settings['remote_bearer_token_user_id'] = $current_user_id;
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
 		return $token;
@@ -69,13 +84,26 @@ class Axtolab_AI_Connector_Bearer_Auth {
 	}
 
 	/**
+	 * Return the WordPress user ID the current Bearer token authenticates as.
+	 *
+	 * @return int 0 when no token is configured.
+	 */
+	public static function get_token_user_id(): int {
+		$settings = get_option( 'axtolab_ai_connector_settings', array() );
+		return isset( $settings['remote_bearer_token_user_id'] ) ? (int) $settings['remote_bearer_token_user_id'] : 0;
+	}
+
+	/**
 	 * Revoke the current bearer token.
+	 *
+	 * @return void
 	 */
 	public static function revoke_token(): void {
 		$settings = get_option( 'axtolab_ai_connector_settings', array() );
 		unset( $settings['remote_bearer_token_hash'] );
 		unset( $settings['remote_bearer_token_created'] );
 		unset( $settings['remote_bearer_token_prefix'] );
+		unset( $settings['remote_bearer_token_user_id'] );
 		update_option( 'axtolab_ai_connector_settings', $settings );
 	}
 
@@ -93,7 +121,7 @@ class Axtolab_AI_Connector_Bearer_Auth {
 	/**
 	 * Get token metadata for admin UI display.
 	 *
-	 * @return array{exists: bool, prefix: string, created_at: string}
+	 * @return array{exists: bool, prefix: string, created_at: string, user_id: int}
 	 */
 	public static function get_token_info(): array {
 		$settings = get_option( 'axtolab_ai_connector_settings', array() );
@@ -102,6 +130,7 @@ class Axtolab_AI_Connector_Bearer_Auth {
 			'exists'     => ! empty( $settings['remote_bearer_token_hash'] ),
 			'prefix'     => $settings['remote_bearer_token_prefix'] ?? '',
 			'created_at' => $settings['remote_bearer_token_created'] ?? '',
+			'user_id'    => isset( $settings['remote_bearer_token_user_id'] ) ? (int) $settings['remote_bearer_token_user_id'] : 0,
 		);
 	}
 }

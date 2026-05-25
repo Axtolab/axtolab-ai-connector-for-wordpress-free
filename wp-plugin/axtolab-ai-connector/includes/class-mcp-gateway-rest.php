@@ -1437,8 +1437,9 @@ final class Axtolab_AI_Connector_REST {
 	 *
 	 * The application_password_did_authenticate hook may not fire if a
 	 * security plugin (e.g. Wordfence) intercepts the auth flow. This
-	 * fallback reads the Basic Auth header and matches the password
-	 * against the service account's stored Application Passwords.
+	 * fallback reads the Basic Auth header and matches the password against
+	 * the resolved current user's stored Application Passwords, then
+	 * confirms the UUID is in our connections registry.
 	 *
 	 * Result is cached per-request to avoid repeated password hashing.
 	 *
@@ -1450,13 +1451,8 @@ final class Axtolab_AI_Connector_REST {
 		}
 		self::$fallback_attempted = true;
 
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-		if ( ! $service_user_id ) {
-			return null;
-		}
-
 		$current_user_id = get_current_user_id();
-		if ( $current_user_id !== $service_user_id ) {
+		if ( $current_user_id <= 0 ) {
 			return null;
 		}
 
@@ -1485,13 +1481,20 @@ final class Axtolab_AI_Connector_REST {
 			return null;
 		}
 
-		$passwords = WP_Application_Passwords::get_user_application_passwords( $service_user_id );
+		$passwords = WP_Application_Passwords::get_user_application_passwords( $current_user_id );
 		if ( ! is_array( $passwords ) ) {
 			return null;
 		}
 
 		foreach ( $passwords as $item ) {
-			if ( wp_check_password( $password, $item['password'], $service_user_id ) ) {
+			if ( wp_check_password( $password, $item['password'], $current_user_id ) ) {
+				// Only treat this as an MCP connection if it's in our
+				// registry — App Passwords created by the same user for
+				// other tools must not get the MCP capability surface.
+				$registered = Axtolab_AI_Connector_Connections::get_by_uuid( $item['uuid'] );
+				if ( ! $registered ) {
+					return null;
+				}
 				self::$fallback_connection_id = $item['uuid'];
 				Axtolab_AI_Connector_Connections::set_current_connection_id( $item['uuid'] );
 				return $item['uuid'];

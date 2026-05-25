@@ -49,10 +49,8 @@
     </rule>
 
     <!-- Project-specific custom capabilities granted to the administrator role
-         (and the axtolab_ai_connector_editor service-account role) by the
-         plugin activation hook. Registered via WP_Role->add_cap() in
-         axtolab_ai_connector_grant_admin_caps() and
-         axtolab_ai_connector_provision_role(). -->
+         by the plugin activation hook. Registered via WP_Role->add_cap() in
+         axtolab_ai_connector_grant_admin_caps(). -->
     <rule ref="WordPress.WP.Capabilities">
         <properties>
             <property name="custom_capabilities" type="array">

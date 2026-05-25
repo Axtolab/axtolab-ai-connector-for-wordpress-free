@@ -258,16 +258,24 @@ class Axtolab_AI_Connector_Upload_Portal {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
-		// Set the service account as current user for upload permissions.
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-		if ( ! $service_user_id || ! get_user_by( 'id', $service_user_id ) ) {
+		// Set the user that created the upload session as the current user
+		// so the WP capability filter on wp_handle_upload respects their
+		// `upload_files` capability. The session's `created_by` was recorded
+		// at session-creation time as the user the MCP connection
+		// authenticated as.
+		$session_user_id = isset( $session['created_by'] ) ? (int) $session['created_by'] : 0;
+		if ( ! $session_user_id || ! get_user_by( 'id', $session_user_id ) ) {
 			remove_filter( 'upload_mimes', $mime_filter, 999 );
-			self::debug_log( 'MCP Upload Portal: Service account not found (ID: ' . $service_user_id . '). Visit the AI Connector settings page and click "Create service user".' );
-			return new WP_Error( 'service_account_missing', 'AI Connector service user has not been created yet. Open the AI Connector settings page in wp-admin and click "Create service user".', array( 'status' => 500 ) );
+			self::debug_log( 'MCP Upload Portal: Upload session has no valid owning user (ID: ' . $session_user_id . ').' );
+			return new WP_Error(
+				'upload_session_user_invalid',
+				'Upload session is no longer associated with a valid WordPress user.',
+				array( 'status' => 500 )
+			);
 		}
 
 		$previous_user_id = get_current_user_id();
-		wp_set_current_user( $service_user_id );
+		wp_set_current_user( $session_user_id );
 
 		$upload = wp_handle_upload(
 			$upload_file,

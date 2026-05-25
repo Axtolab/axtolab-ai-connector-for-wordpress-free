@@ -6,6 +6,23 @@
  * MCP client connections (Application Passwords + OAuth tokens) with
  * label management, last-active tracking, and per-connection revoke.
  *
+ * Connection storage shape (since the round-6 refactor that removed the
+ * single shared service account):
+ *
+ *   option `axtolab_ai_connector_connections` = array<string, array{
+ *       wp_user_id:    int,    // WordPress user the App Password belongs to
+ *       client_type:   string, // claude_desktop | cowork | chatgpt | …
+ *       client_label:  string, // display name (user-editable)
+ *       auth_method:   string, // app_password | oauth
+ *       registered_at: int,    // Unix timestamp
+ *   }>
+ *
+ * The key is the App Password UUID, or {@see self::OAUTH_CONNECTION_ID} for
+ * the single OAuth token. The legacy per-UUID `META_PREFIX` /
+ * `LAST_ACTIVE_PREFIX` / `CAPABILITIES_PREFIX` / `ALLOWED_AUTHORS_PREFIX`
+ * options stay in place — only the connection-set membership moves to the
+ * registry option.
+ *
  * @package WP_MCP_Gateway
  * @since   0.1.30
  */
@@ -24,6 +41,13 @@ if ( class_exists( 'Axtolab_AI_Connector_Connections', false ) ) {
 }
 
 class Axtolab_AI_Connector_Connections {
+
+	/**
+	 * Option name for the connections registry array.
+	 *
+	 * @var string
+	 */
+	const REGISTRY_OPTION = 'axtolab_ai_connector_connections';
 
 	/**
 	 * Option prefix for connection metadata.
@@ -89,6 +113,115 @@ class Axtolab_AI_Connector_Connections {
 	 */
 	private static $current_connection_id = null;
 
+	// ── Registry helpers ─────────────────────────────────────────────────────
+
+	/**
+	 * Get the raw registry array.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private static function get_registry() {
+		$registry = get_option( self::REGISTRY_OPTION, array() );
+		return is_array( $registry ) ? $registry : array();
+	}
+
+	/**
+	 * Replace the registry option.
+	 *
+	 * @param array $registry The new registry array.
+	 * @return void
+	 */
+	private static function save_registry( array $registry ) {
+		update_option( self::REGISTRY_OPTION, $registry, false );
+		self::invalidate_cache();
+	}
+
+	/**
+	 * Record a newly-created connection in the registry.
+	 *
+	 * @param string $connection_id App Password UUID or self::OAUTH_CONNECTION_ID.
+	 * @param int    $wp_user_id    WordPress user ID the connection authenticates as.
+	 * @param array  $meta          Metadata: { client_type: string, client_label: string, auth_method: string }.
+	 * @return void
+	 */
+	public static function register_connection( $connection_id, $wp_user_id, $meta = array() ) {
+		if ( ! self::is_valid_connection_id( $connection_id ) ) {
+			return;
+		}
+		$registry                   = self::get_registry();
+		$registry[ $connection_id ] = array(
+			'wp_user_id'    => (int) $wp_user_id,
+			'client_type'   => isset( $meta['client_type'] ) ? sanitize_text_field( $meta['client_type'] ) : 'unknown',
+			'client_label'  => isset( $meta['client_label'] ) ? sanitize_text_field( $meta['client_label'] ) : '',
+			'auth_method'   => isset( $meta['auth_method'] ) ? sanitize_text_field( $meta['auth_method'] ) : 'app_password',
+			'registered_at' => time(),
+		);
+		self::save_registry( $registry );
+
+		// Mirror to the legacy META_PREFIX option so existing code paths
+		// (admin renderer, OAuth flow) that read it directly keep working
+		// without a parallel migration.
+		update_option(
+			self::META_PREFIX . $connection_id,
+			array(
+				'client_type'   => $registry[ $connection_id ]['client_type'],
+				'client_label'  => $registry[ $connection_id ]['client_label'],
+				'registered_at' => $registry[ $connection_id ]['registered_at'],
+			),
+			false
+		);
+	}
+
+	/**
+	 * Look up the WordPress user ID for a connection.
+	 *
+	 * @param string $connection_id App Password UUID or self::OAUTH_CONNECTION_ID.
+	 * @return int|null User ID, or null if the connection is unknown or has no wp_user_id.
+	 */
+	public static function get_wp_user_id( $connection_id ) {
+		$registry = self::get_registry();
+		if ( ! isset( $registry[ $connection_id ] ) ) {
+			return null;
+		}
+		$id = isset( $registry[ $connection_id ]['wp_user_id'] ) ? (int) $registry[ $connection_id ]['wp_user_id'] : 0;
+		return $id > 0 ? $id : null;
+	}
+
+	/**
+	 * Return a single connection by ID, or null.
+	 *
+	 * @param string $connection_id App Password UUID or self::OAUTH_CONNECTION_ID.
+	 * @return array|null
+	 */
+	public static function get_connection( $connection_id ) {
+		$all = self::get_all_connections();
+		foreach ( $all as $conn ) {
+			if ( $conn['id'] === $connection_id ) {
+				return $conn;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Resolve an App Password UUID to the registered connection (if any).
+	 *
+	 * Used by the Basic-auth fallback in the REST layer when the
+	 * application_password_did_authenticate hook does not fire.
+	 *
+	 * @param string $uuid Application Password UUID.
+	 * @return array|null Registry row including 'id' key, or null.
+	 */
+	public static function get_by_uuid( $uuid ) {
+		$registry = self::get_registry();
+		if ( ! isset( $registry[ $uuid ] ) ) {
+			return null;
+		}
+		$row       = $registry[ $uuid ];
+		$row['id'] = $uuid;
+		return $row;
+	}
+
 	// ── Read operations ──────────────────────────────────────────────────────
 
 	/**
@@ -98,12 +231,15 @@ class Axtolab_AI_Connector_Connections {
 	 *
 	 * @return array[] Each entry: {
 	 *     id: string,          // unique identifier (app password UUID or 'oauth_token')
+	 *     wp_user_id: int,     // WordPress user ID (the App Password owner; 0 for needs-reauth)
+	 *     wp_user_login: string,
 	 *     label: string,       // user-editable display name
 	 *     client_type: string, // claude_desktop, cowork, chatgpt, claude_web, cli, unknown
 	 *     auth_method: string, // app_password, oauth
 	 *     created: int,        // Unix timestamp
 	 *     last_active: int,    // Unix timestamp (0 if never)
 	 *     last_ip: string,     // IP address or empty
+	 *     needs_reauth: bool,  // wp_user_id is missing/orphaned/zero
 	 * }
 	 */
 	public static function get_all_connections() {
@@ -111,37 +247,59 @@ class Axtolab_AI_Connector_Connections {
 			return self::$connections_cache;
 		}
 
-		$connections     = array();
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
+		$connections = array();
+		$registry    = self::get_registry();
 
-		// 1. Application Passwords for the service account.
-		if ( $service_user_id && class_exists( 'WP_Application_Passwords' ) ) {
-			$passwords = WP_Application_Passwords::get_user_application_passwords( $service_user_id );
+		// 1. App Password connections from the registry.
+		foreach ( $registry as $id => $row ) {
+			if ( self::OAUTH_CONNECTION_ID === $id ) {
+				continue; // Handled below from oauth settings (authoritative for expiry).
+			}
 
-			if ( is_array( $passwords ) ) {
-				foreach ( $passwords as $pwd ) {
-					$uuid        = $pwd['uuid'];
-					$meta        = get_option( self::META_PREFIX . $uuid, array() );
-					$last_active = (int) get_option( self::LAST_ACTIVE_PREFIX . $uuid, 0 );
+			$wp_user_id   = isset( $row['wp_user_id'] ) ? (int) $row['wp_user_id'] : 0;
+			$wp_user      = $wp_user_id ? get_user_by( 'id', $wp_user_id ) : false;
+			$needs_reauth = ! ( $wp_user instanceof WP_User );
 
-					// Fall back to WordPress core's last_used (date only, as Unix timestamp).
-					if ( ! $last_active && ! empty( $pwd['last_used'] ) ) {
-						$last_active = (int) $pwd['last_used'];
+			$last_active = (int) get_option( self::LAST_ACTIVE_PREFIX . $id, 0 );
+			$created     = isset( $row['registered_at'] ) ? (int) $row['registered_at'] : 0;
+			$last_ip     = '';
+
+			// Pull live data from the App Password record when the user still exists.
+			if ( $wp_user instanceof WP_User && class_exists( 'WP_Application_Passwords' ) ) {
+				$passwords = WP_Application_Passwords::get_user_application_passwords( $wp_user_id );
+				if ( is_array( $passwords ) ) {
+					foreach ( $passwords as $pwd ) {
+						if ( $pwd['uuid'] === $id ) {
+							if ( ! $last_active && ! empty( $pwd['last_used'] ) ) {
+								$last_active = (int) $pwd['last_used'];
+							}
+							if ( ! $created && isset( $pwd['created'] ) ) {
+								$created = (int) $pwd['created'];
+							}
+							if ( ! empty( $pwd['last_ip'] ) ) {
+								$last_ip = $pwd['last_ip'];
+							}
+							break;
+						}
 					}
-
-					$connections[] = array(
-						'id'              => $uuid,
-						'label'           => ! empty( $meta['client_label'] ) ? $meta['client_label'] : $pwd['name'],
-						'client_type'     => ! empty( $meta['client_type'] ) ? $meta['client_type'] : 'unknown',
-						'auth_method'     => 'app_password',
-						'created'         => isset( $pwd['created'] ) ? (int) $pwd['created'] : 0,
-						'last_active'     => $last_active,
-						'last_ip'         => ! empty( $pwd['last_ip'] ) ? $pwd['last_ip'] : '',
-						'capabilities'    => self::get_capabilities( $uuid ),
-						'allowed_authors' => self::get_allowed_authors( $uuid ),
-					);
 				}
 			}
+
+			$connections[] = array(
+				'id'              => $id,
+				'wp_user_id'      => $wp_user_id,
+				'wp_user_login'   => $wp_user instanceof WP_User ? $wp_user->user_login : '',
+				'wp_user_display' => $wp_user instanceof WP_User ? $wp_user->display_name : '',
+				'label'           => ! empty( $row['client_label'] ) ? $row['client_label'] : __( 'MCP Connection', 'axtolab-ai-connector' ),
+				'client_type'     => ! empty( $row['client_type'] ) ? $row['client_type'] : 'unknown',
+				'auth_method'     => ! empty( $row['auth_method'] ) ? $row['auth_method'] : 'app_password',
+				'created'         => $created,
+				'last_active'     => $last_active,
+				'last_ip'         => $last_ip,
+				'capabilities'    => self::get_capabilities( $id ),
+				'allowed_authors' => self::get_allowed_authors( $id ),
+				'needs_reauth'    => $needs_reauth,
+			);
 		}
 
 		// 2. OAuth token (at most one active at a time).
@@ -153,30 +311,40 @@ class Axtolab_AI_Connector_Connections {
 
 			if ( $active ) {
 				$oauth_id    = self::OAUTH_CONNECTION_ID;
-				$meta        = get_option( self::META_PREFIX . $oauth_id, array() );
+				$row         = isset( $registry[ $oauth_id ] ) ? $registry[ $oauth_id ] : array();
 				$last_active = (int) get_option( self::LAST_ACTIVE_PREFIX . $oauth_id, 0 );
 				$created_str = isset( $settings['oauth_access_token_created'] ) ? $settings['oauth_access_token_created'] : '';
 				$created_ts  = $created_str ? strtotime( $created_str ) : 0;
 				$client_name = isset( $settings['oauth_client_name'] ) ? $settings['oauth_client_name'] : 'MCP Client';
 
-				// Auto-detect client type from client_name.
-				$client_type = 'unknown';
-				if ( false !== stripos( $client_name, 'chatgpt' ) ) {
-					$client_type = 'chatgpt';
-				} elseif ( false !== stripos( $client_name, 'claude' ) ) {
-					$client_type = 'claude_web';
+				$wp_user_id   = isset( $row['wp_user_id'] ) ? (int) $row['wp_user_id'] : 0;
+				$wp_user      = $wp_user_id ? get_user_by( 'id', $wp_user_id ) : false;
+				$needs_reauth = ! ( $wp_user instanceof WP_User );
+
+				// Auto-detect client type from client_name when not yet stored.
+				$client_type = ! empty( $row['client_type'] ) ? $row['client_type'] : 'unknown';
+				if ( 'unknown' === $client_type ) {
+					if ( false !== stripos( $client_name, 'chatgpt' ) ) {
+						$client_type = 'chatgpt';
+					} elseif ( false !== stripos( $client_name, 'claude' ) ) {
+						$client_type = 'claude_web';
+					}
 				}
 
 				$connections[] = array(
 					'id'              => $oauth_id,
-					'label'           => ! empty( $meta['client_label'] ) ? $meta['client_label'] : $client_name,
-					'client_type'     => ! empty( $meta['client_type'] ) ? $meta['client_type'] : $client_type,
+					'wp_user_id'      => $wp_user_id,
+					'wp_user_login'   => $wp_user instanceof WP_User ? $wp_user->user_login : '',
+					'wp_user_display' => $wp_user instanceof WP_User ? $wp_user->display_name : '',
+					'label'           => ! empty( $row['client_label'] ) ? $row['client_label'] : $client_name,
+					'client_type'     => $client_type,
 					'auth_method'     => 'oauth',
 					'created'         => $created_ts ? (int) $created_ts : 0,
 					'last_active'     => $last_active,
 					'last_ip'         => '',
 					'capabilities'    => self::get_capabilities( self::OAUTH_CONNECTION_ID ),
 					'allowed_authors' => self::get_allowed_authors( self::OAUTH_CONNECTION_ID ),
+					'needs_reauth'    => $needs_reauth,
 				);
 			}
 		}
@@ -199,6 +367,8 @@ class Axtolab_AI_Connector_Connections {
 	 *
 	 * Call after any write operation that changes the connections list
 	 * (rename, revoke, register_meta, etc.).
+	 *
+	 * @return void
 	 */
 	public static function invalidate_cache() {
 		self::$connections_cache = null;
@@ -229,38 +399,49 @@ class Axtolab_AI_Connector_Connections {
 			$new_label = mb_substr( $new_label, 0, 200 );
 		}
 
+		$registry = self::get_registry();
+
 		if ( self::OAUTH_CONNECTION_ID === $connection_id ) {
-			// Update stored meta for OAuth connection.
+			if ( ! isset( $registry[ $connection_id ] ) ) {
+				$registry[ $connection_id ] = array();
+			}
+			$registry[ $connection_id ]['client_label'] = $new_label;
+			self::save_registry( $registry );
+
+			// Mirror to legacy META_PREFIX store.
 			$meta                 = get_option( self::META_PREFIX . $connection_id, array() );
 			$meta['client_label'] = $new_label;
 			update_option( self::META_PREFIX . $connection_id, $meta, false );
-			self::invalidate_cache();
 			return $new_label;
 		}
 
-		// App password — update the WP core name field.
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
-
-		if ( ! $service_user_id || ! class_exists( 'WP_Application_Passwords' ) ) {
+		if ( ! isset( $registry[ $connection_id ] ) ) {
 			return new WP_Error( 'not_found', __( 'Connection not found.', 'axtolab-ai-connector' ) );
 		}
 
-		$result = WP_Application_Passwords::update_application_password(
-			$service_user_id,
-			$connection_id,
-			array( 'name' => $new_label )
-		);
+		$wp_user_id = (int) $registry[ $connection_id ]['wp_user_id'];
 
-		if ( is_wp_error( $result ) ) {
-			return $result;
+		// Update the WordPress core App Password "name" field too when the
+		// owning user still exists, so it stays in sync under that user's
+		// profile.
+		if ( $wp_user_id && class_exists( 'WP_Application_Passwords' ) && get_user_by( 'id', $wp_user_id ) ) {
+			$result = WP_Application_Passwords::update_application_password(
+				$wp_user_id,
+				$connection_id,
+				array( 'name' => $new_label )
+			);
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
 		}
 
-		// Also update our metadata store so the label is preserved.
+		$registry[ $connection_id ]['client_label'] = $new_label;
+		self::save_registry( $registry );
+
+		// Mirror to legacy META_PREFIX store.
 		$meta                 = get_option( self::META_PREFIX . $connection_id, array() );
 		$meta['client_label'] = $new_label;
 		update_option( self::META_PREFIX . $connection_id, $meta, false );
-
-		self::invalidate_cache();
 
 		return $new_label;
 	}
@@ -276,31 +457,29 @@ class Axtolab_AI_Connector_Connections {
 			return new WP_Error( 'invalid_id', __( 'Invalid connection ID.', 'axtolab-ai-connector' ) );
 		}
 
+		$registry = self::get_registry();
+
 		if ( self::OAUTH_CONNECTION_ID === $connection_id ) {
 			Axtolab_AI_Connector_OAuth::revoke_token();
+			unset( $registry[ $connection_id ] );
+			self::save_registry( $registry );
 			self::cleanup_meta( $connection_id );
-			self::invalidate_cache();
 			return true;
 		}
 
-		// App password — delete via WP core.
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
+		if ( isset( $registry[ $connection_id ] ) ) {
+			$wp_user_id = (int) $registry[ $connection_id ]['wp_user_id'];
 
-		if ( ! $service_user_id || ! class_exists( 'WP_Application_Passwords' ) ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'axtolab-ai-connector' ) );
-		}
+			// Best-effort delete the underlying App Password from WordPress.
+			if ( $wp_user_id && class_exists( 'WP_Application_Passwords' ) && get_user_by( 'id', $wp_user_id ) ) {
+				WP_Application_Passwords::delete_application_password( $wp_user_id, $connection_id );
+			}
 
-		$result = WP_Application_Passwords::delete_application_password(
-			$service_user_id,
-			$connection_id
-		);
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
+			unset( $registry[ $connection_id ] );
+			self::save_registry( $registry );
 		}
 
 		self::cleanup_meta( $connection_id );
-		self::invalidate_cache();
 
 		return true;
 	}
@@ -311,20 +490,19 @@ class Axtolab_AI_Connector_Connections {
 	 * @return int Number of connections revoked.
 	 */
 	public static function revoke_all() {
-		$count           = 0;
-		$service_user_id = (int) get_option( 'axtolab_ai_connector_service_user_id', 0 );
+		$count    = 0;
+		$registry = self::get_registry();
 
-		// Delete all app passwords.
-		if ( $service_user_id && class_exists( 'WP_Application_Passwords' ) ) {
-			$passwords = WP_Application_Passwords::get_user_application_passwords( $service_user_id );
-
-			if ( is_array( $passwords ) ) {
-				foreach ( $passwords as $pwd ) {
-					self::cleanup_meta( $pwd['uuid'] );
-					++$count;
-				}
-				WP_Application_Passwords::delete_all_application_passwords( $service_user_id );
+		foreach ( $registry as $id => $row ) {
+			if ( self::OAUTH_CONNECTION_ID === $id ) {
+				continue;
 			}
+			$wp_user_id = isset( $row['wp_user_id'] ) ? (int) $row['wp_user_id'] : 0;
+			if ( $wp_user_id && class_exists( 'WP_Application_Passwords' ) && get_user_by( 'id', $wp_user_id ) ) {
+				WP_Application_Passwords::delete_application_password( $wp_user_id, $id );
+			}
+			self::cleanup_meta( $id );
+			++$count;
 		}
 
 		// Revoke OAuth token if active.
@@ -334,7 +512,8 @@ class Axtolab_AI_Connector_Connections {
 			++$count;
 		}
 
-		self::invalidate_cache();
+		// Wipe the registry entirely.
+		self::save_registry( array() );
 
 		return $count;
 	}
@@ -347,6 +526,7 @@ class Axtolab_AI_Connector_Connections {
 	 * Throttled to once per minute per connection to avoid DB spam.
 	 *
 	 * @param string $connection_id The app password UUID or 'oauth_token'.
+	 * @return void
 	 */
 	public static function touch( $connection_id ) {
 		if ( ! self::is_valid_connection_id( $connection_id ) ) {
@@ -375,9 +555,19 @@ class Axtolab_AI_Connector_Connections {
 	 *
 	 * @param WP_User $user The authenticated user.
 	 * @param array   $item The application password record.
+	 * @return void
 	 */
 	public static function on_app_password_auth( $user, $item ) {
 		if ( empty( $item['uuid'] ) ) {
+			return;
+		}
+
+		// Only mark the request as belonging to a known MCP connection if the
+		// App Password UUID is in our registry. App Passwords created by users
+		// for unrelated tools (REST API clients, mobile apps, etc.) must not
+		// be silently treated as MCP traffic.
+		$registry = self::get_registry();
+		if ( ! isset( $registry[ $item['uuid'] ] ) ) {
 			return;
 		}
 
@@ -404,6 +594,7 @@ class Axtolab_AI_Connector_Connections {
 	 * hook does not fire (e.g. security plugin interference).
 	 *
 	 * @param string $id The connection UUID.
+	 * @return void
 	 */
 	public static function set_current_connection_id( $id ) {
 		self::$current_connection_id = $id;
@@ -502,12 +693,16 @@ class Axtolab_AI_Connector_Connections {
 	// ── Connection metadata ──────────────────────────────────────────────────
 
 	/**
-	 * Register metadata for a new connection.
+	 * Register / update metadata for an existing connection.
 	 *
-	 * Called during connection-token consumption or OAuth token issuance.
+	 * Kept for back-compat with the OAuth flow which calls this to attach a
+	 * client name to the already-registered OAuth connection. Most callers
+	 * should use {@see self::register_connection()} instead, which records
+	 * the owning wp_user_id at the same time.
 	 *
 	 * @param string $connection_id The app password UUID or token ID.
-	 * @param array  $meta          { client_type: string, client_label: string }
+	 * @param array  $meta          Metadata: { client_type: string, client_label: string }.
+	 * @return void
 	 */
 	public static function register_meta( $connection_id, $meta ) {
 		if ( ! self::is_valid_connection_id( $connection_id ) ) {
@@ -521,7 +716,22 @@ class Axtolab_AI_Connector_Connections {
 		);
 
 		update_option( self::META_PREFIX . $connection_id, $stored, false );
-		self::invalidate_cache();
+
+		// Mirror into the registry. The wp_user_id is left untouched if a row
+		// already exists (it must be set explicitly via register_connection()).
+		$registry = self::get_registry();
+		if ( ! isset( $registry[ $connection_id ] ) ) {
+			$registry[ $connection_id ] = array(
+				'wp_user_id' => 0,
+			);
+		}
+		$registry[ $connection_id ]['client_type']   = $stored['client_type'];
+		$registry[ $connection_id ]['client_label']  = $stored['client_label'];
+		$registry[ $connection_id ]['registered_at'] = $stored['registered_at'];
+		if ( empty( $registry[ $connection_id ]['auth_method'] ) ) {
+			$registry[ $connection_id ]['auth_method'] = self::OAUTH_CONNECTION_ID === $connection_id ? 'oauth' : 'app_password';
+		}
+		self::save_registry( $registry );
 	}
 
 	// ── Display helpers ──────────────────────────────────────────────────────
@@ -593,6 +803,7 @@ class Axtolab_AI_Connector_Connections {
 			'chatgpt'        => __( 'ChatGPT', 'axtolab-ai-connector' ),
 			'claude_web'     => __( 'Claude Web', 'axtolab-ai-connector' ),
 			'cli'            => __( 'CLI', 'axtolab-ai-connector' ),
+			'other'          => __( 'Other', 'axtolab-ai-connector' ),
 			'unknown'        => __( 'Unknown', 'axtolab-ai-connector' ),
 		);
 
@@ -628,6 +839,7 @@ class Axtolab_AI_Connector_Connections {
 	 * Remove stored metadata and last-active data for a connection.
 	 *
 	 * @param string $connection_id The connection identifier.
+	 * @return void
 	 */
 	private static function cleanup_meta( $connection_id ) {
 		delete_option( self::META_PREFIX . $connection_id );
