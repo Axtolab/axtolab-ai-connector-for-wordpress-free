@@ -157,7 +157,6 @@ require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-preview.php'
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-inline-images.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-rest.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-token-auth.php';
-require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-bearer-auth.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-confirmation.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-capabilities.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-mcp-transport.php';
@@ -177,7 +176,7 @@ require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-admin.php';
 // On CGI/FastCGI servers (LiteSpeed, some Apache configs), PHP never sees the
 // Authorization header in $_SERVER. This block reads it via getallheaders()
 // (available in PHP 7.3+ for all SAPIs) and populates $_SERVER so that
-// WordPress Application Passwords, Bearer auth, and OAuth can work.
+// WordPress Application Passwords and OAuth bearer tokens can work.
 //
 // This runs at file-load time (before any hooks) to ensure it's available
 // when WordPress calls wp_validate_application_password() during rest_api_init.
@@ -584,18 +583,35 @@ function axtolab_ai_connector_bootstrap(): void {
 	);
 
 	// Remote MCP Transport (Streamable HTTP).
-	// Enable if bearer token or OAuth is active.
-	$settings      = get_option( 'axtolab_ai_connector_settings', array() );
-	$bearer_active = ! empty( $settings['remote_mcp_enabled'] ) && Axtolab_AI_Connector_Bearer_Auth::has_token();
-	$oauth_active  = ! empty( $settings['oauth_enabled'] );
+	// OAuth 2.1 is the sole bearer-token issuer for the transport. The manual
+	// Bearer-Token generation path was removed in 0.2.x; any historical
+	// `remote_bearer_token_*` settings are scrubbed during the same upgrade pass.
+	$settings     = get_option( 'axtolab_ai_connector_settings', array() );
+	$oauth_active = ! empty( $settings['oauth_enabled'] );
 
-	if ( $bearer_active || $oauth_active ) {
+	if ( $oauth_active ) {
 		Axtolab_AI_Connector_MCP_Transport::bootstrap();
+		Axtolab_AI_Connector_OAuth::bootstrap();
 	}
 
-	// OAuth discovery and endpoints (enabled separately from transport).
-	if ( $oauth_active ) {
-		Axtolab_AI_Connector_OAuth::bootstrap();
+	// Defensive scrub of legacy Bearer-Token settings on existing installs.
+	// The manual Bearer-Token UI was removed; lingering keys are no longer
+	// read anywhere but should not sit in the settings option indefinitely.
+	if ( is_admin() && (
+			isset( $settings['remote_bearer_token_hash'] )
+			|| isset( $settings['remote_bearer_token_created'] )
+			|| isset( $settings['remote_bearer_token_prefix'] )
+			|| isset( $settings['remote_bearer_token_user_id'] )
+			|| isset( $settings['bearer_capabilities'] )
+		) ) {
+		unset(
+			$settings['remote_bearer_token_hash'],
+			$settings['remote_bearer_token_created'],
+			$settings['remote_bearer_token_prefix'],
+			$settings['remote_bearer_token_user_id'],
+			$settings['bearer_capabilities']
+		);
+		update_option( 'axtolab_ai_connector_settings', $settings );
 	}
 
 	// Upgrade .htaccess rules for existing installations.

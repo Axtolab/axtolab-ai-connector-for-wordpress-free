@@ -73,20 +73,6 @@ class Axtolab_AI_Connector_Admin {
 	const AJAX_TOGGLE_REMOTE = 'axtolab_ai_connector_toggle_remote';
 
 	/**
-	 * AJAX action for generating a bearer token.
-	 *
-	 * @var string
-	 */
-	const AJAX_GENERATE_BEARER = 'axtolab_ai_connector_generate_bearer';
-
-	/**
-	 * AJAX action for revoking the bearer token.
-	 *
-	 * @var string
-	 */
-	const AJAX_REVOKE_BEARER = 'axtolab_ai_connector_revoke_bearer';
-
-	/**
 	 * AJAX action for saving capability checkboxes.
 	 *
 	 * @var string
@@ -205,8 +191,6 @@ class Axtolab_AI_Connector_Admin {
 		add_action( 'wp_ajax_' . self::AJAX_WIZARD_VERIFY, array( $this, 'ajax_wizard_verify' ) );
 		add_action( 'wp_ajax_' . self::AJAX_WIZARD_CREATE, array( $this, 'ajax_wizard_create' ) );
 		add_action( 'wp_ajax_' . self::AJAX_TOGGLE_REMOTE, array( $this, 'ajax_toggle_remote' ) );
-		add_action( 'wp_ajax_' . self::AJAX_GENERATE_BEARER, array( $this, 'ajax_generate_bearer' ) );
-		add_action( 'wp_ajax_' . self::AJAX_REVOKE_BEARER, array( $this, 'ajax_revoke_bearer' ) );
 		add_action( 'wp_ajax_' . self::AJAX_SAVE_CAPABILITIES, array( $this, 'ajax_save_capabilities' ) );
 		add_action( 'wp_ajax_' . self::AJAX_TOGGLE_OAUTH, array( $this, 'ajax_toggle_oauth' ) );
 		add_action( 'wp_ajax_' . self::AJAX_REVOKE_OAUTH, array( $this, 'ajax_revoke_oauth' ) );
@@ -1076,21 +1060,22 @@ JS;
 
 				<p class="mcp-field-label"><?php esc_html_e( 'Step 2: Add a new connection', 'axtolab-ai-connector' ); ?></p>
 				<p class="mcp-help-text">
-					<?php esc_html_e( 'Each AI client connects with its own Application Password, created in your WordPress profile. The "+ Add new connection" wizard in the Connected Clients section below walks you through it.', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'Each AI client connects with its own Application Password, created in your WordPress profile. The wizard below walks you through it; the resulting connection appears in the "Existing connections" card at the bottom of the page.', 'axtolab-ai-connector' ); ?>
 				</p>
 				<p>
-					<a href="#mcp-connections-card" class="button button-primary" id="mcp-jump-to-connections">
-						<?php esc_html_e( 'Add new connection', 'axtolab-ai-connector' ); ?>
-					</a>
+					<button type="button" class="button button-primary" id="mcp-wizard-open-btn" aria-controls="mcp-wizard-panel" aria-expanded="false">
+						<span aria-hidden="true">+ </span><?php esc_html_e( 'Add new connection', 'axtolab-ai-connector' ); ?>
+					</button>
 				</p>
+
+				<?php $this->render_connection_wizard_panel(); ?>
 
 			</div><!-- tab: quick-connect -->
 
-			<?php // ── Tab 2: Remote Access (bearer token + OAuth) ── ?>
+			<?php // ── Tab 2: Web Clients (OAuth only) ── ?>
 			<?php
 			$remote_settings  = get_option( 'axtolab_ai_connector_settings', array() );
 			$remote_enabled   = ! empty( $remote_settings['remote_mcp_enabled'] );
-			$bearer_info      = Axtolab_AI_Connector_Bearer_Auth::get_token_info();
 			$oauth_enabled    = ! empty( $remote_settings['oauth_enabled'] );
 			$oauth_info       = Axtolab_AI_Connector_OAuth::get_token_info();
 			$mcp_endpoint_url = rest_url( 'axtolab-ai-connector/v1/mcp' );
@@ -1100,16 +1085,26 @@ JS;
 
 			// Default: Standard preset (all except trash_restore).
 			$default_caps = Axtolab_AI_Connector_MCP_Transport::DEFAULT_CAPABILITIES;
-			$bearer_caps  = $remote_settings['bearer_capabilities'] ?? $default_caps;
 			$oauth_caps   = $remote_settings['oauth_capabilities'] ?? $default_caps;
 			?>
 			<div class="mcp-tab-content" data-tab="remote-access">
 
 				<p class="mcp-help-text"><?php esc_html_e( 'Enable remote access for web-based AI clients like ChatGPT and Claude Web. Connects via OAuth 2.1 — no credentials leave your browser.', 'axtolab-ai-connector' ); ?></p>
 
+				<div class="axtolab-callout">
+					<p>
+						<strong><?php esc_html_e( 'How permissions work', 'axtolab-ai-connector' ); ?></strong>
+					</p>
+					<ul style="margin:6px 0 0 18px; padding:0;">
+						<li><?php esc_html_e( 'Connection capabilities (set on the OAuth connection in the "Existing connections" card after you approve it) — what the AI is allowed to attempt.', 'axtolab-ai-connector' ); ?></li>
+						<li><?php esc_html_e( 'The OAuth token authenticates as your admin user — actions run with your admin WordPress capabilities at the per-object level (per-post / per-media / per-term).', 'axtolab-ai-connector' ); ?></li>
+						<li><?php esc_html_e( 'Both layers must allow an action for it to succeed.', 'axtolab-ai-connector' ); ?></li>
+					</ul>
+				</div>
+
 				<p class="mcp-field-label"><?php esc_html_e( 'Enable Remote AI Client Access', 'axtolab-ai-connector' ); ?></p>
 				<p class="mcp-help-text">
-					<?php esc_html_e( 'Allow remote AI clients to connect to your site via the Streamable HTTP MCP endpoint.', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'Allow remote AI clients to connect to your site via the Streamable HTTP MCP endpoint. OAuth 2.1 is the sole authentication method for this transport.', 'axtolab-ai-connector' ); ?>
 				</p>
 				<label class="mcp-input-row">
 					<input type="checkbox" id="mcp-toggle-remote" <?php checked( $remote_enabled ); ?> />
@@ -1133,8 +1128,8 @@ JS;
 
 				<hr />
 
-				<!-- ═══ OAuth (primary connection method) ═══ -->
-				<h3><?php esc_html_e( 'OAuth Connection (Recommended)', 'axtolab-ai-connector' ); ?></h3>
+				<!-- ═══ OAuth (sole connection method for Web Clients) ═══ -->
+				<h3><?php esc_html_e( 'OAuth Connection', 'axtolab-ai-connector' ); ?></h3>
 				<p class="mcp-help-text">
 					<?php esc_html_e( 'The standard, secure authentication method. ChatGPT, Claude Web, and other MCP-compatible clients handle the entire OAuth 2.1 flow automatically — you just approve the connection once.', 'axtolab-ai-connector' ); ?>
 				</p>
@@ -1221,108 +1216,6 @@ JS;
 						<li><?php esc_html_e( 'When prompted, log into your WordPress admin and click Approve.', 'axtolab-ai-connector' ); ?></li>
 						<li><?php esc_html_e( 'ChatGPT will now have access to your WordPress tools.', 'axtolab-ai-connector' ); ?></li>
 					</ol>
-				</details>
-
-				<hr />
-
-				<!-- ═══ Alternative Connection Methods (collapsed) ═══ -->
-				<details class="mcp-cap-details">
-					<summary style="font-size: 14px; font-weight: 600;">
-						<?php esc_html_e( 'Alternative Connection Methods', 'axtolab-ai-connector' ); ?>
-					</summary>
-					<div class="mcp-cap-inner">
-						<p class="mcp-help-text" style="margin-top: 0;">
-							<?php esc_html_e( 'Use these methods if OAuth is not available for your MCP-compatible AI client.', 'axtolab-ai-connector' ); ?>
-						</p>
-
-						<!-- ── Bearer Token ── -->
-						<h4><?php esc_html_e( 'Bearer Token', 'axtolab-ai-connector' ); ?></h4>
-						<p class="mcp-help-text">
-							<?php esc_html_e( 'For MCP-compatible AI clients that support Authorization headers (Claude.ai, generic clients).', 'axtolab-ai-connector' ); ?>
-						</p>
-
-						<p class="mcp-field-label"><?php esc_html_e( 'Token', 'axtolab-ai-connector' ); ?></p>
-						<div id="mcp-bearer-status">
-							<?php if ( $bearer_info['exists'] ) : ?>
-									<p class="mcp-help-text">
-										<?php
-										printf(
-											/* translators: 1: token prefix, 2: token creation date/time. */
-											esc_html__( 'Active — prefix: %1$s… — created: %2$s', 'axtolab-ai-connector' ),
-											esc_html( $bearer_info['prefix'] ),
-											esc_html( $bearer_info['created_at'] )
-										);
-										?>
-								</p>
-							<?php else : ?>
-								<p class="mcp-help-text"><?php esc_html_e( 'No bearer token active.', 'axtolab-ai-connector' ); ?></p>
-							<?php endif; ?>
-						</div>
-
-						<p>
-							<button type="button" id="mcp-generate-bearer-btn" class="button button-primary">
-								<?php esc_html_e( 'Generate New Token', 'axtolab-ai-connector' ); ?>
-							</button>
-							<?php if ( $bearer_info['exists'] ) : ?>
-								<button type="button" id="mcp-revoke-bearer-btn" class="button button-secondary">
-									<?php esc_html_e( 'Revoke Token', 'axtolab-ai-connector' ); ?>
-								</button>
-							<?php endif; ?>
-						</p>
-						<p id="mcp-bearer-message" class="mcp-feedback" aria-live="polite"></p>
-
-						<div id="mcp-bearer-token-result" style="display:none;">
-							<p class="mcp-field-label" style="color:#dc3232;">
-								<?php esc_html_e( 'Copy this token now. It will not be shown again.', 'axtolab-ai-connector' ); ?>
-							</p>
-							<div class="mcp-copy-block">
-								<pre class="mcp-code-block" id="mcp-bearer-token-value"></pre>
-								<button type="button" class="button button-small mcp-copy-btn" data-target="mcp-bearer-token-value">
-									<?php esc_html_e( 'Copy', 'axtolab-ai-connector' ); ?>
-								</button>
-							</div>
-						</div>
-
-						<!-- Bearer capabilities — collapsible -->
-						<details class="mcp-cap-details" id="mcp-bearer-cap-details">
-							<summary>
-								<?php esc_html_e( 'Capabilities', 'axtolab-ai-connector' ); ?>
-								<span class="mcp-cap-badge" id="mcp-bearer-cap-badge"></span>
-								<span class="mcp-cap-saved" id="mcp-bearer-saved"><?php esc_html_e( 'Saved!', 'axtolab-ai-connector' ); ?></span>
-							</summary>
-							<div class="mcp-cap-inner">
-								<p class="mcp-help-text" style="margin-top:0;">
-									<?php esc_html_e( 'Control what this connection is allowed to do. Changes save automatically.', 'axtolab-ai-connector' ); ?>
-								</p>
-								<div style="margin-bottom: 10px;">
-									<select class="mcp-cap-preset" data-connection="bearer">
-										<option value="standard"><?php esc_html_e( 'Standard (Recommended)', 'axtolab-ai-connector' ); ?></option>
-										<option value="full_access"><?php esc_html_e( 'Full Access', 'axtolab-ai-connector' ); ?></option>
-										<option value="draft_only"><?php esc_html_e( 'Draft Only (No Publish)', 'axtolab-ai-connector' ); ?></option>
-										<option value="content_manager"><?php esc_html_e( 'Content Manager', 'axtolab-ai-connector' ); ?></option>
-										<option value="read_only"><?php esc_html_e( 'Read Only', 'axtolab-ai-connector' ); ?></option>
-										<option value="custom"><?php esc_html_e( 'Custom', 'axtolab-ai-connector' ); ?></option>
-									</select>
-								</div>
-								<?php foreach ( $capability_defs as $cap_key => $cap_label ) : ?>
-									<label style="display: block; margin-bottom: 4px;">
-										<input type="checkbox"
-											class="mcp-cap-checkbox"
-											data-connection="bearer"
-											data-cap="<?php echo esc_attr( $cap_key ); ?>"
-											<?php checked( in_array( $cap_key, $bearer_caps, true ) ); ?>
-											<?php disabled( $cap_key === 'read' ); ?>
-										/>
-										<?php echo esc_html( $cap_label ); ?>
-										<?php if ( $cap_key === 'read' ) : ?>
-											<em style="color: #888;"><?php esc_html_e( '(always on)', 'axtolab-ai-connector' ); ?></em>
-										<?php endif; ?>
-									</label>
-								<?php endforeach; ?>
-							</div>
-						</details>
-
-					</div>
 				</details>
 
 			</div><!-- tab: remote-access -->
@@ -1469,10 +1362,13 @@ JS;
 	}
 
 	/**
-	 * Render the "Connected Clients" section with per-connection management.
+	 * Render the "Existing connections" section with per-connection management.
 	 *
 	 * Shows a table of all active connections with rename/revoke actions,
-	 * plus a "Revoke All" link as an emergency kill switch.
+	 * plus a "Revoke All" link as an emergency kill switch. The connection
+	 * creation UI lives inside the Desktop AI Clients tab (App Password
+	 * wizard) and the Web Clients tab (OAuth approval flow); this card is
+	 * read + manage only.
 	 *
 	 * @return void
 	 */
@@ -1484,15 +1380,11 @@ JS;
 		? $settings['review_notification_email']
 		: '';
 		?>
-		<h3 id="mcp-connections-card"><?php esc_html_e( 'Connected Clients', 'axtolab-ai-connector' ); ?></h3>
+		<h3 id="mcp-connections-card"><?php esc_html_e( 'Existing connections', 'axtolab-ai-connector' ); ?></h3>
 
-		<div class="mcp-connections-toolbar" style="display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
-			<button type="button" class="button button-primary" id="mcp-wizard-open-btn" aria-controls="mcp-wizard-panel" aria-expanded="false">
-				<span aria-hidden="true">+ </span><?php esc_html_e( 'Add new connection', 'axtolab-ai-connector' ); ?>
-			</button>
-		</div>
-
-		<?php $this->render_connection_wizard_panel(); ?>
+		<p class="mcp-help-text" style="margin-top:-4px;">
+			<?php esc_html_e( 'All active connections, regardless of how they were created. Use the Desktop AI Clients tab to add an App Password connection, or the Web Clients tab to enable OAuth and approve a ChatGPT / Claude Web connection.', 'axtolab-ai-connector' ); ?>
+		</p>
 
 		<div class="mcp-review-email-row" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 			<label for="mcp-review-email" style="font-weight: 500; white-space: nowrap;">
@@ -1515,7 +1407,7 @@ JS;
 
 		<?php if ( 0 === $count ) : ?>
 			<p class="mcp-help-text">
-				<?php esc_html_e( 'No clients are connected yet. Click "+ Add new connection" above to create your first one.', 'axtolab-ai-connector' ); ?>
+				<?php esc_html_e( 'No clients are connected yet. Add one from the Desktop AI Clients or Web Clients tab above.', 'axtolab-ai-connector' ); ?>
 			</p>
 		<?php else : ?>
 			<table class="mcp-connections-table" id="mcp-connections-table">
@@ -2473,56 +2365,6 @@ JS;
 	}
 
 	/**
-	 * AJAX: Generate a new bearer token for Remote MCP access.
-	 *
-	 * The raw token is returned once and never stored in plaintext.
-	 *
-	 * Nonce: `{MENU_SLUG}-ajax`.
-	 *
-	 * @return void Sends JSON and exits.
-	 */
-	public function ajax_generate_bearer(): void {
-		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
-		}
-
-		$token = Axtolab_AI_Connector_Bearer_Auth::generate_token();
-		if ( is_wp_error( $token ) ) {
-			wp_send_json_error( array( 'message' => $token->get_error_message() ), 403 );
-		}
-
-		$info = Axtolab_AI_Connector_Bearer_Auth::get_token_info();
-
-		wp_send_json_success(
-			array(
-				'token' => $token,
-				'info'  => $info,
-			)
-		);
-	}
-
-	/**
-	 * AJAX: Revoke the current bearer token for Remote MCP access.
-	 *
-	 * Nonce: `{MENU_SLUG}-ajax`.
-	 *
-	 * @return void Sends JSON and exits.
-	 */
-	public function ajax_revoke_bearer(): void {
-		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
-		}
-
-		Axtolab_AI_Connector_Bearer_Auth::revoke_token();
-
-		wp_send_json_success( array( 'message' => __( 'Bearer token revoked.', 'axtolab-ai-connector' ) ) );
-	}
-
-	/**
 	 * AJAX: Toggle OAuth on or off.
 	 *
 	 * Nonce: `{MENU_SLUG}-ajax`.
@@ -2583,7 +2425,7 @@ JS;
 		}
 
 		$connection = isset( $_POST['connection'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['connection'] ) ) : '';
-		if ( ! in_array( $connection, array( 'bearer', 'oauth' ), true ) ) {
+		if ( 'oauth' !== $connection ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid connection type.', 'axtolab-ai-connector' ) ) );
 		}
 
@@ -2597,13 +2439,8 @@ JS;
 			$caps[] = 'read';
 		}
 
-		if ( 'oauth' === $connection ) {
-			$settings_key = 'oauth_capabilities';
-		} else {
-			$settings_key = 'bearer_capabilities';
-		}
-		$settings                  = get_option( 'axtolab_ai_connector_settings', array() );
-		$settings[ $settings_key ] = $caps;
+		$settings                         = get_option( 'axtolab_ai_connector_settings', array() );
+		$settings['oauth_capabilities']   = $caps;
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
 		wp_send_json_success( array( 'capabilities' => $caps ) );
@@ -3196,20 +3033,6 @@ JS;
         $('.mcp-tab-content[data-tab="' + tab + '"]').addClass('mcp-tab-content-active');
     });
 
-    // ── "Add new connection" jump link from quick-connect tab ────────────────
-    $(document).on('click', '#mcp-jump-to-connections', function (e) {
-        e.preventDefault();
-        var target = document.getElementById('mcp-connections-card');
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        // Auto-open the wizard so the admin lands on it directly.
-        var $openBtn = $('#mcp-wizard-open-btn');
-        if ($openBtn.length) {
-            $openBtn.trigger('click');
-        }
-    });
-
     // ── Copy button ──────────────────────────────────────────────────────────
     $(document).on('click', '.mcp-copy-btn', function () {
         var $btn = $(this);
@@ -3266,71 +3089,6 @@ JS;
             function (errMsg) {
                 // Revert the checkbox on failure.
                 $checkbox.prop('checked', !$checkbox.is(':checked'));
-                $msg.text(errMsg).removeClass('is-success').addClass('is-error');
-            }
-        );
-    });
-
-    // ── Generate Bearer Token button ─────────────────────────────────────────
-    $(document).on('click', '#mcp-generate-bearer-btn', function () {
-        var $btn    = $(this);
-        var $msg    = $('#mcp-bearer-message');
-        var $result = $('#mcp-bearer-token-result');
-
-        $btn.prop('disabled', true).text('Generating…');
-        $msg.text('').removeClass('is-success is-error');
-        $result.hide();
-
-        doAjax(
-            'axtolab_ai_connector_generate_bearer',
-            {},
-            function (data) {
-                $btn.prop('disabled', false).text('Generate New Token');
-                $('#mcp-bearer-token-value').text(data.token);
-                $result.show();
-                // Update status display.
-                var info = data.info;
-                var statusHtml = '<p class="mcp-help-text">Active — prefix: ' +
-                    $('<span>').text(info.prefix).html() +
-                    '… — created: ' +
-                    $('<span>').text(info.created_at).html() +
-                    '</p>';
-                $('#mcp-bearer-status').html(statusHtml);
-                // Show Revoke button if it was hidden.
-                if (!$('#mcp-revoke-bearer-btn').length) {
-                    $btn.after(' <button type="button" id="mcp-revoke-bearer-btn" class="button button-secondary">Revoke Token</button>');
-                }
-                $msg.text('Token generated! Copy it now — it will not be shown again.').removeClass('is-error').addClass('is-success');
-            },
-            function (errMsg) {
-                $btn.prop('disabled', false).text('Generate New Token');
-                $msg.text(errMsg).removeClass('is-success').addClass('is-error');
-            }
-        );
-    });
-
-    // ── Revoke Bearer Token button ───────────────────────────────────────────
-    $(document).on('click', '#mcp-revoke-bearer-btn', function () {
-        if (!window.confirm('Revoke the bearer token? Remote clients will lose access immediately.')) return;
-
-        var $btn    = $(this);
-        var $msg    = $('#mcp-bearer-message');
-        var $result = $('#mcp-bearer-token-result');
-
-        $btn.prop('disabled', true).text('Revoking…');
-        $msg.text('').removeClass('is-success is-error');
-
-        doAjax(
-            'axtolab_ai_connector_revoke_bearer',
-            {},
-            function (data) {
-                $btn.remove();
-                $result.hide();
-                $('#mcp-bearer-status').html('<p class="mcp-help-text">No bearer token active.</p>');
-                $msg.text(data.message || 'Bearer token revoked.').removeClass('is-error').addClass('is-success');
-            },
-            function (errMsg) {
-                $btn.prop('disabled', false).text('Revoke Token');
                 $msg.text(errMsg).removeClass('is-success').addClass('is-error');
             }
         );
@@ -3486,7 +3244,7 @@ JS;
     });
 
     // Initialize badges on page load.
-    ['bearer', 'oauth'].forEach(function (conn) {
+    ['oauth'].forEach(function (conn) {
         updateCapUI(conn);
     });
 

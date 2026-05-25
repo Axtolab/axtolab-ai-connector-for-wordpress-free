@@ -141,7 +141,11 @@ class Axtolab_AI_Connector_MCP_Transport {
 	);
 
 	/**
-	 * The auth type of the current request: 'bearer' or 'oauth'.
+	 * The auth type of the current request. Currently always 'oauth' when set
+	 * — OAuth 2.1 is the sole bearer-token issuer for the MCP-over-HTTP
+	 * transport. Retained as a field for future per-auth-type tool filtering
+	 * (e.g. App Password tokens flowing through the transport one day).
+	 *
 	 * Set during permission_callback, used by tool filtering.
 	 */
 	private static $current_auth_type = null;
@@ -196,7 +200,16 @@ class Axtolab_AI_Connector_MCP_Transport {
 	// =========================================================================
 
 	/**
-	 * Verify Bearer token and set the current user to the service account.
+	 * Verify the incoming Bearer token and set the current user.
+	 *
+	 * The MCP-over-HTTP transport authenticates clients via the standard
+	 * `Authorization: Bearer <token>` HTTP convention. The token itself is
+	 * always an OAuth 2.1 access token issued by
+	 * {@see Axtolab_AI_Connector_OAuth}; the plugin no longer ships a manual
+	 * Bearer-Token generation path.
+	 *
+	 * The method name is kept as `check_bearer_auth` because the protocol
+	 * surface (the `Bearer` scheme) has not changed — only the token issuer.
 	 *
 	 * @param WP_REST_Request $request The incoming request.
 	 * @return bool|WP_Error
@@ -228,28 +241,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 		}
 		set_transient( $rate_key, $count + 1, self::RATE_LIMIT_WINDOW );
 
-		// Try bearer token first.
-		if ( Axtolab_AI_Connector_Bearer_Auth::verify_token( $provided_token ) ) {
-			$bearer_user_id = Axtolab_AI_Connector_Bearer_Auth::get_token_user_id();
-			if ( ! $bearer_user_id || ! get_user_by( 'id', $bearer_user_id ) ) {
-				return new WP_Error(
-					'bearer_user_invalid',
-					'The Bearer token is no longer associated with a valid WordPress user. Recreate the token.',
-					array( 'status' => 401 )
-				);
-			}
-			wp_set_current_user( $bearer_user_id );
-			self::$current_auth_type = 'bearer';
-
-			$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
-			if ( is_wp_error( $multisite_allowed ) ) {
-				return $multisite_allowed;
-			}
-
-			return true;
-		}
-
-		// Try OAuth token as fallback.
+		// Verify as an OAuth 2.1 access token.
 		if ( Axtolab_AI_Connector_OAuth::verify_access_token( $provided_token ) ) {
 			$oauth_user_id = Axtolab_AI_Connector_Connections::get_wp_user_id(
 				Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID
@@ -1574,14 +1566,8 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 * @return array List of allowed tool names.
 	 */
 	private static function get_allowed_tools(): array {
-		$auth_type = self::$current_auth_type ?? 'bearer';
-		$settings  = get_option( 'axtolab_ai_connector_settings', array() );
-
-		if ( 'oauth' === $auth_type ) {
-			$capabilities = $settings['oauth_capabilities'] ?? Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
-		} else {
-			$capabilities = $settings['bearer_capabilities'] ?? Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
-		}
+		$settings     = get_option( 'axtolab_ai_connector_settings', array() );
+		$capabilities = $settings['oauth_capabilities'] ?? Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
 
 		if ( ! in_array( 'read', $capabilities, true ) ) {
 			$capabilities[] = 'read';

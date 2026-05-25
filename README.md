@@ -57,7 +57,7 @@ The plugin adds a REST API gateway to your WordPress site. AI clients connect to
 - **AI image generation** — Google Imagen and OpenAI image models using your own provider API keys.
 - **Yoast SEO** — read scores, update focus keyphrase, SEO title, and meta description.
 - **Secure by design** — dedicated service account with minimal permissions, allowlist-driven content type controls, single-use confirmation tokens for destructive actions, rate limiting on authentication endpoints.
-- **Three authentication methods** — Application Passwords, OAuth 2.1 with PKCE, and Bearer Token for MCP-over-HTTP.
+- **Two authentication methods** — Application Passwords for Desktop AI clients, and OAuth 2.1 with PKCE for Web AI clients on the MCP-over-HTTP transport.
 
 ## Bring your own AI model
 

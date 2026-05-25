@@ -25,7 +25,7 @@ Axtolab AI Connector for WordPress connects your WordPress site to AI agents lik
 * **Yoast SEO** — Read SEO and readability scores. Update focus keyphrase, SEO title, and meta description. Preview rendered meta tags.
 * **Authors & Taxonomies** — Assign authors from an allowlist. Create and assign categories, tags, and custom taxonomy terms.
 * **Per-connection privilege model** — every MCP connection authenticates as a WordPress user via Application Password. The connection's capability set determines which AI tools can be called; the user's WP role determines which objects they can act on. Both layers must allow an action for it to succeed. The plugin never creates WordPress users — admins create the Application Password under their own (or a dedicated) WordPress profile and paste it into the connection wizard. Confirmation tokens required for publish, trash, and restore operations. Allowlist-driven content type and taxonomy controls. Rate limiting on authentication endpoints.
-* **Multiple Auth Methods** — Application Passwords, OAuth 2.1 with PKCE, and Bearer Token for MCP-over-HTTP transport.
+* **Two authentication methods** — Application Passwords (for Desktop AI clients) and OAuth 2.1 with PKCE (for Web AI clients like ChatGPT and Claude Web).
 * **Upload Portal** — Drag-and-drop media uploads with time-limited tokens. No WordPress login required for the upload session.
 
 = Available MCP Tools =
@@ -59,7 +59,7 @@ Axtolab AI Connector is **fully featured with no limits**. No publish limits, no
 * Search and import stock photos (Unsplash, Pexels)
 * Generate images through supported providers when you configure your own provider API key
 * Yoast SEO integration
-* All authentication methods (App Passwords, OAuth 2.1, Bearer Token)
+* Both authentication methods (App Passwords, OAuth 2.1)
 * All taxonomy and author management
 
 The free core is feature-complete and useful on its own. Separate plugins may extend it, but no built-in feature in this WordPress.org package requires a license key.
@@ -112,14 +112,14 @@ Yes. Single-site and multisite installations are supported by the free core.
 
 = How is authentication handled? =
 
-The plugin supports three authentication methods: WordPress Application Passwords, OAuth 2.1 with PKCE, and Bearer Tokens. Each MCP connection authenticates as a WordPress user that the administrator chose during setup — either their own admin account (simple) or a dedicated WP user they created themselves (recommended for production sites). The plugin never creates WordPress users or roles. Each tool call runs with that user's WordPress capabilities, layered with the per-connection capability set (read / publish / trash / media / SEO / etc.) the administrator chose for the connection. Both layers must allow an action for it to succeed.
+The plugin supports two authentication methods: WordPress Application Passwords (for Desktop AI clients) and OAuth 2.1 with PKCE (for Web AI clients like ChatGPT and Claude Web). Each MCP connection authenticates as a WordPress user that the administrator chose during setup — either their own admin account (simple) or a dedicated WP user they created themselves (recommended for production sites). The plugin never creates WordPress users or roles. Each tool call runs with that user's WordPress capabilities, layered with the per-connection capability set (read / publish / trash / media / SEO / etc.) the administrator chose for the connection. Both layers must allow an action for it to succeed.
 
 = Which auth method works for which endpoint? =
 
 Each method has a specific scope. Pick the one that matches what your client needs to do:
 
 * **Application Password** (HTTP Basic Auth) — works against every plugin REST endpoint (`/site-info`, `/content/*`, `/media/*`, `/yoast/*`, `/abilities/*`, etc.). This is available for custom clients and local MCP clients that need direct REST access. The connection wizard packages the username + Application Password into a single `wmcp1_` token you can paste into Claude Desktop / Claude Code without copying credentials manually.
-* **OAuth 2.1 with PKCE + Bearer Token** — issued tokens are scoped to the **MCP-over-HTTP transport only** (`/wp-json/axtolab-ai-connector/v1/mcp`). They do not authenticate the ordinary REST API surface. This scope split is intentional: OAuth is the path remote/web MCP clients (ChatGPT, Claude Web) use to access the JSON-RPC tool surface, while ordinary REST is reserved for trusted local MCP servers using Application Passwords. If you need OAuth-issued credentials to call ordinary REST endpoints directly, contact support — we can extend the scope on request once your use case is documented.
+* **OAuth 2.1 with PKCE** — OAuth-issued access tokens are sent as standard `Authorization: Bearer <token>` headers and are scoped to the **MCP-over-HTTP transport only** (`/wp-json/axtolab-ai-connector/v1/mcp`). They do not authenticate the ordinary REST API surface. This scope split is intentional: OAuth is the path remote/web MCP clients (ChatGPT, Claude Web) use to access the JSON-RPC tool surface, while ordinary REST is reserved for trusted local MCP servers using Application Passwords. If you need OAuth-issued credentials to call ordinary REST endpoints directly, contact support — we can extend the scope on request once your use case is documented.
 
 = The AI Connector admin shows "Host-root .well-known discovery: Blocked by your web server". What does this mean? =
 
@@ -252,7 +252,7 @@ Highlights:
 * **Health and ping endpoints.** `/wp-json/axtolab-ai-connector/v1/ping` and `/health-check` report connection status and the installed plugin version.
 * **Roll Back / Undo on every write.** Every AI-driven create, update, publish, trash, or restore action captures a before/after snapshot. Revert any change with one click from the Logs & Roll Back admin page.
 * **MCP tools** across content authoring, media management, taxonomy, authors, Yoast SEO, stock photos, image generation, upload portal, connection introspection, and Roll Back.
-* **Three authentication methods.** Application Passwords (HTTP Basic), OAuth 2.1 with PKCE S256 + dynamic client registration (RFC 7591), and Bearer Token for MCP-over-HTTP transport.
+* **Two authentication methods.** Application Passwords (HTTP Basic) for Desktop AI clients, and OAuth 2.1 with PKCE S256 + dynamic client registration (RFC 7591) for Web AI clients on the MCP-over-HTTP transport.
 * **Capability-group-driven tool filtering** on the MCP transport — operators choose what AI agents on each connection are allowed to do (read, create_edit, publish, trash_restore, media_manage, taxonomy, authors, seo, image, upload_portal).
 * **Provider-neutral SEO tools** that auto-detect Yoast or Rank Math, with the legacy Yoast-specific tools retained for backwards compatibility.
 * **Confirmation-token flow** required for destructive operations (publish, trash, restore) — a single-use token must be issued before the action proceeds.

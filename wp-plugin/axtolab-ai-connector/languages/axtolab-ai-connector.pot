@@ -3,20 +3,20 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Axtolab AI Connector 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/axtolab-ai-connector\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-25T07:51:11+00:00\n"
+"POT-Creation-Date: 2026-05-25T22:56:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: axtolab-ai-connector\n"
 
 #. Plugin Name of the plugin
 #: axtolab-ai-connector.php
-#: includes/class-mcp-gateway-admin.php:536
+#: includes/class-mcp-gateway-admin.php:520
 msgid "Axtolab AI Connector"
 msgstr ""
 
@@ -27,8 +27,8 @@ msgstr ""
 
 #. Author of the plugin
 #: axtolab-ai-connector.php
-#: includes/class-mcp-gateway-admin.php:372
-#: includes/class-mcp-gateway-admin.php:373
+#: includes/class-mcp-gateway-admin.php:356
+#: includes/class-mcp-gateway-admin.php:357
 msgid "Axtolab"
 msgstr ""
 
@@ -40,7 +40,7 @@ msgstr ""
 msgid "The Free plugin is deferring to ensure add-on compatibility and can be safely deactivated."
 msgstr ""
 
-#: axtolab-ai-connector.php:637
+#: axtolab-ai-connector.php:653
 msgid "If this persists, contact support"
 msgstr ""
 
@@ -83,986 +83,937 @@ msgstr ""
 msgid "WordPress.org forum"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:271
+#: includes/class-mcp-gateway-admin.php:255
 msgid "Axtolab AI Connector:"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:272
+#: includes/class-mcp-gateway-admin.php:256
 msgid "OAuth for web-based AI clients (ChatGPT, Claude Web) is disabled. Enable it to let those clients connect to this site."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:275
-#: includes/class-mcp-gateway-admin.php:1144
+#: includes/class-mcp-gateway-admin.php:259
+#: includes/class-mcp-gateway-admin.php:1139
 msgid "Enable OAuth"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:276
+#: includes/class-mcp-gateway-admin.php:260
 msgid "Dismiss"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:386
-#: includes/class-mcp-gateway-admin.php:387
+#: includes/class-mcp-gateway-admin.php:370
+#: includes/class-mcp-gateway-admin.php:371
 msgid "AI Connector"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:397
-#: includes/class-mcp-gateway-admin.php:398
-#: includes/class-mcp-gateway-admin.php:603
+#: includes/class-mcp-gateway-admin.php:381
+#: includes/class-mcp-gateway-admin.php:382
+#: includes/class-mcp-gateway-admin.php:587
 msgid "Logs & Roll Back"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:485
+#: includes/class-mcp-gateway-admin.php:469
 msgid "Revoking…"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:486
+#: includes/class-mcp-gateway-admin.php:470
 msgid "Revoke all active connections? Connected AI clients will lose access until re-authorized."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:487
+#: includes/class-mcp-gateway-admin.php:471
 msgid "Verifying…"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:488
+#: includes/class-mcp-gateway-admin.php:472
 msgid "Creating…"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:529
-#: includes/class-mcp-gateway-admin.php:579
+#: includes/class-mcp-gateway-admin.php:513
+#: includes/class-mcp-gateway-admin.php:563
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:544
+#: includes/class-mcp-gateway-admin.php:528
 msgid "Connects Claude, ChatGPT, and AI agents to your WordPress site, safely."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:605
+#: includes/class-mcp-gateway-admin.php:589
 msgid "Every AI-driven change captured in the changelog. Undo individual changes or whole sessions; redo what you reverted."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:610
-#: includes/class-mcp-gateway-admin.php:651
+#: includes/class-mcp-gateway-admin.php:594
+#: includes/class-mcp-gateway-admin.php:635
 msgid "Status"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:612
+#: includes/class-mcp-gateway-admin.php:596
 msgid "All"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:613
+#: includes/class-mcp-gateway-admin.php:597
 msgid "Pending (in effect)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:614
-#: includes/class-mcp-gateway-admin.php:685
+#: includes/class-mcp-gateway-admin.php:598
+#: includes/class-mcp-gateway-admin.php:669
 msgid "Rolled back"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:617
+#: includes/class-mcp-gateway-admin.php:601
 msgid "Target type"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:620
-#: includes/class-mcp-gateway-admin.php:647
+#: includes/class-mcp-gateway-admin.php:604
+#: includes/class-mcp-gateway-admin.php:631
 msgid "Tool"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:623
-#: includes/class-mcp-gateway-admin.php:650
+#: includes/class-mcp-gateway-admin.php:607
+#: includes/class-mcp-gateway-admin.php:634
 msgid "Session"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:626
+#: includes/class-mcp-gateway-admin.php:610
 msgid "Filter"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:627
+#: includes/class-mcp-gateway-admin.php:611
 msgid "Reset"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:630
+#: includes/class-mcp-gateway-admin.php:614
 msgid "Roll back entire session"
 msgstr ""
 
 #. translators: 1: items shown, 2: total
-#: includes/class-mcp-gateway-admin.php:638
+#: includes/class-mcp-gateway-admin.php:622
 msgid "Showing %1$d of %2$d entries."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:646
+#: includes/class-mcp-gateway-admin.php:630
 msgid "When"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:648
+#: includes/class-mcp-gateway-admin.php:632
 msgid "Action"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:649
+#: includes/class-mcp-gateway-admin.php:633
 msgid "Target"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:652
-#: includes/class-mcp-gateway-admin.php:1530
+#: includes/class-mcp-gateway-admin.php:636
+#: includes/class-mcp-gateway-admin.php:1422
 msgid "Actions"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:657
+#: includes/class-mcp-gateway-admin.php:641
 msgid "No changes recorded yet. Mutations made by AI tools will appear here."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:687
-#: includes/class-mcp-gateway-admin.php:697
+#: includes/class-mcp-gateway-admin.php:671
+#: includes/class-mcp-gateway-admin.php:681
 msgid "Redo"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:689
+#: includes/class-mcp-gateway-admin.php:673
 msgid "In effect"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:693
+#: includes/class-mcp-gateway-admin.php:677
 msgid "View"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:695
+#: includes/class-mcp-gateway-admin.php:679
 msgid "Undo"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:704
+#: includes/class-mcp-gateway-admin.php:688
 msgid "Loading…"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:722
+#: includes/class-mcp-gateway-admin.php:706
 msgid "Previous"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:725
+#: includes/class-mcp-gateway-admin.php:709
 msgid "Next"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:887
+#: includes/class-mcp-gateway-admin.php:871
 msgid "Setup Status"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:894
+#: includes/class-mcp-gateway-admin.php:878
 msgid "Plugin Active"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:902
-#: includes/class-mcp-gateway-admin.php:908
+#: includes/class-mcp-gateway-admin.php:886
+#: includes/class-mcp-gateway-admin.php:892
 msgid "Application Passwords"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:903
+#: includes/class-mcp-gateway-admin.php:887
 msgid "Available"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:909
+#: includes/class-mcp-gateway-admin.php:893
 msgid "Disabled — enable Application Passwords on this site to use the AI Connector."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:917
-#: includes/class-mcp-gateway-admin.php:931
+#: includes/class-mcp-gateway-admin.php:901
+#: includes/class-mcp-gateway-admin.php:915
 msgid "AI Client Connected"
 msgstr ""
 
 #. translators: %d: number of active connections
-#: includes/class-mcp-gateway-admin.php:922
-#: includes/class-mcp-gateway-admin.php:1644
+#: includes/class-mcp-gateway-admin.php:906
+#: includes/class-mcp-gateway-admin.php:1536
 msgid "%d active connection"
 msgid_plural "%d active connections"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-mcp-gateway-admin.php:932
+#: includes/class-mcp-gateway-admin.php:916
 msgid "Waiting for authorization"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:961
-#: includes/class-mcp-gateway-admin.php:967
+#: includes/class-mcp-gateway-admin.php:945
+#: includes/class-mcp-gateway-admin.php:951
 msgid "OAuth Discovery"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:962
+#: includes/class-mcp-gateway-admin.php:946
 msgid "Endpoints reachable"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:968
+#: includes/class-mcp-gateway-admin.php:952
 msgid "Endpoints not reachable — check REST API accessibility"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1005
-#: includes/class-mcp-gateway-admin.php:1011
+#: includes/class-mcp-gateway-admin.php:989
+#: includes/class-mcp-gateway-admin.php:995
 msgid "Host-root .well-known discovery"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1006
+#: includes/class-mcp-gateway-admin.php:990
 msgid "RFC 8414/9728 standard paths reachable"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1013
+#: includes/class-mcp-gateway-admin.php:997
 msgid "Blocked by your web server (likely nginx). MCP clients still work via the resource-metadata flow — this is non-blocking. For full RFC 8414/9728 compliance, ask your host to forward /.well-known/oauth-* paths to PHP. See the FAQ in the plugin readme for an nginx config snippet."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1037
+#: includes/class-mcp-gateway-admin.php:1021
 msgid "Connect AI Client"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1042
+#: includes/class-mcp-gateway-admin.php:1026
 msgid "Desktop AI Clients"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1043
+#: includes/class-mcp-gateway-admin.php:1027
 msgid "Recommended"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1046
+#: includes/class-mcp-gateway-admin.php:1030
 msgid "Web Clients (ChatGPT, Claude Web)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1049
+#: includes/class-mcp-gateway-admin.php:1033
 msgid "Image Providers"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1056
+#: includes/class-mcp-gateway-admin.php:1040
 msgid "Set up Claude Desktop, Claude Code, or compatible local AI clients for the best experience — full filesystem access and local image uploads."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1067
+#: includes/class-mcp-gateway-admin.php:1051
 msgid "Step 1: Install the AI Connector extension"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1069
+#: includes/class-mcp-gateway-admin.php:1053
 msgid "Download the Claude Desktop bundle and drag it into Claude Desktop's Extensions panel."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1073
+#: includes/class-mcp-gateway-admin.php:1057
 msgid "Download Extension (.mcpb)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1077
+#: includes/class-mcp-gateway-admin.php:1061
 msgid "Step 2: Add a new connection"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1079
-msgid "Each AI client connects with its own Application Password, created in your WordPress profile. The \"+ Add new connection\" wizard in the Connected Clients section below walks you through it."
+#: includes/class-mcp-gateway-admin.php:1063
+msgid "Each AI client connects with its own Application Password, created in your WordPress profile. The wizard below walks you through it; the resulting connection appears in the \"Existing connections\" card at the bottom of the page."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1083
-#: includes/class-mcp-gateway-admin.php:1491
+#: includes/class-mcp-gateway-admin.php:1067
 msgid "Add new connection"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1108
+#: includes/class-mcp-gateway-admin.php:1092
 msgid "Enable remote access for web-based AI clients like ChatGPT and Claude Web. Connects via OAuth 2.1 — no credentials leave your browser."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1110
+#: includes/class-mcp-gateway-admin.php:1096
+#: includes/class-mcp-gateway-admin.php:1580
+msgid "How permissions work"
+msgstr ""
+
+#: includes/class-mcp-gateway-admin.php:1099
+msgid "Connection capabilities (set on the OAuth connection in the \"Existing connections\" card after you approve it) — what the AI is allowed to attempt."
+msgstr ""
+
+#: includes/class-mcp-gateway-admin.php:1100
+msgid "The OAuth token authenticates as your admin user — actions run with your admin WordPress capabilities at the per-object level (per-post / per-media / per-term)."
+msgstr ""
+
+#: includes/class-mcp-gateway-admin.php:1101
+#: includes/class-mcp-gateway-admin.php:1585
+msgid "Both layers must allow an action for it to succeed."
+msgstr ""
+
+#: includes/class-mcp-gateway-admin.php:1105
 msgid "Enable Remote AI Client Access"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1112
-msgid "Allow remote AI clients to connect to your site via the Streamable HTTP MCP endpoint."
+#: includes/class-mcp-gateway-admin.php:1107
+msgid "Allow remote AI clients to connect to your site via the Streamable HTTP MCP endpoint. OAuth 2.1 is the sole authentication method for this transport."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1116
+#: includes/class-mcp-gateway-admin.php:1111
 msgid "Enable Remote AI Access"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1123
+#: includes/class-mcp-gateway-admin.php:1118
 msgid "MCP Endpoint URL"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1125
+#: includes/class-mcp-gateway-admin.php:1120
 msgid "All remote connections share this endpoint. Copy it into your MCP-compatible AI client."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1130
-#: includes/class-mcp-gateway-admin.php:1281
-#: includes/class-mcp-gateway-admin.php:1823
+#: includes/class-mcp-gateway-admin.php:1125
+#: includes/class-mcp-gateway-admin.php:1715
 msgid "Copy"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1137
-msgid "OAuth Connection (Recommended)"
+#: includes/class-mcp-gateway-admin.php:1132
+msgid "OAuth Connection"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1139
+#: includes/class-mcp-gateway-admin.php:1134
 msgid "The standard, secure authentication method. ChatGPT, Claude Web, and other MCP-compatible clients handle the entire OAuth 2.1 flow automatically — you just approve the connection once."
 msgstr ""
 
 #. translators: 1: OAuth client name, 2: token expiration date/time.
-#: includes/class-mcp-gateway-admin.php:1154
+#: includes/class-mcp-gateway-admin.php:1149
 msgid "Connected — client: %1$s — expires: %2$s"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1161
+#: includes/class-mcp-gateway-admin.php:1156
 msgid "Revoke OAuth Token"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1165
+#: includes/class-mcp-gateway-admin.php:1160
 msgid "No active OAuth connection. Your MCP-compatible AI client will prompt for authorization when it first connects."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1173
-#: includes/class-mcp-gateway-admin.php:1289
+#: includes/class-mcp-gateway-admin.php:1168
 msgid "Capabilities"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1175
-#: includes/class-mcp-gateway-admin.php:1291
+#: includes/class-mcp-gateway-admin.php:1170
 msgid "Saved!"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1179
-#: includes/class-mcp-gateway-admin.php:1295
+#: includes/class-mcp-gateway-admin.php:1174
 msgid "Control what this connection is allowed to do. Changes save automatically."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1183
-#: includes/class-mcp-gateway-admin.php:1299
+#: includes/class-mcp-gateway-admin.php:1178
 #: includes/class-mcp-gateway-capabilities.php:194
 msgid "Standard (Recommended)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1184
-#: includes/class-mcp-gateway-admin.php:1300
+#: includes/class-mcp-gateway-admin.php:1179
 #: includes/class-mcp-gateway-capabilities.php:193
 msgid "Full Access"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1185
-#: includes/class-mcp-gateway-admin.php:1301
+#: includes/class-mcp-gateway-admin.php:1180
 #: includes/class-mcp-gateway-capabilities.php:195
 msgid "Draft Only (No Publish)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1186
-#: includes/class-mcp-gateway-admin.php:1302
+#: includes/class-mcp-gateway-admin.php:1181
 #: includes/class-mcp-gateway-capabilities.php:197
 msgid "Content Manager"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1187
-#: includes/class-mcp-gateway-admin.php:1303
+#: includes/class-mcp-gateway-admin.php:1182
 #: includes/class-mcp-gateway-capabilities.php:196
 msgid "Read Only"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1188
-#: includes/class-mcp-gateway-admin.php:1304
+#: includes/class-mcp-gateway-admin.php:1183
 #: includes/class-mcp-gateway-capabilities.php:200
 msgid "Custom"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1202
-#: includes/class-mcp-gateway-admin.php:1318
-#: includes/class-mcp-gateway-admin.php:1593
+#: includes/class-mcp-gateway-admin.php:1197
+#: includes/class-mcp-gateway-admin.php:1485
 msgid "(always on)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1212
+#: includes/class-mcp-gateway-admin.php:1207
 msgid "Setup Instructions"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1215
+#: includes/class-mcp-gateway-admin.php:1210
 msgid "Enable Remote AI Client Access AND OAuth above."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1216
+#: includes/class-mcp-gateway-admin.php:1211
 msgid "Copy the MCP endpoint URL above."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1217
+#: includes/class-mcp-gateway-admin.php:1212
 msgid "In ChatGPT, go to Settings → Apps & Connectors → Create."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1218
+#: includes/class-mcp-gateway-admin.php:1213
 msgid "Paste the URL as the MCP Server URL."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1219
+#: includes/class-mcp-gateway-admin.php:1214
 msgid "Select \"OAuth\" as the authentication method."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1220
+#: includes/class-mcp-gateway-admin.php:1215
 msgid "Click Create — ChatGPT will discover the OAuth endpoints automatically."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1221
+#: includes/class-mcp-gateway-admin.php:1216
 msgid "When prompted, log into your WordPress admin and click Approve."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1222
+#: includes/class-mcp-gateway-admin.php:1217
 msgid "ChatGPT will now have access to your WordPress tools."
 msgstr ""
 
 #: includes/class-mcp-gateway-admin.php:1231
-msgid "Alternative Connection Methods"
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1235
-msgid "Use these methods if OAuth is not available for your MCP-compatible AI client."
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1239
-msgid "Bearer Token"
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1241
-msgid "For MCP-compatible AI clients that support Authorization headers (Claude.ai, generic clients)."
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1244
-msgid "Token"
-msgstr ""
-
-#. translators: 1: token prefix, 2: token creation date/time.
-#: includes/class-mcp-gateway-admin.php:1251
-msgid "Active — prefix: %1$s… — created: %2$s"
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1258
-msgid "No bearer token active."
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1264
-msgid "Generate New Token"
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1268
-msgid "Revoke Token"
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1276
-msgid "Copy this token now. It will not be shown again."
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1338
 msgid "Configure stock photo and AI image providers. Provider API keys are supplied by the site owner and stored encrypted."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1344
+#: includes/class-mcp-gateway-admin.php:1237
 msgid "Stock Photo Providers"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1350
+#: includes/class-mcp-gateway-admin.php:1243
 msgid "Google Imagen"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1353
+#: includes/class-mcp-gateway-admin.php:1246
 msgid "Generate images with a Google AI Studio API key."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1354
-#: includes/class-mcp-gateway-admin.php:1402
-#: includes/class-mcp-gateway-admin.php:1428
+#: includes/class-mcp-gateway-admin.php:1247
+#: includes/class-mcp-gateway-admin.php:1295
+#: includes/class-mcp-gateway-admin.php:1321
 msgid "Get API Key"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1356
-#: includes/class-mcp-gateway-admin.php:1404
-#: includes/class-mcp-gateway-admin.php:1430
+#: includes/class-mcp-gateway-admin.php:1249
+#: includes/class-mcp-gateway-admin.php:1297
+#: includes/class-mcp-gateway-admin.php:1323
 msgid "API Key"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1359
-#: includes/class-mcp-gateway-admin.php:1386
-#: includes/class-mcp-gateway-admin.php:1407
-#: includes/class-mcp-gateway-admin.php:1433
+#: includes/class-mcp-gateway-admin.php:1252
+#: includes/class-mcp-gateway-admin.php:1279
+#: includes/class-mcp-gateway-admin.php:1300
+#: includes/class-mcp-gateway-admin.php:1326
 msgid "Clear key"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1361
-#: includes/class-mcp-gateway-admin.php:1435
+#: includes/class-mcp-gateway-admin.php:1254
+#: includes/class-mcp-gateway-admin.php:1328
 msgid "Model"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1368
-#: includes/class-mcp-gateway-admin.php:1389
-#: includes/class-mcp-gateway-admin.php:1410
-#: includes/class-mcp-gateway-admin.php:1448
+#: includes/class-mcp-gateway-admin.php:1261
+#: includes/class-mcp-gateway-admin.php:1282
+#: includes/class-mcp-gateway-admin.php:1303
+#: includes/class-mcp-gateway-admin.php:1341
 msgid "Test Connection"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1377
+#: includes/class-mcp-gateway-admin.php:1270
 msgid "Unsplash (Stock Photos)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1380
-#: includes/class-mcp-gateway-admin.php:1401
+#: includes/class-mcp-gateway-admin.php:1273
+#: includes/class-mcp-gateway-admin.php:1294
 msgid "Free with attribution."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1381
+#: includes/class-mcp-gateway-admin.php:1274
 msgid "Get Access Key"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1383
+#: includes/class-mcp-gateway-admin.php:1276
 msgid "Access Key"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1398
+#: includes/class-mcp-gateway-admin.php:1291
 msgid "Pexels (Stock Photos)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1418
+#: includes/class-mcp-gateway-admin.php:1311
 msgid "AI Generation Providers"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1424
+#: includes/class-mcp-gateway-admin.php:1317
 msgid "OpenAI GPT Image"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1427
+#: includes/class-mcp-gateway-admin.php:1320
 msgid "Generate images with an OpenAI API key."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1441
+#: includes/class-mcp-gateway-admin.php:1334
 msgid "Quality"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1443
+#: includes/class-mcp-gateway-admin.php:1336
 msgid "Low"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1444
+#: includes/class-mcp-gateway-admin.php:1337
 msgid "Medium (Default)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1445
+#: includes/class-mcp-gateway-admin.php:1338
 msgid "High"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1455
+#: includes/class-mcp-gateway-admin.php:1348
 msgid "Save Settings"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1487
-msgid "Connected Clients"
+#: includes/class-mcp-gateway-admin.php:1383
+msgid "Existing connections"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1499
+#: includes/class-mcp-gateway-admin.php:1386
+msgid "All active connections, regardless of how they were created. Use the Desktop AI Clients tab to add an App Password connection, or the Web Clients tab to enable OAuth and approve a ChatGPT / Claude Web connection."
+msgstr ""
+
+#: includes/class-mcp-gateway-admin.php:1391
 msgid "Review notification email:"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1506
+#: includes/class-mcp-gateway-admin.php:1398
 msgid "Save"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1509
-#: includes/class-mcp-gateway-admin.php:1598
+#: includes/class-mcp-gateway-admin.php:1401
+#: includes/class-mcp-gateway-admin.php:1490
 msgid "Saved"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1512
+#: includes/class-mcp-gateway-admin.php:1404
 msgid "Where to send \"ready for review\" emails from Draft Only connections. Defaults to the WordPress admin email if left blank."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1518
-msgid "No clients are connected yet. Click \"+ Add new connection\" above to create your first one."
+#: includes/class-mcp-gateway-admin.php:1410
+msgid "No clients are connected yet. Add one from the Desktop AI Clients or Web Clients tab above."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1524
+#: includes/class-mcp-gateway-admin.php:1416
 msgid "Label"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1525
+#: includes/class-mcp-gateway-admin.php:1417
 msgid "WP user"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1526
+#: includes/class-mcp-gateway-admin.php:1418
 msgid "Client Type"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1527
+#: includes/class-mcp-gateway-admin.php:1419
 msgid "Auth Method"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1528
+#: includes/class-mcp-gateway-admin.php:1420
 msgid "Created"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1529
+#: includes/class-mcp-gateway-admin.php:1421
 msgid "Last Active"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1542
+#: includes/class-mcp-gateway-admin.php:1434
 msgid "The underlying WordPress user no longer exists. Revoke this connection and create a new one."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1543
+#: includes/class-mcp-gateway-admin.php:1435
 msgid "Needs re-auth"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1562
+#: includes/class-mcp-gateway-admin.php:1454
 msgid "Rename"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1565
+#: includes/class-mcp-gateway-admin.php:1457
 msgid "Revoke"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1573
-#: includes/class-mcp-gateway-admin.php:1778
+#: includes/class-mcp-gateway-admin.php:1465
+#: includes/class-mcp-gateway-admin.php:1670
 msgid "Preset:"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1613
+#: includes/class-mcp-gateway-admin.php:1505
 msgid "Allowed Authors"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1615
+#: includes/class-mcp-gateway-admin.php:1507
 msgid "leave all unchecked to allow any author"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1651
+#: includes/class-mcp-gateway-admin.php:1543
 msgid "Revoke All Connections"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1671
-#: includes/class-mcp-gateway-admin.php:1743
+#: includes/class-mcp-gateway-admin.php:1563
+#: includes/class-mcp-gateway-admin.php:1635
 #: includes/class-mcp-gateway-connections.php:801
 msgid "Claude Desktop"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1672
+#: includes/class-mcp-gateway-admin.php:1564
 msgid "Claude Code / CLI"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1673
+#: includes/class-mcp-gateway-admin.php:1565
 #: includes/class-mcp-gateway-connections.php:802
 msgid "Cowork"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1674
+#: includes/class-mcp-gateway-admin.php:1566
 #: includes/class-mcp-gateway-connections.php:803
 msgid "ChatGPT"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1675
+#: includes/class-mcp-gateway-admin.php:1567
 #: includes/class-mcp-gateway-connections.php:804
 msgid "Claude Web"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1676
+#: includes/class-mcp-gateway-admin.php:1568
 msgid "Other MCP client"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1682
-#: includes/class-mcp-gateway-admin.php:1684
+#: includes/class-mcp-gateway-admin.php:1574
+#: includes/class-mcp-gateway-admin.php:1576
 msgid "Add a new MCP connection"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1688
-msgid "How permissions work"
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1691
+#: includes/class-mcp-gateway-admin.php:1583
 msgid "Connection capabilities (set in Step 4) — what the AI is allowed to attempt."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1692
+#: includes/class-mcp-gateway-admin.php:1584
 msgid "WP role of the underlying user — what that user can do at the per-object level (per-post / per-media / per-term)."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1693
-msgid "Both layers must allow an action for it to succeed."
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:1699
+#: includes/class-mcp-gateway-admin.php:1591
 msgid "Step 1 — Who will the AI act as?"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1703
+#: includes/class-mcp-gateway-admin.php:1595
 msgid "Your admin account"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1704
+#: includes/class-mcp-gateway-admin.php:1596
 msgid "Simple setup. The per-connection capabilities below are the only effective limit."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1708
+#: includes/class-mcp-gateway-admin.php:1600
 msgid "A dedicated WP user"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1709
+#: includes/class-mcp-gateway-admin.php:1601
 msgid "Recommended for production sites. Limits blast radius if the App Password leaks."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1712
+#: includes/class-mcp-gateway-admin.php:1604
 msgid "How to create one →"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1721
+#: includes/class-mcp-gateway-admin.php:1613
 msgid "Step 2 — Create an Application Password"
 msgstr ""
 
 #. translators: %s: HTML link to WordPress Application Passwords settings
-#: includes/class-mcp-gateway-admin.php:1727
+#: includes/class-mcp-gateway-admin.php:1619
 msgid "Open %s in your WordPress profile (it opens in a new tab)."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1728
+#: includes/class-mcp-gateway-admin.php:1620
 msgid "Application Passwords settings ↗"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1732
+#: includes/class-mcp-gateway-admin.php:1624
 msgid "Create a new password named, for example, \"Axtolab AI Connector — Claude Desktop\"."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1733
+#: includes/class-mcp-gateway-admin.php:1625
 msgid "Copy the generated password (WordPress shows it only once)."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1739
+#: includes/class-mcp-gateway-admin.php:1631
 msgid "Step 3 — Connect"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1742
+#: includes/class-mcp-gateway-admin.php:1634
 msgid "Connection label"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1747
+#: includes/class-mcp-gateway-admin.php:1639
 msgid "Client type"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1756
+#: includes/class-mcp-gateway-admin.php:1648
 msgid "Paste Application Password"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1761
+#: includes/class-mcp-gateway-admin.php:1653
 msgid "WordPress username (login)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1762
+#: includes/class-mcp-gateway-admin.php:1654
 msgid "e.g. ai-editor"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1763
+#: includes/class-mcp-gateway-admin.php:1655
 msgid "Required when the App Password belongs to a different WordPress user than the one you are logged in as."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1768
+#: includes/class-mcp-gateway-admin.php:1660
 msgid "Verify"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1776
+#: includes/class-mcp-gateway-admin.php:1668
 msgid "Step 4 — Capabilities"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1797
+#: includes/class-mcp-gateway-admin.php:1689
 msgid "always on"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1807
+#: includes/class-mcp-gateway-admin.php:1699
 msgid "Cancel"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1810
+#: includes/class-mcp-gateway-admin.php:1702
 msgid "Create connection"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1816
-#: includes/class-mcp-gateway-admin.php:2435
+#: includes/class-mcp-gateway-admin.php:1708
+#: includes/class-mcp-gateway-admin.php:2327
 msgid "Connection created."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1818
+#: includes/class-mcp-gateway-admin.php:1710
 msgid "Copy the connection token below and paste it into your MCP client. It bundles the site URL, the WordPress user login, and the Application Password — treat it like a password."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1828
+#: includes/class-mcp-gateway-admin.php:1720
 msgid "Done"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1852
+#: includes/class-mcp-gateway-admin.php:1744
 msgid "Advanced Write Gates"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1854
+#: includes/class-mcp-gateway-admin.php:1746
 msgid "AI agents can read site-wide settings by default but cannot change permalinks or arbitrary options unless you explicitly enable it here. Turn a gate on only while running a specific automation, then turn it off again."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1859
+#: includes/class-mcp-gateway-admin.php:1751
 msgid "Permalink writes"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1866
+#: includes/class-mcp-gateway-admin.php:1758
 msgid "Allow AI agents to update the WordPress permalink structure"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1868
+#: includes/class-mcp-gateway-admin.php:1760
 msgid "Off by default. Required for tools like wp_update_permalink_structure. Capability + admin-toggle + allowlist all gate the write."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1873
+#: includes/class-mcp-gateway-admin.php:1765
 msgid "Options API writes"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1880
+#: includes/class-mcp-gateway-admin.php:1772
 msgid "Allow AI agents to update WordPress options on the writable allowlist"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1882
+#: includes/class-mcp-gateway-admin.php:1774
 msgid "Off by default. Sensitive keys (siteurl, home, license_*, secrets) remain blocked even when this is on."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1900
-#: includes/class-mcp-gateway-admin.php:1984
-#: includes/class-mcp-gateway-admin.php:2016
-#: includes/class-mcp-gateway-admin.php:2061
-#: includes/class-mcp-gateway-admin.php:2105
-#: includes/class-mcp-gateway-admin.php:2130
-#: includes/class-mcp-gateway-admin.php:2160
-#: includes/class-mcp-gateway-admin.php:2195
-#: includes/class-mcp-gateway-admin.php:2320
-#: includes/class-mcp-gateway-admin.php:2457
-#: includes/class-mcp-gateway-admin.php:2488
-#: includes/class-mcp-gateway-admin.php:2517
-#: includes/class-mcp-gateway-admin.php:2536
-#: includes/class-mcp-gateway-admin.php:2563
-#: includes/class-mcp-gateway-admin.php:2582
-#: includes/class-mcp-gateway-admin.php:2625
-#: includes/class-mcp-gateway-admin.php:2677
+#: includes/class-mcp-gateway-admin.php:1792
+#: includes/class-mcp-gateway-admin.php:1876
+#: includes/class-mcp-gateway-admin.php:1908
+#: includes/class-mcp-gateway-admin.php:1953
+#: includes/class-mcp-gateway-admin.php:1997
+#: includes/class-mcp-gateway-admin.php:2022
+#: includes/class-mcp-gateway-admin.php:2052
+#: includes/class-mcp-gateway-admin.php:2087
+#: includes/class-mcp-gateway-admin.php:2212
+#: includes/class-mcp-gateway-admin.php:2349
+#: includes/class-mcp-gateway-admin.php:2378
+#: includes/class-mcp-gateway-admin.php:2405
+#: includes/class-mcp-gateway-admin.php:2424
+#: includes/class-mcp-gateway-admin.php:2462
+#: includes/class-mcp-gateway-admin.php:2514
 msgid "Permission denied."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1906
+#: includes/class-mcp-gateway-admin.php:1798
 msgid "Unknown setting."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1928
+#: includes/class-mcp-gateway-admin.php:1820
 msgid "How It Works"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1929
+#: includes/class-mcp-gateway-admin.php:1821
 msgid "Desktop AI Clients (Recommended)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1931
+#: includes/class-mcp-gateway-admin.php:1823
 msgid "Click \"Generate Connection Token\" to create a one-time token."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1932
+#: includes/class-mcp-gateway-admin.php:1824
 msgid "Paste the token into the Axtolab AI Connector extension settings in Claude Desktop or another compatible client."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:1933
+#: includes/class-mcp-gateway-admin.php:1825
 msgid "The client saves the connection locally — restart it and you're ready to go!"
 msgstr ""
 
 #. translators: %s: REST API base URL
-#: includes/class-mcp-gateway-admin.php:1939
+#: includes/class-mcp-gateway-admin.php:1831
 msgid "REST API base: %s"
 msgstr ""
 
 #. translators: %d: number of connections revoked
-#: includes/class-mcp-gateway-admin.php:1995
+#: includes/class-mcp-gateway-admin.php:1887
 msgid "%d connection revoked."
 msgid_plural "%d connections revoked."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-mcp-gateway-admin.php:2026
-#: includes/class-mcp-gateway-admin.php:2070
-#: includes/class-mcp-gateway-admin.php:2110
-#: includes/class-mcp-gateway-admin.php:2165
+#: includes/class-mcp-gateway-admin.php:1918
+#: includes/class-mcp-gateway-admin.php:1962
+#: includes/class-mcp-gateway-admin.php:2002
+#: includes/class-mcp-gateway-admin.php:2057
 msgid "Missing connection ID."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2042
+#: includes/class-mcp-gateway-admin.php:1934
 msgid "Connection renamed."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2088
+#: includes/class-mcp-gateway-admin.php:1980
 msgid "Connection revoked."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2116
+#: includes/class-mcp-gateway-admin.php:2008
 msgid "Permissions updated."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2140
+#: includes/class-mcp-gateway-admin.php:2032
 msgid "Invalid email address."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2146
+#: includes/class-mcp-gateway-admin.php:2038
 msgid "Review email saved."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2171
+#: includes/class-mcp-gateway-admin.php:2063
 msgid "Author restriction updated."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2204
+#: includes/class-mcp-gateway-admin.php:2096
 msgid "Paste the Application Password before verifying."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2214
+#: includes/class-mcp-gateway-admin.php:2106
 msgid "Enter the WordPress username the Application Password belongs to."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2246
-#: includes/class-mcp-gateway-admin.php:2368
+#: includes/class-mcp-gateway-admin.php:2138
+#: includes/class-mcp-gateway-admin.php:2260
 msgid "WordPress rejected the username + Application Password combination."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2253
-#: includes/class-mcp-gateway-admin.php:2374
+#: includes/class-mcp-gateway-admin.php:2145
+#: includes/class-mcp-gateway-admin.php:2266
 msgid "The resolved user could not be loaded."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2287
+#: includes/class-mcp-gateway-admin.php:2179
 msgid "This user has very limited WordPress capabilities — the AI may be blocked from most actions even when the connection allows them. Editor or higher is usually the right floor."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2335
+#: includes/class-mcp-gateway-admin.php:2227
 msgid "Application Password is required."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2381
+#: includes/class-mcp-gateway-admin.php:2273
 msgid "Application Passwords are not available on this site."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2396
+#: includes/class-mcp-gateway-admin.php:2288
 msgid "Could not match the Application Password to a stored record. Try again."
 msgstr ""
 
 #. translators: %s: client type label
-#: includes/class-mcp-gateway-admin.php:2407
+#: includes/class-mcp-gateway-admin.php:2299
 msgid "MCP Connection (%s)"
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2522
-msgid "Bearer token revoked."
-msgstr ""
-
-#: includes/class-mcp-gateway-admin.php:2568
+#: includes/class-mcp-gateway-admin.php:2410
 msgid "OAuth token revoked."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2587
+#: includes/class-mcp-gateway-admin.php:2429
 msgid "Invalid connection type."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2663
+#: includes/class-mcp-gateway-admin.php:2500
 msgid "Image provider settings saved."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2684
+#: includes/class-mcp-gateway-admin.php:2521
 msgid "No provider specified."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2688
+#: includes/class-mcp-gateway-admin.php:2525
 msgid "AI image generation is disabled on this site."
 msgstr ""
 
-#: includes/class-mcp-gateway-admin.php:2701
+#: includes/class-mcp-gateway-admin.php:2538
 msgid "Connection successful!"
-msgstr ""
-
-#: includes/class-mcp-gateway-bearer-auth.php:47
-msgid "A WordPress administrator must be logged in to generate a Bearer token."
 msgstr ""
 
 #: includes/class-mcp-gateway-capabilities.php:142
@@ -1242,24 +1193,24 @@ msgid "Rate limit exceeded. Maximum %1$d requests per %2$d seconds."
 msgstr ""
 
 #. translators: 1: site name, 2: post title
-#: includes/class-mcp-gateway-rest.php:4307
+#: includes/class-mcp-gateway-rest.php:4308
 msgid "[%1$s] Draft ready for review: \"%2$s\""
 msgstr ""
 
 #. translators: %s: post title
-#: includes/class-mcp-gateway-rest.php:4314
+#: includes/class-mcp-gateway-rest.php:4315
 msgid "A draft is ready for your review: \"%s\""
 msgstr ""
 
-#: includes/class-mcp-gateway-rest.php:4319
+#: includes/class-mcp-gateway-rest.php:4320
 msgid "Note from contributor:"
 msgstr ""
 
-#: includes/class-mcp-gateway-rest.php:4322
+#: includes/class-mcp-gateway-rest.php:4323
 msgid "Edit link:"
 msgstr ""
 
-#: includes/class-mcp-gateway-rest.php:4323
+#: includes/class-mcp-gateway-rest.php:4324
 msgid "WP MCP Gateway"
 msgstr ""
 

@@ -1702,8 +1702,8 @@ final class Axtolab_AI_Connector_REST {
 	 * list. Lets AI agents plan work without trial-and-error.
 	 *
 	 * Capability filtering only applies to the remote MCP transport
-	 * (`/mcp` endpoint, OAuth/bearer auth). When the request reaches this
-	 * REST endpoint via Application Password Basic auth — the typical
+	 * (`/mcp` endpoint, OAuth-issued Bearer tokens). When the request reaches
+	 * this REST endpoint via Application Password Basic auth — the typical
 	 * local mcp-server setup — there is no per-connection filter, so we
 	 * report `full_access` with a clarifying note.
 	 *
@@ -1718,11 +1718,6 @@ final class Axtolab_AI_Connector_REST {
 				? (array) $settings['oauth_capabilities']
 				: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
 			$note         = 'OAuth connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
-		} elseif ( 'bearer' === $auth_method ) {
-			$capabilities = isset( $settings['bearer_capabilities'] )
-				? (array) $settings['bearer_capabilities']
-				: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
-			$note         = 'Bearer-token connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
 		} else {
 			// Application Password / direct REST: no per-connection filter.
 			$capabilities = Axtolab_AI_Connector_Capabilities::PRESETS['full_access'];
@@ -1753,10 +1748,10 @@ final class Axtolab_AI_Connector_REST {
 
 	/**
 	 * Best-effort detection of the auth method used for the current REST
-	 * request. Distinguishes Application Password (Basic), OAuth bearer,
-	 * and standalone bearer tokens.
+	 * request. Distinguishes Application Password (Basic) and OAuth
+	 * (Bearer issued by the plugin's OAuth provider).
 	 *
-	 * @return string One of 'app_password', 'oauth', 'bearer', 'unknown'.
+	 * @return string One of 'app_password', 'oauth', 'unknown'.
 	 */
 	private static function detect_caller_auth_method() {
 		$header = isset( $_SERVER['HTTP_AUTHORIZATION'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_AUTHORIZATION'] ) ) : '';
@@ -1790,7 +1785,7 @@ final class Axtolab_AI_Connector_REST {
 				&& Axtolab_AI_Connector_OAuth::verify_access_token( $token ) ) {
 				return 'oauth';
 			}
-			return 'bearer';
+			return 'unknown';
 		}
 
 		return 'unknown';

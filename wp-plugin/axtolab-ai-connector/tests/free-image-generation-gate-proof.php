@@ -99,8 +99,7 @@ $GLOBALS['image_gate_test_options'] = array(
 		'pexels'        => array( 'enabled' => true, 'api_key' => 'encrypted-pexels-key' ),
 	),
 	'axtolab_ai_connector_settings'        => array(
-		'bearer_capabilities' => array( 'read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal' ),
-		'oauth_capabilities'  => array( 'read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal' ),
+		'oauth_capabilities' => array( 'read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal' ),
 	),
 );
 

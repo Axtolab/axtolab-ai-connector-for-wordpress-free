@@ -64,17 +64,13 @@ For web-based clients (ChatGPT, Claude Web). Supports:
 
 Enable in Settings → AI Connector → OAuth.
 
-### 3. Bearer Token
-For remote MCP-over-HTTP transport connections. Enable in Settings → AI Connector → Remote AI Access.
-
 ## Admin Settings
 
 Navigate to **Settings → AI Connector** to configure:
 
-- **Connect AI Client** — install the .mcpb extension and jump to the connection wizard
-- **Connected Clients** — list, rename, revoke, and re-permission existing MCP connections; "+ Add new connection" launches the App Password wizard
-- **Remote AI Access** — enable/disable bearer token transport
-- **OAuth** — enable/disable OAuth 2.1 authorization server
+- **Desktop AI Clients tab** — install the .mcpb extension and run the inline "+ Add new connection" App Password wizard
+- **Web Clients tab** — enable Remote AI Access and OAuth 2.1 for ChatGPT / Claude Web (the OAuth-issued Bearer token is the sole credential for the MCP-over-HTTP transport)
+- **Existing connections** card — list, rename, revoke, and re-permission existing MCP connections
 - **Image Providers** — API keys for Google Imagen, OpenAI, Unsplash, Pexels
 - **Revoke All** — clear all MCP connections (App Passwords + OAuth)
 
