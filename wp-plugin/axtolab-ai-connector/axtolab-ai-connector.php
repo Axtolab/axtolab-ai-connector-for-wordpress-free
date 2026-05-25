@@ -586,10 +586,14 @@ function axtolab_ai_connector_bootstrap(): void {
 	// OAuth 2.1 is the sole bearer-token issuer for the transport. The manual
 	// Bearer-Token generation path was removed in 0.2.x; any historical
 	// `remote_bearer_token_*` settings are scrubbed during the same upgrade pass.
-	$settings     = get_option( 'axtolab_ai_connector_settings', array() );
-	$oauth_active = ! empty( $settings['oauth_enabled'] );
+	// `remote_mcp_enabled` is the canonical key for "Remote MCP for Web Clients
+	// (via OAuth)" — pre-R6 there was a separate `oauth_enabled` toggle, but
+	// after Bearer removal the two were logically AND-gated so they were
+	// collapsed into one. The legacy key is migrated below.
+	$settings          = get_option( 'axtolab_ai_connector_settings', array() );
+	$remote_mcp_active = ! empty( $settings['remote_mcp_enabled'] );
 
-	if ( $oauth_active ) {
+	if ( $remote_mcp_active ) {
 		Axtolab_AI_Connector_MCP_Transport::bootstrap();
 		Axtolab_AI_Connector_OAuth::bootstrap();
 	}
@@ -597,6 +601,7 @@ function axtolab_ai_connector_bootstrap(): void {
 	// Defensive scrub of legacy Bearer-Token settings on existing installs.
 	// The manual Bearer-Token UI was removed; lingering keys are no longer
 	// read anywhere but should not sit in the settings option indefinitely.
+	$settings_changed = false;
 	if ( is_admin() && (
 			isset( $settings['remote_bearer_token_hash'] )
 			|| isset( $settings['remote_bearer_token_created'] )
@@ -611,6 +616,23 @@ function axtolab_ai_connector_bootstrap(): void {
 			$settings['remote_bearer_token_user_id'],
 			$settings['bearer_capabilities']
 		);
+		$settings_changed = true;
+	}
+
+	// Defensive sync of legacy `oauth_enabled` key. After R6 Bearer removal,
+	// `remote_mcp_enabled` is the canonical key; `oauth_enabled` is dropped on
+	// next save. If a site has the legacy key set on (and `remote_mcp_enabled`
+	// not yet set), promote the value so existing OAuth connections keep
+	// working without an admin re-toggle.
+	if ( is_admin() && array_key_exists( 'oauth_enabled', $settings ) ) {
+		if ( ! empty( $settings['oauth_enabled'] ) && empty( $settings['remote_mcp_enabled'] ) ) {
+			$settings['remote_mcp_enabled'] = true;
+		}
+		unset( $settings['oauth_enabled'] );
+		$settings_changed = true;
+	}
+
+	if ( $settings_changed ) {
 		update_option( 'axtolab_ai_connector_settings', $settings );
 	}
 

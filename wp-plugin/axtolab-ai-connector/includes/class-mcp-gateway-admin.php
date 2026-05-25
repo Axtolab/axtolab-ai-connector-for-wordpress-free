@@ -80,13 +80,6 @@ class Axtolab_AI_Connector_Admin {
 	const AJAX_SAVE_CAPABILITIES = 'axtolab_ai_connector_save_capabilities';
 
 	/**
-	 * AJAX action for toggling OAuth.
-	 *
-	 * @var string
-	 */
-	const AJAX_TOGGLE_OAUTH = 'axtolab_ai_connector_toggle_oauth';
-
-	/**
 	 * AJAX action for revoking the OAuth token.
 	 *
 	 * @var string
@@ -192,7 +185,6 @@ class Axtolab_AI_Connector_Admin {
 		add_action( 'wp_ajax_' . self::AJAX_WIZARD_CREATE, array( $this, 'ajax_wizard_create' ) );
 		add_action( 'wp_ajax_' . self::AJAX_TOGGLE_REMOTE, array( $this, 'ajax_toggle_remote' ) );
 		add_action( 'wp_ajax_' . self::AJAX_SAVE_CAPABILITIES, array( $this, 'ajax_save_capabilities' ) );
-		add_action( 'wp_ajax_' . self::AJAX_TOGGLE_OAUTH, array( $this, 'ajax_toggle_oauth' ) );
 		add_action( 'wp_ajax_' . self::AJAX_REVOKE_OAUTH, array( $this, 'ajax_revoke_oauth' ) );
 		add_action( 'wp_ajax_' . self::AJAX_SAVE_IMAGE_PROVIDERS, array( $this, 'ajax_save_image_providers' ) );
 		add_action( 'wp_ajax_' . self::AJAX_TEST_IMAGE_PROVIDER, array( $this, 'ajax_test_image_provider' ) );
@@ -232,7 +224,7 @@ class Axtolab_AI_Connector_Admin {
 		}
 
 		$settings = get_option( 'axtolab_ai_connector_settings', array() );
-		if ( ! empty( $settings['oauth_enabled'] ) ) {
+		if ( ! empty( $settings['remote_mcp_enabled'] ) ) {
 			return;
 		}
 
@@ -253,10 +245,10 @@ class Axtolab_AI_Connector_Admin {
 		<div class="notice notice-info">
 			<p>
 				<strong><?php esc_html_e( 'Axtolab AI Connector:', 'axtolab-ai-connector' ); ?></strong>
-				<?php esc_html_e( 'OAuth for web-based AI clients (ChatGPT, Claude Web) is disabled. Enable it to let those clients connect to this site.', 'axtolab-ai-connector' ); ?>
+				<?php esc_html_e( 'Remote MCP for web-based AI clients (ChatGPT, Claude Web) is disabled. Enable it to let those clients connect to this site via OAuth.', 'axtolab-ai-connector' ); ?>
 			</p>
 			<p>
-				<a class="button button-primary" href="<?php echo esc_url( $enable_url ); ?>"><?php esc_html_e( 'Enable OAuth', 'axtolab-ai-connector' ); ?></a>
+				<a class="button button-primary" href="<?php echo esc_url( $enable_url ); ?>"><?php esc_html_e( 'Enable Remote MCP', 'axtolab-ai-connector' ); ?></a>
 				<a class="button" href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'axtolab-ai-connector' ); ?></a>
 			</p>
 		</div>
@@ -286,8 +278,10 @@ class Axtolab_AI_Connector_Admin {
 		$action = sanitize_key( wp_unslash( $_GET[ self::OAUTH_NOTICE_QUERY_KEY ] ) );
 
 		if ( 'enable' === $action ) {
-			$settings                  = get_option( 'axtolab_ai_connector_settings', array() );
-			$settings['oauth_enabled'] = true;
+			$settings                       = get_option( 'axtolab_ai_connector_settings', array() );
+			$settings['remote_mcp_enabled'] = true;
+			// Drop the legacy key if it lingered after the R6 collapse.
+			unset( $settings['oauth_enabled'] );
 			update_option( 'axtolab_ai_connector_settings', $settings );
 
 			if ( function_exists( 'axtolab_ai_connector_write_oauth_htaccess_rules' ) ) {
@@ -295,7 +289,7 @@ class Axtolab_AI_Connector_Admin {
 			}
 
 			wp_safe_redirect(
-				add_query_arg( 'axtolab_oauth_enabled', '1', admin_url( 'admin.php?page=' . self::MENU_SLUG ) )
+				add_query_arg( 'axtolab_remote_mcp_enabled', '1', admin_url( 'admin.php?page=' . self::MENU_SLUG ) )
 			);
 			exit;
 		}
@@ -918,10 +912,10 @@ JS;
 				<?php endif; ?>
 
 				<?php
-				// 4. OAuth Discovery (only when OAuth is enabled).
+				// 4. OAuth Discovery (only when Remote MCP is enabled).
 				// Uses the REST API metadata route — works on every host.
 				$oauth_settings = get_option( 'axtolab_ai_connector_settings', array() );
-				if ( ! empty( $oauth_settings['oauth_enabled'] ) ) :
+				if ( ! empty( $oauth_settings['remote_mcp_enabled'] ) ) :
 					$discovery_url    = rest_url( 'axtolab-ai-connector/v1/oauth/metadata/resource' );
 					$discovery_result = wp_remote_get(
 						$discovery_url,
@@ -962,7 +956,7 @@ JS;
 				// .htaccess rewrite never sees the request — needs nginx-level
 				// config. Cached for 6 hours to avoid an outbound HTTP probe on
 				// every admin page load.
-				if ( ! empty( $oauth_settings['oauth_enabled'] ) ) :
+				if ( ! empty( $oauth_settings['remote_mcp_enabled'] ) ) :
 					$wellknown_status = get_transient( 'axtolab_ai_connector_wellknown_status' );
 					if ( false === $wellknown_status ) {
 						$wellknown_url    = home_url( '/.well-known/oauth-protected-resource' );
@@ -1076,7 +1070,6 @@ JS;
 			<?php
 			$remote_settings  = get_option( 'axtolab_ai_connector_settings', array() );
 			$remote_enabled   = ! empty( $remote_settings['remote_mcp_enabled'] );
-			$oauth_enabled    = ! empty( $remote_settings['oauth_enabled'] );
 			$oauth_info       = Axtolab_AI_Connector_OAuth::get_token_info();
 			$mcp_endpoint_url = rest_url( 'axtolab-ai-connector/v1/mcp' );
 
@@ -1102,121 +1095,118 @@ JS;
 					</ul>
 				</div>
 
-				<p class="mcp-field-label"><?php esc_html_e( 'Enable Remote AI Client Access', 'axtolab-ai-connector' ); ?></p>
+				<p class="mcp-field-label"><?php esc_html_e( 'Enable Remote MCP for Web Clients', 'axtolab-ai-connector' ); ?></p>
 				<p class="mcp-help-text">
-					<?php esc_html_e( 'Allow remote AI clients to connect to your site via the Streamable HTTP MCP endpoint. OAuth 2.1 is the sole authentication method for this transport.', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'Allow web AI clients (ChatGPT, Claude Web, and other MCP-compatible clients) to connect to your site via OAuth 2.1. The MCP-over-HTTP transport endpoint is exposed once enabled.', 'axtolab-ai-connector' ); ?>
 				</p>
 				<label class="mcp-input-row">
 					<input type="checkbox" id="mcp-toggle-remote" <?php checked( $remote_enabled ); ?> />
-					<?php esc_html_e( 'Enable Remote AI Access', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'Enable Remote MCP (via OAuth)', 'axtolab-ai-connector' ); ?>
 				</label>
 				<p id="mcp-toggle-remote-message" class="mcp-feedback" aria-live="polite"></p>
 
-				<hr />
+				<?php if ( $remote_enabled ) : ?>
+					<p class="mcp-help-text" style="color: #00a32a; margin-top: 4px;">
+						<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
+						<?php esc_html_e( 'Remote MCP enabled — web clients can connect via OAuth.', 'axtolab-ai-connector' ); ?>
+					</p>
 
-				<!-- ═══ Shared MCP Endpoint URL ═══ -->
-				<p class="mcp-field-label"><?php esc_html_e( 'MCP Endpoint URL', 'axtolab-ai-connector' ); ?></p>
-				<p class="mcp-help-text">
-					<?php esc_html_e( 'All remote connections share this endpoint. Copy it into your MCP-compatible AI client.', 'axtolab-ai-connector' ); ?>
-				</p>
-				<div class="mcp-copy-block">
-					<pre class="mcp-code-block" id="mcp-endpoint-url"><?php echo esc_html( $mcp_endpoint_url ); ?></pre>
-					<button type="button" class="button button-small mcp-copy-btn" data-target="mcp-endpoint-url">
-						<?php esc_html_e( 'Copy', 'axtolab-ai-connector' ); ?>
-					</button>
-				</div>
+					<hr />
 
-				<hr />
-
-				<!-- ═══ OAuth (sole connection method for Web Clients) ═══ -->
-				<h3><?php esc_html_e( 'OAuth Connection', 'axtolab-ai-connector' ); ?></h3>
-				<p class="mcp-help-text">
-					<?php esc_html_e( 'The standard, secure authentication method. ChatGPT, Claude Web, and other MCP-compatible clients handle the entire OAuth 2.1 flow automatically — you just approve the connection once.', 'axtolab-ai-connector' ); ?>
-				</p>
-
-				<label class="mcp-input-row">
-					<input type="checkbox" id="mcp-toggle-oauth" <?php checked( $oauth_enabled ); ?> />
-					<?php esc_html_e( 'Enable OAuth', 'axtolab-ai-connector' ); ?>
-				</label>
-				<p id="mcp-oauth-toggle-message" class="mcp-feedback" aria-live="polite"></p>
-
-				<div id="mcp-oauth-status" style="margin-top: 8px;">
-					<?php if ( $oauth_info['active'] ) : ?>
-							<p class="mcp-help-text" style="color: #00a32a;">
-								<?php
-								printf(
-									/* translators: 1: OAuth client name, 2: token expiration date/time. */
-									esc_html__( 'Connected — client: %1$s — expires: %2$s', 'axtolab-ai-connector' ),
-									esc_html( $oauth_info['client_name'] ),
-									esc_html( $oauth_info['expires_at'] )
-								);
-								?>
-						</p>
-						<button type="button" id="mcp-revoke-oauth-btn" class="button button-secondary" style="color: #d63638;">
-							<?php esc_html_e( 'Revoke OAuth Token', 'axtolab-ai-connector' ); ?>
+					<!-- ═══ Shared MCP Endpoint URL ═══ -->
+					<p class="mcp-field-label"><?php esc_html_e( 'MCP Endpoint URL', 'axtolab-ai-connector' ); ?></p>
+					<p class="mcp-help-text">
+						<?php esc_html_e( 'All remote connections share this endpoint. Copy it into your MCP-compatible AI client. The client will redirect you here to approve OAuth access on first connect.', 'axtolab-ai-connector' ); ?>
+					</p>
+					<div class="mcp-copy-block">
+						<pre class="mcp-code-block" id="mcp-endpoint-url"><?php echo esc_html( $mcp_endpoint_url ); ?></pre>
+						<button type="button" class="button button-small mcp-copy-btn" data-target="mcp-endpoint-url">
+							<?php esc_html_e( 'Copy', 'axtolab-ai-connector' ); ?>
 						</button>
-					<?php else : ?>
-						<p class="mcp-help-text">
-							<?php esc_html_e( 'No active OAuth connection. Your MCP-compatible AI client will prompt for authorization when it first connects.', 'axtolab-ai-connector' ); ?>
-						</p>
-					<?php endif; ?>
-				</div>
-
-				<!-- OAuth capabilities — collapsible -->
-				<details class="mcp-cap-details" id="mcp-oauth-cap-details">
-					<summary>
-						<?php esc_html_e( 'Capabilities', 'axtolab-ai-connector' ); ?>
-						<span class="mcp-cap-badge" id="mcp-oauth-cap-badge"></span>
-						<span class="mcp-cap-saved" id="mcp-oauth-saved"><?php esc_html_e( 'Saved!', 'axtolab-ai-connector' ); ?></span>
-					</summary>
-					<div class="mcp-cap-inner">
-						<p class="mcp-help-text" style="margin-top:0;">
-							<?php esc_html_e( 'Control what this connection is allowed to do. Changes save automatically.', 'axtolab-ai-connector' ); ?>
-						</p>
-						<div style="margin-bottom: 10px;">
-							<select class="mcp-cap-preset" data-connection="oauth">
-								<option value="standard"><?php esc_html_e( 'Standard (Recommended)', 'axtolab-ai-connector' ); ?></option>
-								<option value="full_access"><?php esc_html_e( 'Full Access', 'axtolab-ai-connector' ); ?></option>
-								<option value="draft_only"><?php esc_html_e( 'Draft Only (No Publish)', 'axtolab-ai-connector' ); ?></option>
-								<option value="content_manager"><?php esc_html_e( 'Content Manager', 'axtolab-ai-connector' ); ?></option>
-								<option value="read_only"><?php esc_html_e( 'Read Only', 'axtolab-ai-connector' ); ?></option>
-								<option value="custom"><?php esc_html_e( 'Custom', 'axtolab-ai-connector' ); ?></option>
-							</select>
-						</div>
-						<?php foreach ( $capability_defs as $cap_key => $cap_label ) : ?>
-							<label style="display: block; margin-bottom: 4px;">
-								<input type="checkbox"
-									class="mcp-cap-checkbox"
-									data-connection="oauth"
-									data-cap="<?php echo esc_attr( $cap_key ); ?>"
-									<?php checked( in_array( $cap_key, $oauth_caps, true ) ); ?>
-									<?php disabled( $cap_key === 'read' ); ?>
-								/>
-								<?php echo esc_html( $cap_label ); ?>
-								<?php if ( $cap_key === 'read' ) : ?>
-									<em style="color: #888;"><?php esc_html_e( '(always on)', 'axtolab-ai-connector' ); ?></em>
-								<?php endif; ?>
-								</label>
-						<?php endforeach; ?>
 					</div>
-				</details>
 
-				<!-- OAuth Setup Instructions -->
-				<details style="margin-top: 12px;">
-					<summary style="cursor: pointer; font-weight: 500;">
-						<?php esc_html_e( 'Setup Instructions', 'axtolab-ai-connector' ); ?>
-					</summary>
-					<ol class="mcp-help-text" style="margin-top: 8px;">
-						<li><?php esc_html_e( 'Enable Remote AI Client Access AND OAuth above.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'Copy the MCP endpoint URL above.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'In ChatGPT, go to Settings → Apps & Connectors → Create.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'Paste the URL as the MCP Server URL.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'Select "OAuth" as the authentication method.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'Click Create — ChatGPT will discover the OAuth endpoints automatically.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'When prompted, log into your WordPress admin and click Approve.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'ChatGPT will now have access to your WordPress tools.', 'axtolab-ai-connector' ); ?></li>
-					</ol>
-				</details>
+					<div id="mcp-oauth-status" style="margin-top: 12px;">
+						<?php if ( $oauth_info['active'] ) : ?>
+								<p class="mcp-help-text" style="color: #00a32a;">
+									<?php
+									printf(
+										/* translators: 1: OAuth client name, 2: token expiration date/time. */
+										esc_html__( 'Connected — client: %1$s — expires: %2$s', 'axtolab-ai-connector' ),
+										esc_html( $oauth_info['client_name'] ),
+										esc_html( $oauth_info['expires_at'] )
+									);
+									?>
+							</p>
+							<button type="button" id="mcp-revoke-oauth-btn" class="button button-secondary" style="color: #d63638;">
+								<?php esc_html_e( 'Revoke OAuth Token', 'axtolab-ai-connector' ); ?>
+							</button>
+						<?php else : ?>
+							<p class="mcp-help-text">
+								<?php esc_html_e( 'No active OAuth connection. Your MCP-compatible AI client will prompt for authorization when it first connects.', 'axtolab-ai-connector' ); ?>
+							</p>
+						<?php endif; ?>
+					</div>
+
+					<!-- OAuth capabilities — collapsible -->
+					<details class="mcp-cap-details" id="mcp-oauth-cap-details">
+						<summary>
+							<?php esc_html_e( 'Capabilities', 'axtolab-ai-connector' ); ?>
+							<span class="mcp-cap-badge" id="mcp-oauth-cap-badge"></span>
+							<span class="mcp-cap-saved" id="mcp-oauth-saved"><?php esc_html_e( 'Saved!', 'axtolab-ai-connector' ); ?></span>
+						</summary>
+						<div class="mcp-cap-inner">
+							<p class="mcp-help-text" style="margin-top:0;">
+								<?php esc_html_e( 'Control what this connection is allowed to do. Changes save automatically.', 'axtolab-ai-connector' ); ?>
+							</p>
+							<div style="margin-bottom: 10px;">
+								<select class="mcp-cap-preset" data-connection="oauth">
+									<option value="standard"><?php esc_html_e( 'Standard (Recommended)', 'axtolab-ai-connector' ); ?></option>
+									<option value="full_access"><?php esc_html_e( 'Full Access', 'axtolab-ai-connector' ); ?></option>
+									<option value="draft_only"><?php esc_html_e( 'Draft Only (No Publish)', 'axtolab-ai-connector' ); ?></option>
+									<option value="content_manager"><?php esc_html_e( 'Content Manager', 'axtolab-ai-connector' ); ?></option>
+									<option value="read_only"><?php esc_html_e( 'Read Only', 'axtolab-ai-connector' ); ?></option>
+									<option value="custom"><?php esc_html_e( 'Custom', 'axtolab-ai-connector' ); ?></option>
+								</select>
+							</div>
+							<?php foreach ( $capability_defs as $cap_key => $cap_label ) : ?>
+								<label style="display: block; margin-bottom: 4px;">
+									<input type="checkbox"
+										class="mcp-cap-checkbox"
+										data-connection="oauth"
+										data-cap="<?php echo esc_attr( $cap_key ); ?>"
+										<?php checked( in_array( $cap_key, $oauth_caps, true ) ); ?>
+										<?php disabled( $cap_key === 'read' ); ?>
+									/>
+									<?php echo esc_html( $cap_label ); ?>
+									<?php if ( $cap_key === 'read' ) : ?>
+										<em style="color: #888;"><?php esc_html_e( '(always on)', 'axtolab-ai-connector' ); ?></em>
+									<?php endif; ?>
+									</label>
+							<?php endforeach; ?>
+						</div>
+					</details>
+
+					<!-- OAuth Setup Instructions -->
+					<details style="margin-top: 12px;">
+						<summary style="cursor: pointer; font-weight: 500;">
+							<?php esc_html_e( 'Setup Instructions', 'axtolab-ai-connector' ); ?>
+						</summary>
+						<ol class="mcp-help-text" style="margin-top: 8px;">
+							<li><?php esc_html_e( 'Enable Remote MCP (via OAuth) above.', 'axtolab-ai-connector' ); ?></li>
+							<li><?php esc_html_e( 'Copy the MCP endpoint URL above.', 'axtolab-ai-connector' ); ?></li>
+							<li><?php esc_html_e( 'In ChatGPT, go to Settings → Apps & Connectors → Create.', 'axtolab-ai-connector' ); ?></li>
+							<li><?php esc_html_e( 'Paste the URL as the MCP Server URL.', 'axtolab-ai-connector' ); ?></li>
+							<li><?php esc_html_e( 'Select "OAuth" as the authentication method.', 'axtolab-ai-connector' ); ?></li>
+							<li><?php esc_html_e( 'Click Create — ChatGPT will discover the OAuth endpoints automatically.', 'axtolab-ai-connector' ); ?></li>
+							<li><?php esc_html_e( 'When prompted, log into your WordPress admin and click Approve.', 'axtolab-ai-connector' ); ?></li>
+							<li><?php esc_html_e( 'ChatGPT will now have access to your WordPress tools.', 'axtolab-ai-connector' ); ?></li>
+						</ol>
+					</details>
+				<?php else : ?>
+					<p class="mcp-help-text" style="margin-top: 4px;">
+						<?php esc_html_e( 'Disabled — web clients cannot connect.', 'axtolab-ai-connector' ); ?>
+					</p>
+				<?php endif; ?>
 
 			</div><!-- tab: remote-access -->
 
@@ -2359,32 +2349,12 @@ JS;
 
 		$settings                       = get_option( 'axtolab_ai_connector_settings', array() );
 		$settings['remote_mcp_enabled'] = $enabled;
-		update_option( 'axtolab_ai_connector_settings', $settings );
-
-		wp_send_json_success( array( 'enabled' => $enabled ) );
-	}
-
-	/**
-	 * AJAX: Toggle OAuth on or off.
-	 *
-	 * Nonce: `{MENU_SLUG}-ajax`.
-	 *
-	 * @return void Sends JSON and exits.
-	 */
-	public function ajax_toggle_oauth(): void {
-		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
-		}
-
-		$enabled                   = ! empty( $_POST['enabled'] );
-		$settings                  = get_option( 'axtolab_ai_connector_settings', array() );
-		$settings['oauth_enabled'] = $enabled;
+		// Drop the legacy key if it lingered after the R6 collapse.
+		unset( $settings['oauth_enabled'] );
 		update_option( 'axtolab_ai_connector_settings', $settings );
 
 		// Write .htaccess rules when enabling (for plugins already active before OAuth was added).
-		if ( $enabled ) {
+		if ( $enabled && function_exists( 'axtolab_ai_connector_write_oauth_htaccess_rules' ) ) {
 			axtolab_ai_connector_write_oauth_htaccess_rules();
 		}
 
@@ -3072,6 +3042,9 @@ JS;
     });
 
     // ── Toggle Remote MCP checkbox ───────────────────────────────────────────
+    // Single source of truth for "Remote MCP for Web Clients (via OAuth)".
+    // Reload after save so the conditional UI (endpoint URL, capabilities,
+    // setup instructions) renders or hides without a manual refresh.
     $(document).on('change', '#mcp-toggle-remote', function () {
         var $checkbox = $(this);
         var $msg      = $('#mcp-toggle-remote-message');
@@ -3083,34 +3056,14 @@ JS;
             'axtolab_ai_connector_toggle_remote',
             { enabled: enabled },
             function (data) {
-                var label = data.enabled ? 'Remote AI access enabled.' : 'Remote AI access disabled.';
+                var label = data.enabled ? 'Remote MCP enabled.' : 'Remote MCP disabled.';
                 $msg.text(label).removeClass('is-error').addClass('is-success');
+                // Reload so the conditional sub-sections render.
+                window.setTimeout(function () { window.location.reload(); }, 400);
             },
             function (errMsg) {
                 // Revert the checkbox on failure.
                 $checkbox.prop('checked', !$checkbox.is(':checked'));
-                $msg.text(errMsg).removeClass('is-success').addClass('is-error');
-            }
-        );
-    });
-
-    // ── OAuth Toggle ─────────────────────────────────────────────────────────
-    $(document).on('change', '#mcp-toggle-oauth', function () {
-        var $cb  = $(this);
-        var $msg = $('#mcp-oauth-toggle-message');
-        var enabled = $cb.is(':checked') ? 1 : 0;
-
-        $msg.text('Saving…').removeClass('is-success is-error');
-
-        doAjax(
-            'axtolab_ai_connector_toggle_oauth',
-            { enabled: enabled },
-            function (data) {
-                var label = data.enabled ? 'OAuth enabled.' : 'OAuth disabled.';
-                $msg.text(label).removeClass('is-error').addClass('is-success');
-            },
-            function (errMsg) {
-                $cb.prop('checked', !$cb.is(':checked'));
                 $msg.text(errMsg).removeClass('is-success').addClass('is-error');
             }
         );

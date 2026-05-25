@@ -445,9 +445,12 @@ class Axtolab_AI_Connector_MCP_Transport {
 			)
 		);
 
-		// Add securitySchemes when OAuth is enabled — tells ChatGPT every tool requires OAuth.
+		// Add securitySchemes when Remote MCP (via OAuth) is enabled — tells ChatGPT
+		// every tool requires OAuth. After R6 the toggle was unified onto
+		// `remote_mcp_enabled`; OAuth is the sole auth path so the two are
+		// logically the same.
 		$settings = get_option( 'axtolab_ai_connector_settings', array() );
-		if ( ! empty( $settings['oauth_enabled'] ) ) {
+		if ( ! empty( $settings['remote_mcp_enabled'] ) ) {
 			$security_schemes = array(
 				array(
 					'type'   => 'oauth2',
