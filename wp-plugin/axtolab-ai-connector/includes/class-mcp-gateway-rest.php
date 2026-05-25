@@ -1096,7 +1096,13 @@ final class Axtolab_AI_Connector_REST {
 			return new WP_Error( 'unauthorized', 'Authentication required.', array( 'status' => 401 ) );
 		}
 		$post_id = (int) $request['id'];
-		if ( $post_id <= 0 || ! current_user_can( 'publish_post', $post_id ) ) {
+		// WordPress's `publish_post` meta-cap maps to `publish_posts` without
+		// factoring in post ownership (unlike `edit_post` / `delete_post` which
+		// do). To get proper author isolation — an Author can publish their own
+		// drafts but not other authors' — we layer an `edit_post` check
+		// (ownership-aware) in front of the `publish_post` check
+		// (publish-capability-aware). Both must pass.
+		if ( $post_id <= 0 || ! current_user_can( 'edit_post', $post_id ) || ! current_user_can( 'publish_post', $post_id ) ) {
 			return new WP_Error( 'forbidden', 'Insufficient capabilities to publish this post.', array( 'status' => 403 ) );
 		}
 		$multisite_allowed = Axtolab_AI_Connector_Free_Gates::check_multisite_allowed();
