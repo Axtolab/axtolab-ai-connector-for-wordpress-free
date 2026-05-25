@@ -51,7 +51,7 @@ Let AI agents safely write, edit, and manage your WordPress site. This plugin pr
 
 ## Authentication
 
-The plugin supports three authentication methods:
+The plugin supports two authentication methods:
 
 ### 1. Application Passwords (Default)
 WordPress built-in Application Passwords via HTTP Basic Auth. Admins create the Application Password under their own (or a dedicated) WordPress user profile, paste it into the "+ Add new connection" wizard, and the wizard returns a `wmcp1_...` connection token bundling the same credentials. The token is consumed by the `wp_connect_site` MCP tool inside Claude Desktop's `.mcpb` extension. The plugin does not create WordPress users.

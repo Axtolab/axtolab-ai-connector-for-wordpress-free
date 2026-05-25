@@ -144,11 +144,10 @@ The plugin's `scripts/package-plugin.sh` runs `npm run build:mcpb` here as part 
 
 ## Authentication
 
-The plugin supports three authentication methods:
+The plugin supports two authentication methods:
 
 1. **Application Passwords** (HTTP Basic Auth) — primary path for local MCP clients; credentials delivered via the `.mcpb` extension or the runtime `wp_connect_site` MCP tool with a connection token
-2. **OAuth 2.1** (PKCE S256) — for web-based clients (ChatGPT, Claude Web); includes dynamic client registration
-3. **Bearer Token** — for remote MCP-over-HTTP transport
+2. **OAuth 2.1** (PKCE S256) — for web-based clients (ChatGPT, Claude Web); includes dynamic client registration. OAuth issues standard `Authorization: Bearer ...` tokens that the MCP-over-HTTP transport then verifies.
 
 ---
 
