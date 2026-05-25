@@ -1096,9 +1096,9 @@ JS;
 						<strong><?php esc_html_e( 'How permissions work', 'axtolab-ai-connector' ); ?></strong>
 					</p>
 					<ul style="margin:6px 0 0 18px; padding:0;">
-						<li><?php esc_html_e( 'Connection capabilities (set on the OAuth connection in the "Existing connections" card after you approve it) — what the AI is allowed to attempt.', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'The OAuth token authenticates as your admin user — actions run with your admin WordPress capabilities at the per-object level (per-post / per-media / per-term).', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'Both layers must allow an action for it to succeed.', 'axtolab-ai-connector' ); ?></li>
+						<li><?php esc_html_e( 'The OAuth token authenticates as the WordPress user who approved the request (typically the site admin, but could be a dedicated user you set up for AI access). That user\'s WordPress role sets the upper bound of what the AI can do at the per-object level (per-post / per-media / per-term).', 'axtolab-ai-connector' ); ?></li>
+						<li><?php esc_html_e( 'Connection capabilities (set on the OAuth connection in the "Existing connections" card after you approve) — a further filter within that upper bound, deciding which AI tools the connection is allowed to call.', 'axtolab-ai-connector' ); ?></li>
+						<li><?php esc_html_e( 'Both layers must allow an action for it to succeed; the connection capabilities can only restrict, never grant beyond what the user can already do.', 'axtolab-ai-connector' ); ?></li>
 					</ul>
 				</div>
 
@@ -1580,9 +1580,9 @@ JS;
 					<strong><?php esc_html_e( 'How permissions work', 'axtolab-ai-connector' ); ?></strong>
 				</p>
 				<ul style="margin:6px 0 0 18px; padding:0;">
-					<li><?php esc_html_e( 'Connection capabilities (set in Step 4) — what the AI is allowed to attempt.', 'axtolab-ai-connector' ); ?></li>
-					<li><?php esc_html_e( 'WP role of the underlying user — what that user can do at the per-object level (per-post / per-media / per-term).', 'axtolab-ai-connector' ); ?></li>
-					<li><?php esc_html_e( 'Both layers must allow an action for it to succeed.', 'axtolab-ai-connector' ); ?></li>
+					<li><?php esc_html_e( 'The Application Password you paste in Step 3 belongs to a WordPress user (your admin account or a dedicated user you set up). That user\'s WordPress role sets the upper bound of what the AI can do at the per-object level (per-post / per-media / per-term).', 'axtolab-ai-connector' ); ?></li>
+					<li><?php esc_html_e( 'Connection capabilities (set in Step 4) — a further filter within that upper bound, deciding which AI tools the connection is allowed to call.', 'axtolab-ai-connector' ); ?></li>
+					<li><?php esc_html_e( 'Both layers must allow an action for it to succeed; the connection capabilities can only restrict, never grant beyond what the user can already do.', 'axtolab-ai-connector' ); ?></li>
 				</ul>
 			</div>
 
