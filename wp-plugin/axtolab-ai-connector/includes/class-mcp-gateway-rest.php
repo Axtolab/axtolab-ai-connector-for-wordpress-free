@@ -294,7 +294,9 @@ final class Axtolab_AI_Connector_REST {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( __CLASS__, 'handle_search_media' ),
-					'permission_callback' => array( __CLASS__, 'permission_authenticated' ),
+					// R6 Finding 2: media listing requires the media-library
+					// capability, not the broad permission_authenticated check.
+					'permission_callback' => array( __CLASS__, 'permission_upload_files' ),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -2849,6 +2851,15 @@ final class Axtolab_AI_Connector_REST {
 		$allowed      = Axtolab_AI_Connector_Policy::assert_allowed_content_type( $content_type );
 		if ( is_wp_error( $allowed ) ) {
 			return self::from_wp_error( $allowed );
+		}
+
+		// R6 Finding 3: clone creates a new draft, so the user must be able
+		// to create posts of the cloned post type. The route's permission
+		// check (permission_read_post on the source) covers reading the
+		// original; this handler-level check covers creating the clone.
+		$post_type_object = get_post_type_object( $content_type );
+		if ( ! $post_type_object || ! current_user_can( $post_type_object->cap->create_posts ) ) {
+			return Axtolab_AI_Connector_Response::error( 'forbidden_clone', 'Insufficient capabilities to create content of this type.', 403, self::audit_id() );
 		}
 
 		$new_title = (string) $request->get_param( 'title' );
