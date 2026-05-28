@@ -3260,9 +3260,17 @@ final class Axtolab_AI_Connector_REST {
 		$config             = Axtolab_AI_Connector_Config::get();
 		$allowed_author_ids = array_map( 'intval', (array) $config['allowed_author_ids'] );
 
+		// R7 finding: this endpoint is gated by `permission_authenticated`
+		// (login + edit_posts) — broad enough that Editor- and Author-tier
+		// users can call it for the legitimate "assign author to post"
+		// content workflow. To avoid leaking user_email (PII) to that
+		// broader audience, the response only includes the public-facing
+		// fields needed for author selection: id, name, slug. Email is
+		// available via the admin-gated /users endpoints (permission_list_users)
+		// if a caller actually needs it.
 		$args = array(
 			'who'    => 'authors',
-			'fields' => array( 'ID', 'display_name', 'user_nicename', 'user_email' ),
+			'fields' => array( 'ID', 'display_name', 'user_nicename' ),
 		);
 		if ( ! empty( $allowed_author_ids ) ) {
 			$args['include'] = $allowed_author_ids;
@@ -3272,10 +3280,9 @@ final class Axtolab_AI_Connector_REST {
 		$data  = array_map(
 			static function ( $user ) {
 				return array(
-					'id'    => intval( $user->ID ),
-					'name'  => $user->display_name,
-					'slug'  => $user->user_nicename,
-					'email' => $user->user_email,
+					'id'   => intval( $user->ID ),
+					'name' => $user->display_name,
+					'slug' => $user->user_nicename,
 				);
 			},
 			$users
