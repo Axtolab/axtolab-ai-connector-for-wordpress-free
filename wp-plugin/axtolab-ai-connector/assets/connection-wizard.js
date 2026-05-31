@@ -121,8 +121,15 @@
 					if ( onError ) { onError( msg ); }
 				}
 			} )
-			.fail( function () {
-				if ( onError ) { onError( 'Network error. Please try again.' ); }
+			.fail( function ( jqXHR ) {
+				// Surface server-side error messages on HTTP 4xx/5xx
+				// (wp_send_json_error returns JSON with .data.message even on
+				// non-2xx — but jQuery routes those through .fail not .done).
+				var msg = 'Network error. Please try again.';
+				if ( jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.data && jqXHR.responseJSON.data.message ) {
+					msg = jqXHR.responseJSON.data.message;
+				}
+				if ( onError ) { onError( msg ); }
 			} );
 	}
 

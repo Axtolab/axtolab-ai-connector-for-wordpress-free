@@ -2070,6 +2070,40 @@ JS;
 	 *
 	 * @return void Sends JSON and exits.
 	 */
+
+	/**
+	 * Verify a normalised plaintext Application Password against a stored hash.
+	 *
+	 * Wraps WP_Application_Passwords::check_password() when present (WP 6.8+,
+	 * which dispatches `$generic$` hashes through wp_verify_fast_hash() and
+	 * legacy hashes through wp_check_password()), and falls back to manual
+	 * dispatch for older WordPress versions that lack the static helper.
+	 *
+	 * Calling wp_check_password() alone is insufficient on WP 6.8+ because it
+	 * does not recognise the new wp_fast_hash output format used for
+	 * Application Passwords by default — every comparison returns false even
+	 * when the password is valid.
+	 *
+	 * The caller MUST have already stripped non-alphanumerics from $password
+	 * via preg_replace( '/[^a-z\d]/i', '', ... ) to match what WordPress's own
+	 * wp_authenticate_application_password() does before hashing.
+	 *
+	 * @param string $password   Plaintext password, already normalised.
+	 * @param string $hash       Stored hash from get_user_application_passwords().
+	 * @param int    $wp_user_id The user the password belongs to (for legacy hasher).
+	 * @return bool True on match.
+	 */
+	private static function verify_app_password_hash( string $password, string $hash, int $wp_user_id ): bool {
+		if ( method_exists( 'WP_Application_Passwords', 'check_password' ) ) {
+			return (bool) WP_Application_Passwords::check_password( $password, $hash );
+		}
+		// Older WordPress without the static helper: dispatch manually.
+		if ( function_exists( 'wp_verify_fast_hash' ) && 0 === strpos( $hash, '$generic$' ) ) {
+			return (bool) wp_verify_fast_hash( $password, $hash );
+		}
+		return (bool) wp_check_password( $password, $hash, $wp_user_id );
+	}
+
 	public function ajax_wizard_verify(): void {
 		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
 
@@ -2136,13 +2170,17 @@ JS;
 		}
 
 		// Check for App Password collisions against existing registered MCP connections.
-		$collision      = null;
-		$user_passwords = class_exists( 'WP_Application_Passwords' )
+		// Mirror WordPress core's app-password normalisation + verification —
+		// see verify_app_password_hash() for why wp_check_password() alone is
+		// not enough on WP 6.8+ (it cannot read "$generic$" fast hashes).
+		$normalised_password = preg_replace( '/[^a-z\d]/i', '', $app_password );
+		$collision           = null;
+		$user_passwords      = class_exists( 'WP_Application_Passwords' )
 			? WP_Application_Passwords::get_user_application_passwords( $user_id )
 			: array();
 		if ( is_array( $user_passwords ) ) {
 			foreach ( $user_passwords as $pwd ) {
-				if ( ! wp_check_password( $app_password, $pwd['password'], $user_id ) ) {
+				if ( ! self::verify_app_password_hash( $normalised_password, $pwd['password'], $user_id ) ) {
 					continue;
 				}
 				$existing = Axtolab_AI_Connector_Connections::get_by_uuid( $pwd['uuid'] );
@@ -2263,11 +2301,23 @@ JS;
 			wp_send_json_error( array( 'message' => __( 'Application Passwords are not available on this site.', 'axtolab-ai-connector' ) ), 500 );
 		}
 
-		$matched_uuid = '';
-		$passwords    = WP_Application_Passwords::get_user_application_passwords( $wp_user_id );
+		// Mirror WordPress core's wp_authenticate_application_password() exactly:
+		//   1. Strip non-alphanumerics from the pasted password (WP core does
+		//      this so the spaced display form "abcd EFGH 1234 ZYXW" and the
+		//      stripped form "abcdEFGH1234ZYXW" both validate).
+		//   2. Verify via WP_Application_Passwords::check_password(), which
+		//      dispatches to wp_verify_fast_hash() for WP 6.8+ "$generic$"
+		//      hashes and to wp_check_password() for legacy phpass hashes.
+		//      Calling wp_check_password() directly fails on the new fast-hash
+		//      format because it does not recognise the "$generic$" prefix —
+		//      which is why every comparison silently failed in 1.0.1 with
+		//      "Could not match the Application Password to a stored record".
+		$normalised_password = preg_replace( '/[^a-z\d]/i', '', $app_password );
+		$matched_uuid        = '';
+		$passwords           = WP_Application_Passwords::get_user_application_passwords( $wp_user_id );
 		if ( is_array( $passwords ) ) {
 			foreach ( $passwords as $pwd ) {
-				if ( wp_check_password( $app_password, $pwd['password'], $wp_user_id ) ) {
+				if ( self::verify_app_password_hash( $normalised_password, $pwd['password'], $wp_user_id ) ) {
 					$matched_uuid = $pwd['uuid'];
 					break;
 				}

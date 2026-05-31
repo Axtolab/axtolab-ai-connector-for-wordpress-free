@@ -1,6 +1,6 @@
 {
   "name": "axtolab-ai-connector-free-mcpb",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "MCP server for Axtolab AI Connector for WordPress — safely manage WordPress content from Claude, ChatGPT, and MCP-compatible AI clients.",

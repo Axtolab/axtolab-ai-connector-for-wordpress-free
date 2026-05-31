@@ -4,7 +4,7 @@ Tags: ai, mcp, claude, chatgpt, automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -236,12 +236,18 @@ All API keys are stored encrypted using AES-256-CBC with WordPress security salt
 
 * **WordPress.org plugin support forum** — https://wordpress.org/support/plugin/axtolab-ai-connector/ (please use this for general questions; replies are public so the next merchant searching for the same answer can find it).
 * **Email support** — support@axtolab.com (for license, account, or anything sensitive).
-* **Documentation** — https://axtolab.com/docs/ai-connector
+* **Documentation** — https://axtolab.com/docs/ai-connector-free
 * **Bug reports** — use the WordPress.org support forum for public issues or email support for sensitive reports.
 
 The same support entry points are also surfaced inside wp-admin: a "Need help?" footer on every Axtolab settings page, and "Settings · Support" / "Email support · WordPress.org forum · Docs" rows on the Plugins admin row for this plugin.
 
 == Changelog ==
+
+= 1.0.1 =
+Bug fix release for the connection wizard.
+
+* **Fixed:** Connection wizard could fail with "Network error" on the final Create step on WordPress 6.8 and newer, even when Verify reported authenticated successfully. The wizard now matches the pasted Application Password using the same WordPress core helper as the authentication subsystem (which supports the new fast-hash format introduced in WordPress 6.8), so connections are created correctly.
+* **Improved:** The wizard surfaces the actual server-side error message on HTTP failures instead of always showing the generic "Network error" string, making future failures easier to diagnose.
 
 = 1.0.0 =
 First public WordPress.org release.
@@ -260,6 +266,9 @@ Highlights:
 * **Submission readiness pass** — feature settings stand alone (no inline upsells), all third-party services disclosed in the External Services section, the `.mcpb` Claude Desktop installer is hosted as a GitHub Release asset and linked from the setup page.
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+Fixes a bug where the connection wizard could fail with "Network error" on the Create step on WordPress 6.8+. Recommended for everyone using the wizard.
 
 = 1.0.0 =
 First public WordPress.org release. See the changelog for the full feature list.

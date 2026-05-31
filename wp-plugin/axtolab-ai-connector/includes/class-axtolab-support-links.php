@@ -129,8 +129,13 @@ class Axtolab_AI_Connector_Support_Links {
 	 * page rather than the doc landing) is a single config change.
 	 */
 	public static function docs_url( string $plugin_slug ): string {
+		// Free build of the AI Connector links to its own docs tree, separate
+		// from the Core (axtolab.com account) docs — the install path,
+		// connection wizard, and tool surface differ between the two builds.
+		// Add-ons currently share the same docs slug across Free and Core
+		// since they target Core, not Free.
 		$docs_slug_map = array(
-			'axtolab-ai-connector'        => 'ai-connector',
+			'axtolab-ai-connector'        => 'ai-connector-free',
 			'axtolab-ai-assistant'        => 'ai-assistant',
 			'axtolab-woocommerce-ai'      => 'ai-store-manager',
 			'axtolab-image-generation'    => 'ai-image-generation',
