@@ -17,11 +17,14 @@ cd "$REPO_ROOT"
 # Proofs cover:
 #   free-image-generation-gate-proof — confirms BYOK AI image generation
 #     is exposed by default and the opt-out filter behaves correctly.
-#   service-account-namespace-guard-proof — confirms the service-account
-#     user cannot bypass the connector's REST namespace.
+#
+# The service-account-namespace-guard-proof was removed during the round-6
+# review remediation when wp_create_user-based service-account provisioning
+# was replaced by the wizard-driven Application Password flow. There is no
+# service-account namespace to guard anymore — the connection authenticates
+# as whichever WP user the admin chose during wizard setup.
 proofs=(
   "wp-plugin/axtolab-ai-connector/tests/free-image-generation-gate-proof.php"
-  "wp-plugin/axtolab-ai-connector/tests/service-account-namespace-guard-proof.php"
 )
 
 for proof in "${proofs[@]}"; do

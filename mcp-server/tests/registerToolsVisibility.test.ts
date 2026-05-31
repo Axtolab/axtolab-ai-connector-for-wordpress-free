@@ -289,11 +289,17 @@ describe('registerTools visibility', () => {
       sessionImageStore: new SessionImageStore(),
     })
 
+    // Read-only theme tools register in the Free build.
     expect(tools.get('wp_get_active_theme')?.enabled).toBe(true)
     expect(tools.get('wp_get_theme_mods')?.enabled).toBe(true)
-    expect(tools.get('wp_update_theme_mod')?.enabled).toBe(true)
     expect(tools.get('wp_get_custom_css')?.enabled).toBe(true)
-    expect(tools.get('wp_update_custom_css')?.enabled).toBe(true)
+
+    // Theme writes (theme_mod updates, Custom CSS writes) are intentionally
+    // NOT registered in the Free build per WP.org plugin directory guidelines
+    // against plugins that save arbitrary CSS/JS/PHP. See registerTools.ts
+    // line ~595 for the corresponding comment in the source.
+    expect(tools.get('wp_update_theme_mod')).toBeUndefined()
+    expect(tools.get('wp_update_custom_css')).toBeUndefined()
   })
 
   it('registers gap-fill tools (term update/delete, user reads, audit log)', () => {
