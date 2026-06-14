@@ -4,7 +4,7 @@ Tags: ai, mcp, claude, chatgpt, automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,7 @@ Axtolab AI Connector for WordPress connects your WordPress site to AI agents lik
 * **Roll Back / Undo on every write** — every AI-driven change captures a before/after snapshot. Revert any tool call with one click from the Logs & Roll Back admin page.
 * **Content Management** — Create, edit, and manage posts, pages, and custom post types. Clone existing content as drafts. View and restore revisions. Generate shareable preview links.
 * **Media Library** — Upload images from URL, local file, or drag-and-drop portal. Search and browse existing media. Set featured images. Insert, replace, and remove inline images.
+* **WooCommerce Tools** — When WooCommerce is active, list products and orders, update product prices, bulk-adjust prices, and create guarded coupons with Roll Back capture.
 * **Stock Photos** — Search and import free stock photos from Unsplash and Pexels with automatic attribution.
 * **Yoast SEO** — Read SEO and readability scores. Update focus keyphrase, SEO title, and meta description. Preview rendered meta tags.
 * **Authors & Taxonomies** — Assign authors from an allowlist. Create and assign categories, tags, and custom taxonomy terms.
@@ -39,6 +40,7 @@ The connector exposes a categorized tool surface to MCP-compatible AI clients. A
 * **Inline Images (Gutenberg-aware)** — `wp_insert_inline_image`, `wp_replace_inline_image`, `wp_remove_inline_image`
 * **Authors & Taxonomy** — `wp_list_authors`, `wp_assign_author`, `wp_list_terms`, `wp_create_term`, `wp_assign_terms`
 * **Yoast SEO** — `wp_get_yoast_analysis`, `wp_update_yoast_metadata`, `wp_get_yoast_head_preview`
+* **WooCommerce** — `wp_woo_list_products`, `wp_woo_get_product`, `wp_woo_update_product_price`, `wp_woo_bulk_update_prices`, `wp_woo_list_orders`, `wp_woo_get_order`, `wp_woo_create_coupon`
 * **Stock Photos** — `wp_search_stock_photos`, `wp_import_stock_photo` (Unsplash + Pexels with auto-attribution)
 * **Image Providers** — `wp_generate_image`, `wp_list_image_providers`, `wp_confirm_image` with site-owner supplied provider API keys
 * **Upload Portal** — `wp_create_upload_session`, `wp_get_upload_session` (drag-and-drop with time-limited tokens)
@@ -58,6 +60,7 @@ Axtolab AI Connector is **fully featured with no limits**. No publish limits, no
 * Upload and manage media (URL, local file, drag-and-drop portal)
 * Search and import stock photos (Unsplash, Pexels)
 * Generate images through supported providers when you configure your own provider API key
+* WooCommerce read/write tools for products, orders, prices, and coupons when WooCommerce is active
 * Yoast SEO integration
 * Both authentication methods (App Passwords, OAuth 2.1)
 * All taxonomy and author management
@@ -243,6 +246,14 @@ The same support entry points are also surfaced inside wp-admin: a "Need help?" 
 
 == Changelog ==
 
+= 1.0.2 =
+WooCommerce tools are now included in the free connector.
+
+* **Added:** WooCommerce MCP tools for products, orders, product price updates, bulk price adjustments, and coupon creation when WooCommerce is active.
+* **Added:** WooCommerce guardrail settings for AI-driven price and coupon writes.
+* **Improved:** WooCommerce writes are captured in Logs & Roll Back so product price and coupon changes can be reverted.
+* **Improved:** WordPress 6.8+/6.9+ optional integrations remain safe on the plugin's WordPress 6.2 minimum.
+
 = 1.0.1 =
 Bug fix release for the connection wizard.
 
@@ -266,6 +277,9 @@ Highlights:
 * **Submission readiness pass** — feature settings stand alone (no inline upsells), all third-party services disclosed in the External Services section, the `.mcpb` Claude Desktop installer is hosted as a GitHub Release asset and linked from the setup page.
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+Adds guarded WooCommerce MCP tools for products, orders, prices, and coupons while keeping the WordPress minimum at 6.2.
 
 = 1.0.1 =
 Fixes a bug where the connection wizard could fail with "Network error" on the Create step on WordPress 6.8+. Recommended for everyone using the wizard.

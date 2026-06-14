@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.2] — 2026-06-14
+
+### Added
+- **WooCommerce MCP tools in the free connector.** When WooCommerce is active, AI clients can list products and orders, inspect product/order details, update product prices, bulk-adjust prices, and create coupons.
+- **WooCommerce guardrails and Roll Back support.** Product price and coupon writes keep capability checks, configurable guardrails, audit logging, and one-click Roll Back entries.
+
+### Changed
+- Kept the WordPress minimum at 6.2 while retaining optional WordPress 6.8+/6.9+ integrations behind compatibility-safe dispatch.
+
 ## [1.0.0] — 2026-05-17
 
 First public release.

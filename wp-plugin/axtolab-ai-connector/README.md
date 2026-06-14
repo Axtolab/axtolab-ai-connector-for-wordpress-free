@@ -4,13 +4,13 @@ Let AI agents safely write, edit, and manage your WordPress site. This plugin pr
 
 ## Requirements
 
-- WordPress 6.0+
+- WordPress 6.2+
 - PHP 7.4+
 - HTTPS recommended (required for OAuth)
 
 ## Installation
 
-1. Download `axtolab-ai-connector-1.0.0.zip`
+1. Download `axtolab-ai-connector-1.0.2.zip`
 2. In WordPress admin: Plugins → Add New → Upload Plugin → select the zip
 3. Activate the plugin
 4. Connect your AI client (see Authentication below)
@@ -48,6 +48,11 @@ Let AI agents safely write, edit, and manage your WordPress site. This plugin pr
 ### Authors & Taxonomies
 - Assign authors from an allowlist
 - Create and assign taxonomy terms (categories, tags, custom taxonomies)
+
+### WooCommerce
+- List products and orders when WooCommerce is active
+- Update single product prices and bulk-adjust prices with configurable guardrails
+- Create guarded coupons with Roll Back capture
 
 ## Authentication
 

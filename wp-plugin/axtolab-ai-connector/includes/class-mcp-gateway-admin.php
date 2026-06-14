@@ -2097,9 +2097,11 @@ JS;
 		if ( method_exists( 'WP_Application_Passwords', 'check_password' ) ) {
 			return (bool) WP_Application_Passwords::check_password( $password, $hash );
 		}
-		// Older WordPress without the static helper: dispatch manually.
-		if ( function_exists( 'wp_verify_fast_hash' ) && 0 === strpos( $hash, '$generic$' ) ) {
-			return (bool) wp_verify_fast_hash( $password, $hash );
+		// Older WordPress without the static helper: dispatch manually. Keep
+		// this optional WP 6.8+ helper callable safe for our WP 6.2 minimum.
+		$verify_fast_hash = 'wp_verify_fast_hash';
+		if ( function_exists( $verify_fast_hash ) && 0 === strpos( $hash, '$generic$' ) ) {
+			return (bool) call_user_func( $verify_fast_hash, $password, $hash );
 		}
 		return (bool) wp_check_password( $password, $hash, $wp_user_id );
 	}

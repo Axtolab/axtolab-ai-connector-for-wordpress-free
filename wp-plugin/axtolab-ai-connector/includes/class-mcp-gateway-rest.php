@@ -5091,8 +5091,9 @@ final class Axtolab_AI_Connector_REST {
 			);
 		}
 
-		$out       = array();
-		$abilities = function_exists( 'wp_get_abilities' ) ? wp_get_abilities() : array();
+		$out           = array();
+		$get_abilities = 'wp_get_abilities';
+		$abilities     = function_exists( $get_abilities ) ? (array) call_user_func( $get_abilities ) : array();
 		foreach ( $abilities as $ability ) {
 			// Each ability exposes name(), label(), description(),
 			// input_schema(), output_schema() per the WP 6.9 API.
@@ -5137,7 +5138,8 @@ final class Axtolab_AI_Connector_REST {
 			return Axtolab_AI_Connector_Response::error( 'invalid_name', 'Ability name required.', 400, self::audit_id() );
 		}
 
-		$ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( $name ) : null;
+		$get_ability = 'wp_get_ability';
+		$ability     = function_exists( $get_ability ) ? call_user_func( $get_ability, $name ) : null;
 		if ( ! $ability ) {
 			return Axtolab_AI_Connector_Response::error( 'not_found', sprintf( 'Ability "%s" is not registered.', $name ), 404, self::audit_id() );
 		}

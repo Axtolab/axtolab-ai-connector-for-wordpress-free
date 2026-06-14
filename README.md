@@ -4,13 +4,13 @@
 
 [![Latest release](https://img.shields.io/github/v/release/Axtolab/axtolab-ai-connector-for-wordpress-free?label=latest&color=2ea44f)](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases/latest)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2%2B-blue.svg)](LICENSE)
-[![WordPress 6.0+](https://img.shields.io/badge/WordPress-6.0%2B-21759b)](https://wordpress.org)
+[![WordPress 6.2+](https://img.shields.io/badge/WordPress-6.2%2B-21759b)](https://wordpress.org)
 [![PHP 7.4+](https://img.shields.io/badge/PHP-7.4%2B-777bb4)](https://www.php.net/)
 [![MCP compatible](https://img.shields.io/badge/MCP-compatible-9c27b0)](https://modelcontextprotocol.io/)
 
 ---
 
-## 📥 Download v1.0.0
+## 📥 Download v1.0.2
 
 **Easiest:** install from the WordPress.org plugin directory once approved — search **"Axtolab AI Connector"** in **WordPress Admin → Plugins → Add New**.
 
@@ -18,7 +18,7 @@
 
 | File | What it's for | Size | Direct download |
 |---|---|---|---|
-| 🔌 **`axtolab-ai-connector-1.0.0.zip`** | WordPress plugin — upload via WordPress Admin → Plugins → Add New → Upload Plugin | 460 KB | **[Download ZIP →](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases/latest/download/axtolab-ai-connector-1.0.0.zip)** |
+| 🔌 **`axtolab-ai-connector-1.0.2.zip`** | WordPress plugin — upload via WordPress Admin → Plugins → Add New → Upload Plugin | 460 KB | **[Download ZIP →](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases/latest/download/axtolab-ai-connector-1.0.2.zip)** |
 | 🖥️ **`axtolab-ai-connector.mcpb`** | Claude Desktop installer — double-click after the plugin is set up | 300 KB | **[Download .mcpb →](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases/latest/download/axtolab-ai-connector.mcpb)** |
 
 → See the [Releases page](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases) for full changelogs and SHA-256 checksums.
@@ -52,6 +52,7 @@ The plugin adds a REST API gateway to your WordPress site. AI clients connect to
 
 - **Roll Back / Undo on every write** — revert any AI-driven change with one click from the Logs & Roll Back admin page.
 - **Content management** — create, edit, and manage posts, pages, and custom post types. Clone content as drafts, view and restore revisions, generate shareable preview links.
+- **WooCommerce tools** — list products and orders, update product prices, bulk-adjust prices, and create guarded coupons when WooCommerce is active.
 - **Media library** — upload from URL, local file, or drag-and-drop portal. Set featured images. Insert, replace, and remove inline images.
 - **Stock photos** — search and import free stock photos from Unsplash and Pexels with automatic attribution.
 - **AI image generation** — Google Imagen and OpenAI image models using your own provider API keys.

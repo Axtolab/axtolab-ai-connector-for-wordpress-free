@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "axtolab-ai-connector",
   "display_name": "Axtolab AI Connector for WordPress",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Let AI agents safely write, edit, and manage your WordPress site. MCP Gateway for Claude, ChatGPT, and AI agents.",
   "author": {
     "name": "Axtolab",
