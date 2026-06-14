@@ -1939,6 +1939,9 @@ final class Axtolab_AI_Connector_REST {
 				return self::execute_menu_rollback( $change );
 			case 'term':
 				return self::execute_term_rollback( $change );
+			case 'woo_product':
+			case 'woo_coupon':
+				return Axtolab_AI_Connector_WooCommerce_REST::execute_rollback( $change );
 			default:
 				return Axtolab_AI_Connector_Response::error(
 					'rollback_not_supported',
@@ -2132,6 +2135,9 @@ final class Axtolab_AI_Connector_REST {
 				return self::execute_menu_rollback( $change );
 			case 'term':
 				return self::execute_term_rollback( $change );
+			case 'woo_product':
+			case 'woo_coupon':
+				return Axtolab_AI_Connector_WooCommerce_REST::execute_rollback( $change );
 			default:
 				return Axtolab_AI_Connector_Response::error(
 					'rollback_not_supported',
@@ -2293,6 +2299,9 @@ final class Axtolab_AI_Connector_REST {
 			case 'term':
 				$r = Axtolab_AI_Connector_Snapshots::restore_term( $snap );
 				return is_wp_error( $r ) ? $r : true;
+			case 'woo_product':
+			case 'woo_coupon':
+				return Axtolab_AI_Connector_WooCommerce_REST::restore_snapshot( $snap, $target_type );
 			default:
 				return new WP_Error( 'unsupported_target', 'Unsupported target_type: ' . $target_type );
 		}

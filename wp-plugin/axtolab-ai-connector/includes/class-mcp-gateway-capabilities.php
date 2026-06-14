@@ -102,6 +102,15 @@ class Axtolab_AI_Connector_Capabilities {
 			'wp_create_upload_session',
 			'wp_get_upload_session',
 		),
+		'woocommerce'   => array(
+			'wp_woo_list_products',
+			'wp_woo_get_product',
+			'wp_woo_update_product_price',
+			'wp_woo_bulk_update_prices',
+			'wp_woo_list_orders',
+			'wp_woo_get_order',
+			'wp_woo_create_coupon',
+		),
 	);
 
 	/**
@@ -117,14 +126,15 @@ class Axtolab_AI_Connector_Capabilities {
 		'seo',
 		'image',
 		'upload_portal',
+		'woocommerce',
 	);
 
 	/**
 	 * Named presets for the admin UI.
 	 */
 	const PRESETS = array(
-		'full_access'     => array( 'read', 'create_edit', 'publish', 'trash_restore', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal' ),
-		'standard'        => array( 'read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal' ),
+		'full_access'     => array( 'read', 'create_edit', 'publish', 'trash_restore', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'woocommerce' ),
+		'standard'        => array( 'read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'woocommerce' ),
 		'draft_only'      => array( 'read', 'create_edit', 'media_manage', 'taxonomy', 'seo', 'image', 'upload_portal' ),
 		'read_only'       => array( 'read' ),
 		'content_manager' => array( 'read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo' ),
@@ -149,6 +159,7 @@ class Axtolab_AI_Connector_Capabilities {
 			'seo'           => __( 'SEO Management (Yoast)', 'axtolab-ai-connector' ),
 			'image'         => __( 'Image Generation & Stock Photos', 'axtolab-ai-connector' ),
 			'upload_portal' => __( 'Upload Portal', 'axtolab-ai-connector' ),
+			'woocommerce'   => __( 'WooCommerce', 'axtolab-ai-connector' ),
 		);
 	}
 

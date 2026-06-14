@@ -315,6 +315,36 @@ export class PluginApiClient {
     return this.request("POST", `/image/${mediaId}/confirm`, { body: {} });
   }
 
+  // ── WooCommerce ───────────────────────────────────────────────────────
+
+  public async wooListProducts(filters: Record<string, string | number>): Promise<Record<string, unknown>> {
+    return this.request("GET", "/woo/products", { query: filters as Record<string, string | number | boolean> });
+  }
+
+  public async wooGetProduct(id: number): Promise<Record<string, unknown>> {
+    return this.request("GET", `/woo/products/${encodeURIComponent(String(id))}`);
+  }
+
+  public async wooUpdateProductPrice(id: number, body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("PATCH", `/woo/products/${encodeURIComponent(String(id))}/price`, { body });
+  }
+
+  public async wooBulkUpdatePrices(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", "/woo/products/bulk-price", { body });
+  }
+
+  public async wooListOrders(filters: Record<string, string | number>): Promise<Record<string, unknown>> {
+    return this.request("GET", "/woo/orders", { query: filters as Record<string, string | number | boolean> });
+  }
+
+  public async wooGetOrder(id: number): Promise<Record<string, unknown>> {
+    return this.request("GET", `/woo/orders/${encodeURIComponent(String(id))}`);
+  }
+
+  public async wooCreateCoupon(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.request("POST", "/woo/coupons", { body });
+  }
+
   // ── Upload Portal ─────────────────────────────────────────────────────
 
   public async createUploadSession(body: { ip_binding?: boolean } = {}): Promise<unknown> {

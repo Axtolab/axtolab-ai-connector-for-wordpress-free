@@ -167,6 +167,9 @@ require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-connections.
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-audit-log.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-changelog.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-snapshots.php';
+require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-axtolab-ai-connector-woocommerce-guardrails.php';
+require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-axtolab-ai-connector-woocommerce-rest.php';
+require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-axtolab-ai-connector-woocommerce-admin.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-rate-limiter.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-axtolab-support-links.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-admin.php';
@@ -543,6 +546,8 @@ function axtolab_ai_connector_bootstrap(): void {
 	Axtolab_AI_Connector_Preview::bootstrap();
 
 	// Register REST routes.
+	Axtolab_AI_Connector_WooCommerce_Guardrails::bootstrap();
+	Axtolab_AI_Connector_WooCommerce_REST::bootstrap();
 	add_action(
 		'rest_api_init',
 		static function () {
@@ -662,6 +667,7 @@ function axtolab_ai_connector_bootstrap(): void {
 	if ( is_admin() ) {
 		$admin = new Axtolab_AI_Connector_Admin();
 		$admin->init();
+		Axtolab_AI_Connector_WooCommerce_Admin::bootstrap();
 
 		// Display any activation error stored as a transient. Each error
 		// notice carries an inline "contact support" link via the shared

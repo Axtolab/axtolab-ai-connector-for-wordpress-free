@@ -322,6 +322,108 @@ export function registerTools(context: ToolContext): void {
       })
   );
 
+  // ── WooCommerce tools ────────────────────────────────────────────────
+  // Basic WooCommerce read/write tools ship in the connector. WooCommerce
+  // itself must be active, and writes are guarded server-side + captured
+  // in Roll Back.
+
+  server.tool(
+    "wp_woo_list_products",
+    "List WooCommerce products with pagination, status, and search. Read-only. Requires WooCommerce.",
+    {
+      per_page: z.number().int().min(1).max(100).optional(),
+      page: z.number().int().min(1).optional(),
+      status: z.string().optional(),
+      search: z.string().optional(),
+    },
+    async (args: Record<string, string | number | undefined>) =>
+      runToolWithLimit("wp_woo_list_products", args, async () => {
+        const f: Record<string, string | number> = {};
+        for (const [k, v] of Object.entries(args)) { if (v !== undefined && v !== "") f[k] = v as string | number; }
+        return site().client.wooListProducts(f);
+      })
+  );
+
+  server.tool(
+    "wp_woo_get_product",
+    "Get a single WooCommerce product including variations, categories, tags, descriptions, stock, prices.",
+    { id: z.number().int().positive() },
+    async (args: { id: number }) =>
+      runToolWithLimit("wp_woo_get_product", args, async () => site().client.wooGetProduct(args.id))
+  );
+
+  server.tool(
+    "wp_woo_update_product_price",
+    "Update a single WooCommerce product's regular_price and/or sale_price. SAFETY: refused by guardrail if the percentage change exceeds the configured cap (default 20%). Captured in the changelog so the change can be rolled back via wp_rollback_change.",
+    {
+      id: z.number().int().positive(),
+      regular_price: z.number().nonnegative().optional(),
+      sale_price: z.number().nonnegative().optional().describe("Set 0 to remove the sale price"),
+    },
+    async (args: { id: number; regular_price?: number; sale_price?: number }) =>
+      runToolWithLimit("wp_woo_update_product_price", args, async () => {
+        const { id, ...body } = args;
+        return site().client.wooUpdateProductPrice(id, body);
+      })
+  );
+
+  server.tool(
+    "wp_woo_bulk_update_prices",
+    "Bulk update prices across up to 100 products. Provide either percent_change (e.g. +10 raises all by 10%) or set_to (uniform new price). SAFETY: per-product guardrail; products whose change exceeds the cap are skipped. Each successful product change is reversible via wp_rollback_change or wp_rollback_session.",
+    {
+      product_ids: z.array(z.number().int().positive()).min(1).max(100),
+      percent_change: z.number().optional(),
+      set_to: z.number().nonnegative().optional(),
+    },
+    async (args: Record<string, unknown>) =>
+      runToolWithLimit("wp_woo_bulk_update_prices", args, async () =>
+        site().client.wooBulkUpdatePrices(args as Record<string, unknown>)
+      )
+  );
+
+  server.tool(
+    "wp_woo_list_orders",
+    "List WooCommerce orders with status filter. Read-only.",
+    {
+      per_page: z.number().int().min(1).max(100).optional(),
+      page: z.number().int().min(1).optional(),
+      status: z.string().optional().describe("any | pending | processing | on-hold | completed | cancelled | refunded | failed"),
+    },
+    async (args: Record<string, string | number | undefined>) =>
+      runToolWithLimit("wp_woo_list_orders", args, async () => {
+        const f: Record<string, string | number> = {};
+        for (const [k, v] of Object.entries(args)) { if (v !== undefined && v !== "") f[k] = v as string | number; }
+        return site().client.wooListOrders(f);
+      })
+  );
+
+  server.tool(
+    "wp_woo_get_order",
+    "Get a single order with billing/shipping addresses and line items.",
+    { id: z.number().int().positive() },
+    async (args: { id: number }) =>
+      runToolWithLimit("wp_woo_get_order", args, async () => site().client.wooGetOrder(args.id))
+  );
+
+  server.tool(
+    "wp_woo_create_coupon",
+    "Create a WooCommerce coupon. SAFETY GATES: refuses percent-type coupons over the configured max (default 50%); refuses sitewide coupons without minimum_amount unless product/category restrictions are set. Captured for rollback.",
+    {
+      code: z.string().min(1),
+      discount_type: z.enum(["fixed_cart", "fixed_product", "percent", "percent_product"]).optional(),
+      amount: z.number().nonnegative(),
+      minimum_amount: z.number().nonnegative().optional(),
+      product_ids: z.array(z.number().int().positive()).optional().describe("Restrict coupon to specific product IDs"),
+      product_categories: z.array(z.number().int().positive()).optional().describe("Restrict coupon to WooCommerce product category term IDs"),
+      expires_at: z.string().optional(),
+      usage_limit: z.number().int().positive().optional(),
+    },
+    async (args: Record<string, unknown>) =>
+      runToolWithLimit("wp_woo_create_coupon", args, async () =>
+        site().client.wooCreateCoupon(args as Record<string, unknown>)
+      )
+  );
+
   // wp_rollback_session — undo every pending change in one MCP session
   // in LIFO order (newest first). Skips already-rolled-back rows.
   // Continues past per-change failures and returns a per-change status.
