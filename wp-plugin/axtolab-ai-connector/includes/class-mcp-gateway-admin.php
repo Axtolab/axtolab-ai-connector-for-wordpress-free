@@ -456,11 +456,16 @@ class Axtolab_AI_Connector_Admin {
 		// so it stays diffable and so the wizard's class names don't bleed
 		// into other admin screens.
 		if ( $is_settings ) {
+			$wizard_css_path    = AXTOLAB_AI_CONNECTOR_DIR . 'assets/connection-wizard.css';
+			$wizard_css_version = file_exists( $wizard_css_path )
+				? AXTOLAB_AI_CONNECTOR_VERSION . '.' . filemtime( $wizard_css_path )
+				: AXTOLAB_AI_CONNECTOR_VERSION;
+
 			wp_enqueue_style(
 				'axtolab-ai-connector-wizard',
 				plugins_url( 'assets/connection-wizard.css', AXTOLAB_AI_CONNECTOR_FILE ),
 				array(),
-				AXTOLAB_AI_CONNECTOR_VERSION
+				$wizard_css_version
 			);
 		}
 
@@ -499,12 +504,17 @@ class Axtolab_AI_Connector_Admin {
 			)
 		);
 		if ( $is_settings ) {
+			$wizard_js_path    = AXTOLAB_AI_CONNECTOR_DIR . 'assets/connection-wizard.js';
+			$wizard_js_version = file_exists( $wizard_js_path )
+				? AXTOLAB_AI_CONNECTOR_VERSION . '.' . filemtime( $wizard_js_path )
+				: AXTOLAB_AI_CONNECTOR_VERSION;
+
 			wp_add_inline_script( 'axtolab-ai-connector-admin', $this->get_inline_script() );
 			wp_enqueue_script(
 				'axtolab-ai-connector-wizard',
 				plugins_url( 'assets/connection-wizard.js', AXTOLAB_AI_CONNECTOR_FILE ),
 				array( 'jquery', 'axtolab-ai-connector-admin' ),
-				AXTOLAB_AI_CONNECTOR_VERSION,
+				$wizard_js_version,
 				true
 			);
 		}
@@ -3510,6 +3520,11 @@ JS;
     }
 
     window.axtolabAiConnectorOpenConnectionManager = queueConnectionManagerOpen;
+
+    $(document).on('click', '#mcp-wizard-configure-btn', function (e) {
+        e.preventDefault();
+        queueConnectionManagerOpen($(this).attr('data-connection-id') || $(this).data('connection-id') || '');
+    });
 
     // ══════════════════════════════════════════════════════════════════════════
     // Connection Manager — Rename, Revoke, Revoke All

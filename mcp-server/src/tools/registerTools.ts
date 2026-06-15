@@ -104,9 +104,15 @@ export function registerTools(context: ToolContext): void {
   }
 
   function syncToolVisibility(): void {
-    const { connectionCapabilityError } = siteManager.getCurrent();
-    for (const tool of gatedTools.values()) {
+    const { allowedTools, connectionCapabilityError } = siteManager.getCurrent();
+    for (const [name, tool] of gatedTools.entries()) {
       if (connectionCapabilityError) {
+        tool.disable();
+      } else if (
+        allowedTools &&
+        !CAPABILITY_CHECK_BYPASS_TOOLS.has(name) &&
+        !allowedTools.includes(name)
+      ) {
         tool.disable();
       } else {
         tool.enable();

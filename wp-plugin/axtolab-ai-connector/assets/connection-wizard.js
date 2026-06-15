@@ -8,7 +8,7 @@
  *   - Open / Close panel
  *   - Step 1 "Admin / Dedicated" radio toggle (shows the username field for
  *     the dedicated path)
- *   - Step 3 Verify button (loopback Basic-auth call to /wp/v2/users/me)
+ *   - Step 3 Verify button (AJAX call to validate the App Password)
  *   - Step 4 capability preset → checkbox sync
  *   - Footer "Create connection" → AJAX create handler + token display
  */
@@ -151,14 +151,6 @@
 
 	$doneBtn.on( 'click', function () {
 		// Reload to show the new row in the connections table.
-		window.location.reload();
-	} );
-
-	$configureBtn.on( 'click', function () {
-		if ( typeof window.axtolabAiConnectorOpenConnectionManager === 'function' ) {
-			window.axtolabAiConnectorOpenConnectionManager( $( this ).attr( 'data-connection-id' ) || $( this ).data( 'connection-id' ) || '' );
-			return;
-		}
 		window.location.reload();
 	} );
 

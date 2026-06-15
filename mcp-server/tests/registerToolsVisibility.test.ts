@@ -6,6 +6,7 @@ import { PolicyService } from '../src/services/policyService.js'
 import { RateLimiter } from '../src/services/rateLimiter.js'
 import { SessionImageStore } from '../src/services/sessionImageStore.js'
 import { SiteManager, SiteServices } from '../src/services/siteManager.js'
+import { ToolConsentPolicy } from '../src/services/toolConsentPolicy.js'
 import { registerTools } from '../src/tools/registerTools.js'
 
 function makeConfig(): Config {
@@ -24,13 +25,14 @@ function makeConfig(): Config {
   }
 }
 
-function makeSiteServices(blocked: boolean): SiteServices {
+function makeSiteServices(blocked: boolean, allowedTools: string[] | null = blocked ? [] : null): SiteServices {
   const config = makeConfig()
   return {
     config,
     client: new PluginApiClient(config),
     policy: new PolicyService(config),
-    allowedTools: blocked ? [] : null,
+    toolConsentPolicy: ToolConsentPolicy.defaults(),
+    allowedTools,
     allowedAuthorIds: null,
     connectionCapabilityError: blocked
       ? {
@@ -88,6 +90,42 @@ describe('registerTools visibility', () => {
     expect(tools.get('wp_create_draft')?.enabled).toBe(false)
     expect(tools.get('wp_upload_media_from_path')?.enabled).toBe(false)
     expect(tools.get('wp_generate_image')?.enabled).toBe(false)
+  })
+
+  it('hides tools that are outside the active connection permission set', () => {
+    const siteManager = new SiteManager(
+      new Map([
+        [
+          'example.com',
+          makeSiteServices(false, [
+            'wp_getting_started',
+            'wp_site_info',
+            'wp_get_content',
+            'wp_publish_content',
+          ]),
+        ],
+      ]),
+      'example.com'
+    )
+    const { server, tools } = makeFakeServer()
+
+    registerTools({
+      server,
+      siteManager,
+      confirmations: new ConfirmationService(300),
+      rateLimiter: new RateLimiter(60, 1),
+      sessionImageStore: new SessionImageStore(),
+    })
+
+    expect(tools.get('wp_site_info')?.enabled).toBe(true)
+    expect(tools.get('wp_publish_content')?.enabled).toBe(true)
+    expect(tools.get('wp_trash_content')?.enabled).toBe(false)
+    expect(tools.get('wp_create_draft')?.enabled).toBe(false)
+
+    // Local helpers can remain visible even when they are not WordPress
+    // connection tools.
+    expect(tools.get('wp_list_sites')?.enabled).toBe(true)
+    expect(tools.get('wp_upload_media_from_path')?.enabled).toBe(true)
   })
 
   it('registers wp_search_content alongside wp_find_content (parity with Royal MCP "Search")', () => {

@@ -1709,33 +1709,28 @@ final class Axtolab_AI_Connector_REST {
 	 * groups, the matching named preset (if any), and the resolved tool
 	 * list. Lets AI agents plan work without trial-and-error.
 	 *
-	 * Capability filtering only applies to the remote MCP transport
-	 * (`/mcp` endpoint, OAuth-issued Bearer tokens). When the request reaches
-	 * this REST endpoint via Application Password Basic auth — the typical
-	 * local mcp-server setup — there is no per-connection filter, so we
-	 * report `full_access` with a clarifying note.
+	 * Capability filtering applies to any registered AI Connector connection:
+	 * Application Password connections used by the local MCP server and OAuth
+	 * connections used by web clients.
 	 *
 	 * @return WP_REST_Response
 	 */
 	public static function handle_my_capabilities() {
-		$auth_method = self::detect_caller_auth_method();
-		$settings    = get_option( 'axtolab_ai_connector_settings', array() );
+		$auth_method   = self::detect_caller_auth_method();
+		$connection_id = self::get_effective_connection_id();
 
-		if ( 'oauth' === $auth_method ) {
-			$saved_caps   = get_option(
-				Axtolab_AI_Connector_Connections::CAPABILITIES_PREFIX . Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID,
-				null
-			);
-			$capabilities = is_array( $saved_caps )
-				? $saved_caps
-				: ( isset( $settings['oauth_capabilities'] ) && is_array( $settings['oauth_capabilities'] )
-					? $settings['oauth_capabilities']
-					: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET );
-			$note         = 'OAuth connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
+		if ( ! $connection_id && 'oauth' === $auth_method ) {
+			$connection_id = Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID;
+		}
+
+		if ( $connection_id ) {
+			$capabilities = Axtolab_AI_Connector_Connections::get_capabilities( $connection_id );
+			$note         = 'This connection uses the capability groups configured in WordPress → Axtolab → AI Connector → Connection Manager.';
 		} else {
-			// Application Password / direct REST: no per-connection filter.
+			// Unregistered direct REST clients keep the legacy introspection
+			// response; normal MCP connections should resolve above.
 			$capabilities = Axtolab_AI_Connector_Capabilities::PRESETS['full_access'];
-			$note         = 'Application Password auth has no per-connection capability filter; all tools are reachable subject to add-on gates and WordPress role/capability checks.';
+			$note         = 'This request is not associated with a registered AI Connector connection; all tools are listed subject to add-on gates and WordPress role/capability checks.';
 		}
 
 		if ( ! in_array( 'read', $capabilities, true ) ) {
@@ -1749,6 +1744,7 @@ final class Axtolab_AI_Connector_REST {
 		return Axtolab_AI_Connector_Response::success(
 			array(
 				'auth_method'       => $auth_method,
+				'connection_id'      => $connection_id,
 				'preset'            => $preset,
 				'preset_label'      => $preset_label,
 				'capability_groups' => array_values( $capabilities ),

@@ -74,6 +74,9 @@ class WP_REST_Response {
 }
 
 class Axtolab_AI_Connector_Connections {
+	const OAUTH_CONNECTION_ID = 'oauth_token';
+	const CAPABILITIES_PREFIX = '_axtolab_ai_connector_connection_caps_';
+
 	public static function get_current_connection_id() {
 		return null;
 	}
