@@ -145,6 +145,13 @@ class Axtolab_AI_Connector_Admin {
 	const AJAX_TOGGLE_ADVANCED_WRITE = 'axtolab_ai_connector_toggle_advanced_write';
 
 	/**
+	 * AJAX action for saving per-action tool consent policy.
+	 *
+	 * @var string
+	 */
+	const AJAX_SAVE_TOOL_CONSENT_POLICY = 'axtolab_ai_connector_save_tool_consent_policy';
+
+	/**
 	 * Query-string key used by the first-run OAuth enable notice.
 	 *
 	 * @var string
@@ -194,6 +201,7 @@ class Axtolab_AI_Connector_Admin {
 		add_action( 'wp_ajax_' . self::AJAX_SAVE_REVIEW_EMAIL, array( $this, 'ajax_save_review_email' ) );
 		add_action( 'wp_ajax_' . self::AJAX_UPDATE_CONNECTION_AUTHORS, array( $this, 'ajax_update_connection_authors' ) );
 		add_action( 'wp_ajax_' . self::AJAX_TOGGLE_ADVANCED_WRITE, array( $this, 'ajax_toggle_advanced_write' ) );
+		add_action( 'wp_ajax_' . self::AJAX_SAVE_TOOL_CONSENT_POLICY, array( $this, 'ajax_save_tool_consent_policy' ) );
 
 		// Plugin-row Support / Docs links — visible on the Plugins admin
 		// page next to Activate / Deactivate / Settings. Same shared
@@ -475,6 +483,7 @@ class Axtolab_AI_Connector_Admin {
 					'saveReviewEmail'         => self::AJAX_SAVE_REVIEW_EMAIL,
 					'updateConnectionAuthors' => self::AJAX_UPDATE_CONNECTION_AUTHORS,
 					'toggleAdvancedWrite'     => self::AJAX_TOGGLE_ADVANCED_WRITE,
+					'saveToolConsentPolicy'   => self::AJAX_SAVE_TOOL_CONSENT_POLICY,
 					'wizardVerify'            => self::AJAX_WIZARD_VERIFY,
 					'wizardCreate'            => self::AJAX_WIZARD_CREATE,
 				),
@@ -529,6 +538,8 @@ class Axtolab_AI_Connector_Admin {
 				<?php $this->render_connect_claude_section( $status ); ?>
 
 			</div><!-- .mcp-gateway-columns -->
+
+			<?php $this->render_tool_permissions_section(); ?>
 
 			<?php $this->render_advanced_writes_section(); ?>
 
@@ -1717,6 +1728,181 @@ JS;
 	}
 
 	/**
+	 * Render the visible connection permissions and tool consent policy card.
+	 */
+	private function render_tool_permissions_section(): void {
+		$settings        = get_option( 'axtolab_ai_connector_settings', array() );
+		$settings        = is_array( $settings ) ? $settings : array();
+		$capability_defs = Axtolab_AI_Connector_Capabilities::group_labels();
+		$default_caps    = Axtolab_AI_Connector_MCP_Transport::DEFAULT_CAPABILITIES;
+		$oauth_caps      = isset( $settings['oauth_capabilities'] ) && is_array( $settings['oauth_capabilities'] ) ? $settings['oauth_capabilities'] : $default_caps;
+		$consent_policy  = Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy();
+		?>
+		<div class="mcp-gateway-card mcp-tool-permissions-card" id="mcp-tool-permissions">
+			<h2><?php esc_html_e( 'Tool Permissions', 'axtolab-ai-connector' ); ?></h2>
+			<p class="description" style="max-width: 820px;">
+				<?php esc_html_e( 'Connection permissions decide which tool families an AI client can see. Consent decides what happens when an allowed tool tries to publish, delete, restore, change prices, or run another sensitive action.', 'axtolab-ai-connector' ); ?>
+			</p>
+
+			<div class="mcp-permission-grid">
+				<?php $this->render_connection_permission_card( 'oauth', __( 'OAuth connections', 'axtolab-ai-connector' ), $oauth_caps, $capability_defs ); ?>
+			</div>
+
+			<div class="mcp-tool-consent-panel">
+				<div class="mcp-tool-consent-heading">
+					<h3><?php esc_html_e( 'Consent policy', 'axtolab-ai-connector' ); ?></h3>
+					<span class="mcp-tool-consent-saved" id="mcp-tool-consent-saved"><?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?></span>
+				</div>
+				<p class="description">
+					<?php esc_html_e( 'Choose whether each sensitive action is blocked, asks for approval, or always runs after the connection permission check passes.', 'axtolab-ai-connector' ); ?>
+				</p>
+				<div class="mcp-tool-consent-list">
+					<?php foreach ( self::tool_consent_actions() as $action => $meta ) : ?>
+						<?php $tier = isset( $consent_policy[ $action ] ) ? $consent_policy[ $action ] : 'ask'; ?>
+						<div class="mcp-tool-consent-row" data-tool-consent-row="<?php echo esc_attr( $action ); ?>">
+							<div class="mcp-tool-consent-copy">
+								<strong><?php echo esc_html( $meta['label'] ); ?></strong>
+								<span><?php echo esc_html( $meta['description'] ); ?></span>
+							</div>
+							<fieldset class="mcp-consent-segment" aria-label="<?php echo esc_attr( $meta['label'] ); ?>">
+								<?php $this->render_tool_consent_choice( $action, 'always', $tier, __( 'Always allow', 'axtolab-ai-connector' ), 'dashicons-yes-alt' ); ?>
+								<?php $this->render_tool_consent_choice( $action, 'ask', $tier, __( 'Ask first', 'axtolab-ai-connector' ), 'hand' ); ?>
+								<?php $this->render_tool_consent_choice( $action, 'disallow', $tier, __( 'Block', 'axtolab-ai-connector' ), 'dashicons-dismiss' ); ?>
+							</fieldset>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render one connection capability editor in the visible permissions card.
+	 *
+	 * @param string $connection Connection key.
+	 * @param string $label      Human-readable label.
+	 * @param array  $caps       Enabled capability groups.
+	 * @param array  $defs       Capability label map.
+	 */
+	private function render_connection_permission_card( string $connection, string $label, array $caps, array $defs ): void {
+		$preset_labels = Axtolab_AI_Connector_Capabilities::preset_labels();
+		?>
+		<div class="mcp-permission-box" data-permission-connection="<?php echo esc_attr( $connection ); ?>">
+			<div class="mcp-permission-box-head">
+				<h3><?php echo esc_html( $label ); ?></h3>
+				<span class="mcp-permission-saved" id="mcp-visible-<?php echo esc_attr( $connection ); ?>-saved"><?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?></span>
+			</div>
+			<select class="mcp-visible-cap-preset" data-connection="<?php echo esc_attr( $connection ); ?>">
+				<?php foreach ( $preset_labels as $preset => $preset_label ) : ?>
+					<option value="<?php echo esc_attr( $preset ); ?>"><?php echo esc_html( $preset_label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<div class="mcp-visible-cap-list">
+				<?php foreach ( $defs as $cap_key => $cap_label ) : ?>
+					<label class="mcp-visible-cap-label">
+						<input type="checkbox"
+							class="mcp-visible-cap-checkbox"
+							data-connection="<?php echo esc_attr( $connection ); ?>"
+							data-cap="<?php echo esc_attr( $cap_key ); ?>"
+							<?php checked( in_array( $cap_key, $caps, true ) ); ?>
+							<?php disabled( 'read' === $cap_key ); ?>
+						/>
+						<span><?php echo esc_html( $cap_label ); ?></span>
+						<?php if ( 'read' === $cap_key ) : ?>
+							<em><?php esc_html_e( 'always on', 'axtolab-ai-connector' ); ?></em>
+						<?php endif; ?>
+					</label>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render one consent radio option.
+	 *
+	 * @param string $action Action key.
+	 * @param string $tier   Tier value.
+	 * @param string $active Active tier.
+	 * @param string $label  Accessible label.
+	 * @param string $icon   Dashicon class.
+	 */
+	private function render_tool_consent_choice( string $action, string $tier, string $active, string $label, string $icon ): void {
+		?>
+		<label class="mcp-consent-choice mcp-consent-choice-<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( $label ); ?>">
+			<input type="radio"
+				class="mcp-tool-consent-radio"
+				name="mcp_tool_consent_<?php echo esc_attr( $action ); ?>"
+				value="<?php echo esc_attr( $tier ); ?>"
+				data-action="<?php echo esc_attr( $action ); ?>"
+				<?php checked( $active, $tier ); ?>
+			/>
+			<?php if ( 'hand' === $icon ) : ?>
+				<span class="mcp-consent-hand" aria-hidden="true">&#9995;</span>
+			<?php else : ?>
+				<span class="dashicons <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span>
+			<?php endif; ?>
+			<span class="screen-reader-text"><?php echo esc_html( $label ); ?></span>
+		</label>
+		<?php
+	}
+
+	/**
+	 * Consent actions rendered in the admin settings UI.
+	 *
+	 * @return array<string,array{label:string,description:string}>
+	 */
+	private static function tool_consent_actions(): array {
+		return array(
+			'publish_content'              => array(
+				'label'       => __( 'Publish or schedule content', 'axtolab-ai-connector' ),
+				'description' => __( 'Posts, pages, and other configured content types.', 'axtolab-ai-connector' ),
+			),
+			'trash_content'                => array(
+				'label'       => __( 'Move content to trash', 'axtolab-ai-connector' ),
+				'description' => __( 'Soft-delete content while keeping it recoverable.', 'axtolab-ai-connector' ),
+			),
+			'delete_content'               => array(
+				'label'       => __( 'Permanently delete content', 'axtolab-ai-connector' ),
+				'description' => __( 'Requires the permanent delete gate as well as this consent policy.', 'axtolab-ai-connector' ),
+			),
+			'restore_content'              => array(
+				'label'       => __( 'Restore trashed content', 'axtolab-ai-connector' ),
+				'description' => __( 'Bring a trashed item back into the workflow.', 'axtolab-ai-connector' ),
+			),
+			'restore_revision'             => array(
+				'label'       => __( 'Restore a revision', 'axtolab-ai-connector' ),
+				'description' => __( 'Replace current content with a previous revision.', 'axtolab-ai-connector' ),
+			),
+			'woo_update_product_price'     => array(
+				'label'       => __( 'Update WooCommerce prices', 'axtolab-ai-connector' ),
+				'description' => __( 'Single-product regular or sale price changes.', 'axtolab-ai-connector' ),
+			),
+			'woo_bulk_update_prices'       => array(
+				'label'       => __( 'Bulk update WooCommerce prices', 'axtolab-ai-connector' ),
+				'description' => __( 'One consent decision covers the whole bulk call.', 'axtolab-ai-connector' ),
+			),
+			'woo_create_coupon'            => array(
+				'label'       => __( 'Create WooCommerce coupons', 'axtolab-ai-connector' ),
+				'description' => __( 'Discount codes, limits, and expiry settings.', 'axtolab-ai-connector' ),
+			),
+			'generate_image_in_context'    => array(
+				'label'       => __( 'Generate contextual images', 'axtolab-ai-connector' ),
+				'description' => __( 'AI-generated images tied to a post or brand context.', 'axtolab-ai-connector' ),
+			),
+			'batch_regenerate_post_images' => array(
+				'label'       => __( 'Batch regenerate post images', 'axtolab-ai-connector' ),
+				'description' => __( 'One consent decision covers all images in the batch.', 'axtolab-ai-connector' ),
+			),
+			'delete_brand_kit'             => array(
+				'label'       => __( 'Delete brand kits', 'axtolab-ai-connector' ),
+				'description' => __( 'Remove saved image-generation brand guidance.', 'axtolab-ai-connector' ),
+			),
+		);
+	}
+
+	/**
 	 * Advanced write gates: permalink_writes_enabled + options_writes_enabled.
 	 *
 	 * Both are off by default. The plugin's REST handlers refuse the relevant
@@ -1800,6 +1986,43 @@ JS;
 			array(
 				'key'     => $key,
 				'enabled' => $enabled,
+			)
+		);
+	}
+
+	/**
+	 * AJAX: save one tool consent action tier.
+	 */
+	public function ajax_save_tool_consent_policy(): void {
+		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
+		}
+
+		$action = isset( $_POST['action_key'] ) ? sanitize_key( wp_unslash( (string) $_POST['action_key'] ) ) : '';
+		$tier   = isset( $_POST['tier'] ) ? sanitize_key( wp_unslash( (string) $_POST['tier'] ) ) : '';
+
+		if ( '' === $action || ! in_array( $tier, array( 'disallow', 'ask', 'always' ), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid consent setting.', 'axtolab-ai-connector' ) ), 400 );
+		}
+
+		$settings = get_option( 'axtolab_ai_connector_settings', array() );
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+		if ( empty( $settings['tool_consent_policy'] ) || ! is_array( $settings['tool_consent_policy'] ) ) {
+			$settings['tool_consent_policy'] = array();
+		}
+
+		$settings['tool_consent_policy'][ $action ] = $tier;
+		update_option( 'axtolab_ai_connector_settings', $settings );
+
+		wp_send_json_success(
+			array(
+				'action_key' => $action,
+				'tier'       => $tier,
+				'policy'     => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy(),
 			)
 		);
 	}
@@ -2453,7 +2676,7 @@ JS;
 
 		// Parse capabilities array from POST.
 		$raw_caps   = isset( $_POST['capabilities'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['capabilities'] ) ) : array();
-		$valid_caps = array( 'read', 'create_edit', 'publish', 'trash_restore', 'media_manage', 'taxonomy', 'authors', 'seo', 'image' );
+		$valid_caps = Axtolab_AI_Connector_Capabilities::all_groups();
 		$caps       = array_values( array_intersect( $raw_caps, $valid_caps ) );
 
 		// Ensure 'read' is always included.
@@ -2706,6 +2929,131 @@ JS;
     transition: opacity 0.3s;
 }
 .mcp-cap-saved.visible { opacity: 1; }
+
+/* Visible tool permissions */
+.mcp-tool-permissions-card { max-width: 1100px; }
+.mcp-permission-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 16px;
+	margin-top: 16px;
+}
+.mcp-permission-box {
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	background: #fff;
+	padding: 14px;
+}
+.mcp-permission-box-head,
+.mcp-tool-consent-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 10px;
+}
+.mcp-permission-box h3,
+.mcp-tool-consent-heading h3 {
+	margin: 0;
+	font-size: 14px;
+}
+.mcp-visible-cap-preset { width: 100%; max-width: 280px; margin-bottom: 12px; }
+.mcp-visible-cap-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 7px 14px;
+}
+.mcp-visible-cap-label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+}
+.mcp-visible-cap-label em { color: #888; font-size: 12px; }
+.mcp-permission-saved,
+.mcp-tool-consent-saved {
+	color: #00a32a;
+	font-size: 13px;
+	font-weight: 600;
+	opacity: 0;
+	transition: opacity 0.25s;
+}
+.mcp-permission-saved.visible,
+.mcp-tool-consent-saved.visible { opacity: 1; }
+.mcp-tool-consent-panel {
+	margin-top: 18px;
+	border-top: 1px solid #dcdcde;
+	padding-top: 16px;
+}
+.mcp-tool-consent-list {
+	display: grid;
+	gap: 8px;
+	margin-top: 12px;
+}
+.mcp-tool-consent-row {
+	display: grid;
+	grid-template-columns: minmax(240px, 1fr) auto;
+	align-items: center;
+	gap: 16px;
+	padding: 10px 12px;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	background: #fff;
+}
+.mcp-tool-consent-copy strong {
+	display: block;
+	margin-bottom: 2px;
+}
+.mcp-tool-consent-copy span {
+	color: #646970;
+	font-size: 12px;
+}
+.mcp-consent-segment {
+	display: inline-grid;
+	grid-template-columns: repeat(3, 40px);
+	gap: 4px;
+	margin: 0;
+	padding: 3px;
+	border: 0;
+	border-radius: 8px;
+	background: #f0f0f1;
+}
+.mcp-consent-choice {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 34px;
+	border-radius: 6px;
+	color: #646970;
+	cursor: pointer;
+}
+.mcp-consent-choice input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+.mcp-consent-choice .dashicons,
+.mcp-consent-choice .mcp-consent-hand {
+	width: 20px;
+	height: 20px;
+	font-size: 20px;
+	line-height: 20px;
+	text-align: center;
+}
+.mcp-consent-choice:has(input:checked) {
+	background: #646970;
+	color: #fff;
+	box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22);
+}
+.mcp-consent-choice-always:has(input:checked) { background: #1f7a4d; }
+.mcp-consent-choice-ask:has(input:checked) { background: #646970; }
+.mcp-consent-choice-disallow:has(input:checked) { background: #8a2424; }
+@media (max-width: 782px) {
+	.mcp-tool-consent-row { grid-template-columns: 1fr; }
+	.mcp-consent-segment { justify-self: start; }
+}
 
 /* Connections table */
 .mcp-connections-table { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 8px; }
@@ -2966,9 +3314,9 @@ JS;
 
     // ── Per-connection permissions ─────────────────────────────────────────
     var connCapPresets = {
-        full_access:     ['read','create_edit','publish','trash_restore','media_manage','taxonomy','authors','seo','image','upload_portal'],
-        standard:        ['read','create_edit','publish','media_manage','taxonomy','authors','seo','image','upload_portal'],
-        draft_only:      ['read','create_edit','media_manage','taxonomy','seo','image','upload_portal'],
+        full_access:     ['read','create_edit','publish','trash_restore','media_manage','taxonomy','authors','seo','image','upload_portal','ai_actions','woocommerce'],
+        standard:        ['read','create_edit','publish','media_manage','taxonomy','authors','seo','image','upload_portal','ai_actions','woocommerce'],
+        draft_only:      ['read','create_edit','media_manage','taxonomy','seo','image','upload_portal','ai_actions'],
         read_only:       ['read'],
         content_manager: ['read','create_edit','publish','media_manage','taxonomy','authors','seo'],
         media_manager:   ['read','media_manage'],
@@ -3142,9 +3490,9 @@ JS;
     // ══════════════════════════════════════════════════════════════════════════
 
     var capPresets = {
-        standard:        ['read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal'],
-        full_access:     ['read', 'create_edit', 'publish', 'trash_restore', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal'],
-        draft_only:      ['read', 'create_edit', 'media_manage', 'taxonomy', 'seo', 'image', 'upload_portal'],
+        standard:        ['read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'ai_actions', 'woocommerce'],
+        full_access:     ['read', 'create_edit', 'publish', 'trash_restore', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'ai_actions', 'woocommerce'],
+        draft_only:      ['read', 'create_edit', 'media_manage', 'taxonomy', 'seo', 'image', 'upload_portal', 'ai_actions'],
         content_manager: ['read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo'],
         media_manager:   ['read', 'media_manage'],
         seo_specialist:  ['read', 'seo'],
@@ -3175,9 +3523,9 @@ JS;
 
     var capSaveTimers = {};
 
-    function detectPreset(conn) {
+    function detectPresetForSelector(conn, selector) {
         var currentCaps = [];
-        $('[data-connection="' + conn + '"].mcp-cap-checkbox:checked').each(function () {
+        $('[data-connection="' + conn + '"].' + selector + ':checked').each(function () {
             currentCaps.push($(this).data('cap'));
         });
         currentCaps.sort();
@@ -3194,6 +3542,14 @@ JS;
         return matched;
     }
 
+    function detectPreset(conn) {
+        return detectPresetForSelector(conn, 'mcp-cap-checkbox');
+    }
+
+    function detectVisiblePreset(conn) {
+        return detectPresetForSelector(conn, 'mcp-visible-cap-checkbox');
+    }
+
     function updateCapUI(conn) {
         var preset = detectPreset(conn);
         $('[data-connection="' + conn + '"].mcp-cap-preset').val(preset);
@@ -3203,23 +3559,65 @@ JS;
               .addClass(capBadgeClasses[preset] || capBadgeClasses.custom);
     }
 
+    function updateVisibleCapUI(conn) {
+        var preset = detectVisiblePreset(conn);
+        $('[data-connection="' + conn + '"].mcp-visible-cap-preset').val(preset);
+    }
+
+    function readCaps(conn, selector) {
+        var caps = [];
+        $('[data-connection="' + conn + '"].' + selector + ':checked').each(function () {
+            caps.push($(this).data('cap'));
+        });
+        if (caps.indexOf('read') === -1) caps.push('read');
+        return caps;
+    }
+
+    function syncCaps(conn, caps) {
+        ['mcp-cap-checkbox', 'mcp-visible-cap-checkbox'].forEach(function (selector) {
+            $('[data-connection="' + conn + '"].' + selector).each(function () {
+                var cap = $(this).data('cap');
+                $(this).prop('checked', cap === 'read' || caps.indexOf(cap) !== -1);
+            });
+        });
+        updateCapUI(conn);
+        updateVisibleCapUI(conn);
+    }
+
     function autoSaveCaps(conn) {
         clearTimeout(capSaveTimers[conn]);
         capSaveTimers[conn] = setTimeout(function () {
-            var caps = [];
-            $('[data-connection="' + conn + '"].mcp-cap-checkbox:checked').each(function () {
-                caps.push($(this).data('cap'));
-            });
+            var caps = readCaps(conn, 'mcp-cap-checkbox');
 
             doAjax(
                 'axtolab_ai_connector_save_capabilities',
                 { connection: conn, capabilities: caps },
                 function () {
+                    syncCaps(conn, caps);
                     var $saved = $('#mcp-' + conn + '-saved');
                     $saved.addClass('visible');
                     setTimeout(function () { $saved.removeClass('visible'); }, 1500);
                 },
                 function () {}
+            );
+        }, 500);
+    }
+
+    function autoSaveVisibleCaps(conn) {
+        clearTimeout(capSaveTimers['visible-' + conn]);
+        capSaveTimers['visible-' + conn] = setTimeout(function () {
+            var caps = readCaps(conn, 'mcp-visible-cap-checkbox');
+
+            doAjax(
+                'axtolab_ai_connector_save_capabilities',
+                { connection: conn, capabilities: caps },
+                function () {
+                    syncCaps(conn, caps);
+                    var $saved = $('#mcp-visible-' + conn + '-saved');
+                    $saved.addClass('visible');
+                    setTimeout(function () { $saved.removeClass('visible'); }, 1500);
+                },
+                function (msg) { alert(msg || 'Failed to save permissions.'); }
             );
         }, 500);
     }
@@ -3248,9 +3646,49 @@ JS;
         autoSaveCaps(conn);
     });
 
+    $(document).on('change', '.mcp-visible-cap-preset', function () {
+        var conn   = $(this).data('connection');
+        var preset = $(this).val();
+        if (preset === 'custom') return;
+
+        var caps = capPresets[preset] || [];
+        $('[data-connection="' + conn + '"].mcp-visible-cap-checkbox').each(function () {
+            var cap = $(this).data('cap');
+            if (cap === 'read') return;
+            $(this).prop('checked', caps.indexOf(cap) !== -1);
+        });
+
+        updateVisibleCapUI(conn);
+        autoSaveVisibleCaps(conn);
+    });
+
+    $(document).on('change', '.mcp-visible-cap-checkbox', function () {
+        var conn = $(this).data('connection');
+        updateVisibleCapUI(conn);
+        autoSaveVisibleCaps(conn);
+    });
+
+    $(document).on('change', '.mcp-tool-consent-radio', function () {
+        var $input = $(this);
+        doAjax(
+            cfg.actions.saveToolConsentPolicy,
+            {
+                action_key: $input.data('action'),
+                tier: $input.val()
+            },
+            function () {
+                var $saved = $('#mcp-tool-consent-saved');
+                $saved.addClass('visible');
+                setTimeout(function () { $saved.removeClass('visible'); }, 1500);
+            },
+            function (msg) { alert(msg || 'Failed to save consent policy.'); }
+        );
+    });
+
     // Initialize badges on page load.
     ['oauth'].forEach(function (conn) {
         updateCapUI(conn);
+        updateVisibleCapUI(conn);
     });
 
     // ══════════════════════════════════════════════════════════════════════════

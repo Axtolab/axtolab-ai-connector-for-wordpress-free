@@ -138,6 +138,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 		'seo',
 		'image',
 		'upload_portal',
+		'ai_actions',
 		'woocommerce',
 	);
 
