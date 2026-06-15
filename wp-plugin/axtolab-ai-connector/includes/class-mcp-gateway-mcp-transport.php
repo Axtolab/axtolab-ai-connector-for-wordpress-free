@@ -558,7 +558,10 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 * @throws Exception On dispatch or execution failure.
 	 */
 	private static function dispatch_tool( string $tool_name, array $args ) {
-		$consent = Axtolab_AI_Connector_Tool_Consent_Policy::context_for_tool( $tool_name, $args );
+		$connection_id = class_exists( 'Axtolab_AI_Connector_Connections', false )
+			? Axtolab_AI_Connector_Connections::get_current_connection_id()
+			: null;
+		$consent = Axtolab_AI_Connector_Tool_Consent_Policy::context_for_tool( $tool_name, $args, $connection_id );
 
 		if ( Axtolab_AI_Connector_Tool_Consent_Policy::TIER_DISALLOW === $consent['tier'] ) {
 			throw new Exception( 'Tool action blocked by the consent policy.', 403 );

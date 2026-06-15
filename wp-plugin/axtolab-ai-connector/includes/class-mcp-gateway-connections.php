@@ -107,6 +107,13 @@ class Axtolab_AI_Connector_Connections {
 	const ALLOWED_AUTHORS_PREFIX = '_axtolab_ai_connector_connection_authors_';
 
 	/**
+	 * Option prefix for per-connection sensitive-action consent overrides.
+	 *
+	 * @var string
+	 */
+	const CONSENT_POLICY_PREFIX = '_axtolab_ai_connector_connection_consent_';
+
+	/**
 	 * Tracks the connection ID of the currently authenticated request.
 	 *
 	 * @var string|null
@@ -298,6 +305,7 @@ class Axtolab_AI_Connector_Connections {
 				'last_ip'         => $last_ip,
 				'capabilities'    => self::get_capabilities( $id ),
 				'allowed_authors' => self::get_allowed_authors( $id ),
+				'tool_consent_policy' => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy( $id ),
 				'needs_reauth'    => $needs_reauth,
 			);
 		}
@@ -344,6 +352,7 @@ class Axtolab_AI_Connector_Connections {
 					'last_ip'         => '',
 					'capabilities'    => self::get_capabilities( self::OAUTH_CONNECTION_ID ),
 					'allowed_authors' => self::get_allowed_authors( self::OAUTH_CONNECTION_ID ),
+					'tool_consent_policy' => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy( self::OAUTH_CONNECTION_ID ),
 					'needs_reauth'    => $needs_reauth,
 				);
 			}
@@ -645,6 +654,59 @@ class Axtolab_AI_Connector_Connections {
 		return true;
 	}
 
+	// ── Per-connection sensitive-action consent ──────────────────────────────
+
+	/**
+	 * Get saved consent overrides for a connection.
+	 *
+	 * The returned map contains only connection-specific overrides. The final
+	 * resolved policy is built by Axtolab_AI_Connector_Tool_Consent_Policy.
+	 *
+	 * @param string $connection_id The app password UUID or 'oauth_token'.
+	 * @return array<string,string>
+	 */
+	public static function get_tool_consent_policy( $connection_id ) {
+		$stored = get_option( self::CONSENT_POLICY_PREFIX . $connection_id, array() );
+		if ( ! is_array( $stored ) ) {
+			return array();
+		}
+
+		$clean = array();
+		foreach ( $stored as $action => $tier ) {
+			$action = sanitize_key( (string) $action );
+			if ( '' === $action ) {
+				continue;
+			}
+			$clean[ $action ] = Axtolab_AI_Connector_Tool_Consent_Policy::normalize_tier( (string) $tier );
+		}
+		return $clean;
+	}
+
+	/**
+	 * Save one consent action override for a connection.
+	 *
+	 * @param string $connection_id The app password UUID or 'oauth_token'.
+	 * @param string $action        Consent action key.
+	 * @param string $tier          Consent tier.
+	 * @return true|WP_Error
+	 */
+	public static function set_tool_consent_tier( $connection_id, $action, $tier ) {
+		if ( ! self::is_valid_connection_id( $connection_id ) ) {
+			return new WP_Error( 'invalid_id', 'Invalid connection ID.' );
+		}
+
+		$action = sanitize_key( (string) $action );
+		if ( '' === $action ) {
+			return new WP_Error( 'invalid_action', 'Invalid consent action.' );
+		}
+
+		$policy            = self::get_tool_consent_policy( $connection_id );
+		$policy[ $action ] = Axtolab_AI_Connector_Tool_Consent_Policy::normalize_tier( (string) $tier );
+		update_option( self::CONSENT_POLICY_PREFIX . $connection_id, $policy, false );
+		self::invalidate_cache();
+		return true;
+	}
+
 	// ── Per-connection author allowlist ──────────────────────────────────────
 
 	/**
@@ -846,6 +908,7 @@ class Axtolab_AI_Connector_Connections {
 		delete_option( self::LAST_ACTIVE_PREFIX . $connection_id );
 		delete_option( self::CAPABILITIES_PREFIX . $connection_id );
 		delete_option( self::ALLOWED_AUTHORS_PREFIX . $connection_id );
+		delete_option( self::CONSENT_POLICY_PREFIX . $connection_id );
 		delete_transient( self::THROTTLE_PREFIX . $connection_id );
 	}
 

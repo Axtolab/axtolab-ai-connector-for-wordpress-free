@@ -13,6 +13,7 @@ $GLOBALS['tool_consent_test_options'] = array(
 	'mcp_gateway_settings'           => array(),
 	'axtolab_ai_connector_settings'  => array(),
 );
+$GLOBALS['tool_consent_connection_policy'] = array();
 
 function get_option( $key, $default = false ) {
 	return array_key_exists( $key, $GLOBALS['tool_consent_test_options'] ) ? $GLOBALS['tool_consent_test_options'][ $key ] : $default;
@@ -47,6 +48,14 @@ function tool_consent_assert( $condition, $message ) {
 	}
 }
 
+class Axtolab_AI_Connector_Connections {
+	public static function get_tool_consent_policy( $connection_id ) {
+		return isset( $GLOBALS['tool_consent_connection_policy'][ $connection_id ] )
+			? $GLOBALS['tool_consent_connection_policy'][ $connection_id ]
+			: array();
+	}
+}
+
 require_once dirname( __DIR__ ) . '/includes/class-mcp-gateway-config.php';
 require_once dirname( __DIR__ ) . '/includes/class-mcp-gateway-tool-consent-policy.php';
 
@@ -76,6 +85,24 @@ $disallow = Axtolab_AI_Connector_Tool_Consent_Policy::context_for_tool(
 	array( 'id' => 12, 'content_type' => 'post' )
 );
 tool_consent_assert( 'disallow' === $disallow['tier'], 'Config should allow trash_content to be flipped to disallow.' );
+
+$GLOBALS['tool_consent_connection_policy']['conn-one'] = array(
+	'publish_content' => 'ask',
+);
+
+$connection_override = Axtolab_AI_Connector_Tool_Consent_Policy::context_for_tool(
+	'wp_publish_content',
+	array( 'id' => 12, 'content_type' => 'post' ),
+	'conn-one'
+);
+tool_consent_assert( 'ask' === $connection_override['tier'], 'Connection consent override should win over the site default.' );
+
+$connection_inherited = Axtolab_AI_Connector_Tool_Consent_Policy::context_for_tool(
+	'wp_trash_content',
+	array( 'id' => 12, 'content_type' => 'post' ),
+	'conn-one'
+);
+tool_consent_assert( 'disallow' === $connection_inherited['tier'], 'Connection policy should inherit site default when no override is set.' );
 
 $unknown = Axtolab_AI_Connector_Tool_Consent_Policy::context_for_tool(
 	'wp_vendor_bulk_delete_products',

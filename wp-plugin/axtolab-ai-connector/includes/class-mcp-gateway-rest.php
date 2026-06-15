@@ -4341,7 +4341,7 @@ final class Axtolab_AI_Connector_REST {
 				'capabilities'       => array_values( $capabilities ),
 				'allowed_tools'      => array_values( $allowed_tools ),
 				'allowed_author_ids' => $allowed_author_ids,
-				'tool_consent_policy' => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy(),
+				'tool_consent_policy' => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy( $connection_id ),
 			)
 		);
 	}

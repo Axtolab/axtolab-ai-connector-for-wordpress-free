@@ -57,7 +57,7 @@ class Axtolab_AI_Connector_Tool_Consent_Policy {
 	 *
 	 * @return array<string,string>
 	 */
-	public static function policy(): array {
+	public static function policy( ?string $connection_id = null ): array {
 		$config = Axtolab_AI_Connector_Config::get();
 		$saved  = isset( $config['tool_consent_policy'] ) && is_array( $config['tool_consent_policy'] )
 			? $config['tool_consent_policy']
@@ -78,6 +78,13 @@ class Axtolab_AI_Connector_Tool_Consent_Policy {
 		 */
 		$policy = apply_filters( 'axtolab_ai_connector_tool_consent_policy', $policy, $config );
 
+		if ( $connection_id && class_exists( 'Axtolab_AI_Connector_Connections', false ) ) {
+			$policy = array_merge(
+				self::sanitize_policy_map( is_array( $policy ) ? $policy : array() ),
+				Axtolab_AI_Connector_Connections::get_tool_consent_policy( $connection_id )
+			);
+		}
+
 		return self::sanitize_policy_map( is_array( $policy ) ? $policy : array() );
 	}
 
@@ -88,9 +95,9 @@ class Axtolab_AI_Connector_Tool_Consent_Policy {
 	 * @param array  $args      Tool arguments.
 	 * @return array{tool_name:string,action:string,key:string,tier:string}
 	 */
-	public static function context_for_tool( string $tool_name, array $args ): array {
+	public static function context_for_tool( string $tool_name, array $args, ?string $connection_id = null ): array {
 		$action = self::action_for_tool( $tool_name );
-		$policy = self::policy();
+		$policy = self::policy( $connection_id );
 		$tier   = isset( $policy[ $action ] )
 			? $policy[ $action ]
 			: ( self::looks_destructive( $action, $tool_name ) ? self::TIER_ASK : self::TIER_ALWAYS );
@@ -213,8 +220,8 @@ class Axtolab_AI_Connector_Tool_Consent_Policy {
 	 *
 	 * @return array<string,string>
 	 */
-	public static function exported_policy(): array {
-		return self::policy();
+	public static function exported_policy( ?string $connection_id = null ): array {
+		return self::policy( $connection_id );
 	}
 
 	/**
@@ -241,7 +248,7 @@ class Axtolab_AI_Connector_Tool_Consent_Policy {
 	 * @param string $tier Raw tier.
 	 * @return string
 	 */
-	private static function normalize_tier( string $tier ): string {
+	public static function normalize_tier( string $tier ): string {
 		$tier = strtolower( sanitize_key( $tier ) );
 		return in_array( $tier, array( self::TIER_DISALLOW, self::TIER_ASK, self::TIER_ALWAYS ), true )
 			? $tier

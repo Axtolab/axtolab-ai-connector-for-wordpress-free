@@ -122,6 +122,13 @@ class Axtolab_AI_Connector_Admin {
 	const AJAX_UPDATE_CONNECTION_CAPS = 'axtolab_ai_connector_update_connection_caps';
 
 	/**
+	 * AJAX action for updating per-connection sensitive-action consent.
+	 *
+	 * @var string
+	 */
+	const AJAX_UPDATE_CONNECTION_CONSENT = 'axtolab_ai_connector_update_connection_consent';
+
+	/**
 	 * AJAX action for saving the review notification email.
 	 *
 	 * @var string
@@ -198,6 +205,7 @@ class Axtolab_AI_Connector_Admin {
 		add_action( 'wp_ajax_' . self::AJAX_RENAME_CONNECTION, array( $this, 'ajax_rename_connection' ) );
 		add_action( 'wp_ajax_' . self::AJAX_REVOKE_CONNECTION, array( $this, 'ajax_revoke_connection' ) );
 		add_action( 'wp_ajax_' . self::AJAX_UPDATE_CONNECTION_CAPS, array( $this, 'ajax_update_connection_caps' ) );
+		add_action( 'wp_ajax_' . self::AJAX_UPDATE_CONNECTION_CONSENT, array( $this, 'ajax_update_connection_consent' ) );
 		add_action( 'wp_ajax_' . self::AJAX_SAVE_REVIEW_EMAIL, array( $this, 'ajax_save_review_email' ) );
 		add_action( 'wp_ajax_' . self::AJAX_UPDATE_CONNECTION_AUTHORS, array( $this, 'ajax_update_connection_authors' ) );
 		add_action( 'wp_ajax_' . self::AJAX_TOGGLE_ADVANCED_WRITE, array( $this, 'ajax_toggle_advanced_write' ) );
@@ -480,6 +488,7 @@ class Axtolab_AI_Connector_Admin {
 					'renameConnection'        => self::AJAX_RENAME_CONNECTION,
 					'revokeConnection'        => self::AJAX_REVOKE_CONNECTION,
 					'updateConnectionCaps'    => self::AJAX_UPDATE_CONNECTION_CAPS,
+					'updateConnectionConsent' => self::AJAX_UPDATE_CONNECTION_CONSENT,
 					'saveReviewEmail'         => self::AJAX_SAVE_REVIEW_EMAIL,
 					'updateConnectionAuthors' => self::AJAX_UPDATE_CONNECTION_AUTHORS,
 					'toggleAdvancedWrite'     => self::AJAX_TOGGLE_ADVANCED_WRITE,
@@ -538,8 +547,6 @@ class Axtolab_AI_Connector_Admin {
 				<?php $this->render_connect_claude_section( $status ); ?>
 
 			</div><!-- .mcp-gateway-columns -->
-
-			<?php $this->render_tool_permissions_section(); ?>
 
 			<?php $this->render_advanced_writes_section(); ?>
 
@@ -1037,6 +1044,9 @@ JS;
 				<button type="button" class="mcp-tab" data-tab="image-providers">
 					<?php esc_html_e( 'Image Providers', 'axtolab-ai-connector' ); ?>
 				</button>
+				<button type="button" class="mcp-tab" data-tab="connection-manager">
+					<?php esc_html_e( 'Connection Manager', 'axtolab-ai-connector' ); ?>
+				</button>
 			</div>
 
 			<?php // ── Tab 1: Quick Connect (Application Password wizard) ────────── ?>
@@ -1354,16 +1364,17 @@ JS;
 
 				</div><!-- tab: image-providers -->
 
-				<hr />
-
-			<?php $this->render_connected_clients_section(); ?>
+				<?php // ── Tab 4: Connection Manager ─────────────────────────────────── ?>
+				<div class="mcp-tab-content" data-tab="connection-manager">
+					<?php $this->render_connected_clients_section(); ?>
+				</div><!-- tab: connection-manager -->
 
 		</div><!-- .mcp-gateway-connect -->
 		<?php
 	}
 
 	/**
-	 * Render the "Existing connections" section with per-connection management.
+	 * Render the "Connection Manager" section with per-connection management.
 	 *
 	 * Shows a table of all active connections with rename/revoke actions,
 	 * plus a "Revoke All" link as an emergency kill switch. The connection
@@ -1381,10 +1392,10 @@ JS;
 		? $settings['review_notification_email']
 		: '';
 		?>
-		<h3 id="mcp-connections-card"><?php esc_html_e( 'Existing connections', 'axtolab-ai-connector' ); ?></h3>
+		<h3 id="mcp-connections-card"><?php esc_html_e( 'Connection Manager', 'axtolab-ai-connector' ); ?></h3>
 
 		<p class="mcp-help-text" style="margin-top:-4px;">
-			<?php esc_html_e( 'All active connections, regardless of how they were created. Use the Desktop AI Clients tab to add an App Password connection, or the Web Clients tab to enable OAuth and approve a ChatGPT / Claude Web connection.', 'axtolab-ai-connector' ); ?>
+			<?php esc_html_e( 'Manage each active MCP client in one place: revoke access, rename the connection, choose which tool families it may use, and set how sensitive actions should behave.', 'axtolab-ai-connector' ); ?>
 		</p>
 
 		<div class="mcp-review-email-row" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -1450,7 +1461,7 @@ JS;
 							<td><?php echo $conn['created'] ? esc_html( gmdate( 'M j', $conn['created'] ) ) : '&mdash;'; ?></td>
 							<td><?php echo esc_html( Axtolab_AI_Connector_Connections::relative_time( $conn['last_active'] ) ); ?></td>
 							<td class="mcp-conn-actions">
-								<button type="button" class="button button-small mcp-conn-perms-btn">Permissions</button>
+								<button type="button" class="button button-small mcp-conn-perms-btn"><?php esc_html_e( 'Permissions & Behavior', 'axtolab-ai-connector' ); ?></button>
 								<button type="button" class="button button-small mcp-conn-rename-btn">
 									<?php esc_html_e( 'Rename', 'axtolab-ai-connector' ); ?>
 								</button>
@@ -1489,6 +1500,8 @@ JS;
 										<?php endforeach; ?>
 									</div>
 									<span class="mcp-conn-caps-saved" style="opacity:0; transition: opacity 0.3s;"><?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?></span>
+
+									<?php $this->render_connection_behavior_section( $conn ); ?>
 
 									<?php
 									$wp_authors           = get_users(
@@ -1728,6 +1741,46 @@ JS;
 	}
 
 	/**
+	 * Render sensitive-action behavior controls for a single connection.
+	 *
+	 * @param array $conn Connection row.
+	 * @return void
+	 */
+	private function render_connection_behavior_section( array $conn ): void {
+		$connection_id  = isset( $conn['id'] ) ? (string) $conn['id'] : '';
+		$policy         = isset( $conn['tool_consent_policy'] ) && is_array( $conn['tool_consent_policy'] )
+			? $conn['tool_consent_policy']
+			: Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy( $connection_id );
+		?>
+		<div class="mcp-conn-behavior-panel">
+			<div class="mcp-conn-behavior-head">
+				<div>
+					<h4><?php esc_html_e( 'Sensitive-action behavior', 'axtolab-ai-connector' ); ?></h4>
+					<p class="mcp-help-text"><?php esc_html_e( 'After this connection has the required tool family, choose whether each sensitive action runs automatically, asks first, or is blocked.', 'axtolab-ai-connector' ); ?></p>
+				</div>
+				<span class="mcp-conn-behavior-saved"><?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?></span>
+			</div>
+			<div class="mcp-tool-consent-list mcp-conn-behavior-list">
+				<?php foreach ( self::tool_consent_actions() as $action => $meta ) : ?>
+					<?php $tier = isset( $policy[ $action ] ) ? $policy[ $action ] : 'ask'; ?>
+					<div class="mcp-tool-consent-row" data-tool-consent-row="<?php echo esc_attr( $action ); ?>">
+						<div class="mcp-tool-consent-copy">
+							<strong><?php echo esc_html( $meta['label'] ); ?></strong>
+							<span><?php echo esc_html( $meta['description'] ); ?></span>
+						</div>
+						<fieldset class="mcp-consent-segment" aria-label="<?php echo esc_attr( $meta['label'] ); ?>">
+							<?php $this->render_tool_consent_choice( $action, 'always', $tier, __( 'Always allow', 'axtolab-ai-connector' ), 'dashicons-yes-alt', $connection_id ); ?>
+							<?php $this->render_tool_consent_choice( $action, 'ask', $tier, __( 'Ask first', 'axtolab-ai-connector' ), 'hand', $connection_id ); ?>
+							<?php $this->render_tool_consent_choice( $action, 'disallow', $tier, __( 'Block', 'axtolab-ai-connector' ), 'dashicons-dismiss', $connection_id ); ?>
+						</fieldset>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render the visible connection permissions and tool consent policy card.
 	 */
 	private function render_tool_permissions_section(): void {
@@ -1829,8 +1882,10 @@ JS;
 	 * @param string $label  Accessible label.
 	 * @param string $icon   Dashicon class or custom icon marker.
 	 */
-	private function render_tool_consent_choice( string $action, string $tier, string $active, string $label, string $icon ): void {
-		$tooltip = self::tool_consent_choice_tooltip( $tier );
+	private function render_tool_consent_choice( string $action, string $tier, string $active, string $label, string $icon, string $connection_id = '' ): void {
+		$tooltip    = self::tool_consent_choice_tooltip( $tier );
+		$input_class = $connection_id ? 'mcp-conn-consent-radio' : 'mcp-tool-consent-radio';
+		$name        = $connection_id ? 'mcp_conn_consent_' . sanitize_html_class( $connection_id ) . '_' . $action : 'mcp_tool_consent_' . $action;
 		?>
 		<label
 			class="mcp-consent-choice mcp-consent-choice-<?php echo esc_attr( $tier ); ?>"
@@ -1839,10 +1894,13 @@ JS;
 			aria-label="<?php echo esc_attr( $tooltip ); ?>"
 		>
 			<input type="radio"
-				class="mcp-tool-consent-radio"
-				name="mcp_tool_consent_<?php echo esc_attr( $action ); ?>"
+				class="<?php echo esc_attr( $input_class ); ?>"
+				name="<?php echo esc_attr( $name ); ?>"
 				value="<?php echo esc_attr( $tier ); ?>"
 				data-action="<?php echo esc_attr( $action ); ?>"
+				<?php if ( $connection_id ) : ?>
+					data-connection="<?php echo esc_attr( $connection_id ); ?>"
+				<?php endif; ?>
 				<?php checked( $active, $tier ); ?>
 			/>
 			<?php if ( 'hand' === $icon ) : ?>
@@ -2258,6 +2316,43 @@ JS;
 			wp_send_json_error( array( 'message' => $result->get_error_message() ), 400 );
 		}
 		wp_send_json_success( array( 'message' => __( 'Permissions updated.', 'axtolab-ai-connector' ) ) );
+	}
+
+	/**
+	 * AJAX: Update per-connection sensitive-action consent.
+	 *
+	 * Expects POST params: connection_id, action_key, tier.
+	 *
+	 * @return void Sends JSON and exits.
+	 */
+	public function ajax_update_connection_consent(): void {
+		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'axtolab-ai-connector' ) ), 403 );
+		}
+
+		$connection_id = isset( $_POST['connection_id'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['connection_id'] ) ) : '';
+		$action        = isset( $_POST['action_key'] ) ? sanitize_key( wp_unslash( (string) $_POST['action_key'] ) ) : '';
+		$tier          = isset( $_POST['tier'] ) ? sanitize_key( wp_unslash( (string) $_POST['tier'] ) ) : '';
+
+		if ( '' === $connection_id || '' === $action || ! in_array( $tier, array( 'disallow', 'ask', 'always' ), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid behavior setting.', 'axtolab-ai-connector' ) ), 400 );
+		}
+
+		$result = Axtolab_AI_Connector_Connections::set_tool_consent_tier( $connection_id, $action, $tier );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), 400 );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'     => __( 'Behavior updated.', 'axtolab-ai-connector' ),
+				'connection'  => $connection_id,
+				'action_key'  => $action,
+				'tier'        => $tier,
+				'policy'      => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy( $connection_id ),
+			)
+		);
 	}
 
 	/**
@@ -2890,7 +2985,7 @@ JS;
 }
 
 /* Tabs */
-.mcp-tabs { display: flex; gap: 0; border-bottom: 1px solid #c3c4c7; margin-bottom: 16px; }
+.mcp-tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid #c3c4c7; margin-bottom: 16px; }
 .mcp-tab {
 	background: none; border: none; border-bottom: 2px solid transparent;
 	padding: 8px 16px; font-size: 13px; font-weight: 600; color: #50575e;
@@ -3180,11 +3275,17 @@ JS;
 .mcp-danger-link { color: #d63638; text-decoration: none; }
 .mcp-danger-link:hover { color: #a02020; text-decoration: underline; }
 .mcp-connection-caps-row td { padding: 12px 16px; background: #f9f9f9; border-bottom: 1px solid #e0e0e0; }
-.mcp-conn-caps-editor { max-width: 420px; }
+.mcp-conn-caps-editor { max-width: 980px; }
 .mcp-conn-caps-checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 8px; }
 .mcp-conn-cap-label { display: flex; align-items: center; gap: 4px; font-size: 13px; }
 .mcp-conn-cap-note { color: #888; font-size: 12px; }
 .mcp-conn-caps-saved { color: #00a32a; font-size: 13px; font-weight: 500; }
+.mcp-conn-behavior-panel { margin-top: 16px; padding-top: 14px; border-top: 1px solid #e0e0e0; }
+.mcp-conn-behavior-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.mcp-conn-behavior-head h4 { margin: 0 0 4px; font-size: 13px; }
+.mcp-conn-behavior-head .mcp-help-text { margin: 0; }
+.mcp-conn-behavior-saved { color: #00a32a; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity 0.3s; }
+.mcp-conn-behavior-list { max-width: 760px; }
 .mcp-conn-perms-btn { margin-right: 4px; }
 ';
 	}
@@ -3480,6 +3581,28 @@ JS;
         var connId = $(this).data('connection');
         connUpdatePresetUI(connId);
         connAutoSave(connId);
+    });
+
+    var connConsentTimers = {};
+    function connAutoSaveConsent(connId, actionKey, tier) {
+        clearTimeout(connConsentTimers[connId + ':' + actionKey]);
+        connConsentTimers[connId + ':' + actionKey] = setTimeout(function() {
+            doAjax(
+                cfg.actions.updateConnectionConsent,
+                { connection_id: connId, action_key: actionKey, tier: tier },
+                function() {
+                    var $s = $('[data-id="' + connId + '"].mcp-connection-caps-row .mcp-conn-behavior-saved');
+                    $s.css('opacity', 1);
+                    setTimeout(function() { $s.css('opacity', 0); }, 1500);
+                },
+                function(msg) { alert(msg || 'Failed to save behavior.'); }
+            );
+        }, 250);
+    }
+
+    $(document).on('change', '.mcp-conn-consent-radio', function() {
+        var $radio = $(this);
+        connAutoSaveConsent($radio.data('connection'), $radio.data('action'), $radio.val());
     });
 
     // Init presets on load
