@@ -1461,7 +1461,7 @@ JS;
 							<td><?php echo $conn['created'] ? esc_html( gmdate( 'M j', $conn['created'] ) ) : '&mdash;'; ?></td>
 							<td><?php echo esc_html( Axtolab_AI_Connector_Connections::relative_time( $conn['last_active'] ) ); ?></td>
 							<td class="mcp-conn-actions">
-								<button type="button" class="button button-small mcp-conn-perms-btn"><?php esc_html_e( 'Permissions & Behavior', 'axtolab-ai-connector' ); ?></button>
+								<button type="button" class="button button-small mcp-conn-perms-btn"><?php esc_html_e( 'Tool Access & Behavior', 'axtolab-ai-connector' ); ?></button>
 								<button type="button" class="button button-small mcp-conn-rename-btn">
 									<?php esc_html_e( 'Rename', 'axtolab-ai-connector' ); ?>
 								</button>
@@ -1473,6 +1473,10 @@ JS;
 						<tr class="mcp-connection-caps-row" data-id="<?php echo esc_attr( $conn['id'] ); ?>" style="display:none;">
 							<td colspan="7">
 								<div class="mcp-conn-caps-editor">
+									<div class="mcp-conn-access-section">
+										<h4 class="mcp-conn-section-title"><?php esc_html_e( 'Tool Access', 'axtolab-ai-connector' ); ?></h4>
+										<p class="mcp-help-text"><?php esc_html_e( 'Tool Access decides which families of MCP tools this connection can reach. If a family is off, every action in that family is unavailable regardless of the behavior settings below.', 'axtolab-ai-connector' ); ?></p>
+									</div>
 									<div style="margin-bottom: 8px;">
 										<label><?php esc_html_e( 'Preset:', 'axtolab-ai-connector' ); ?>
 										<select class="mcp-conn-cap-preset" data-connection="<?php echo esc_attr( $conn['id'] ); ?>">
@@ -1748,6 +1752,8 @@ JS;
 	 */
 	private function render_connection_behavior_section( array $conn ): void {
 		$connection_id  = isset( $conn['id'] ) ? (string) $conn['id'] : '';
+		$capabilities   = isset( $conn['capabilities'] ) && is_array( $conn['capabilities'] ) ? $conn['capabilities'] : array();
+		$capability_labels = Axtolab_AI_Connector_Capabilities::group_labels();
 		$policy         = isset( $conn['tool_consent_policy'] ) && is_array( $conn['tool_consent_policy'] )
 			? $conn['tool_consent_policy']
 			: Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy( $connection_id );
@@ -1756,19 +1762,38 @@ JS;
 			<div class="mcp-conn-behavior-head">
 				<div>
 					<h4><?php esc_html_e( 'Sensitive-action behavior', 'axtolab-ai-connector' ); ?></h4>
-					<p class="mcp-help-text"><?php esc_html_e( 'After this connection has the required tool family, choose whether each sensitive action runs automatically, asks first, or is blocked.', 'axtolab-ai-connector' ); ?></p>
+					<p class="mcp-help-text"><?php esc_html_e( 'Behavior applies only after Tool Access allows the required family. If the required family is off, Tool Access wins and the action is unavailable.', 'axtolab-ai-connector' ); ?></p>
 				</div>
 				<span class="mcp-conn-behavior-saved"><?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?></span>
 			</div>
 			<div class="mcp-tool-consent-list mcp-conn-behavior-list">
 				<?php foreach ( self::tool_consent_actions() as $action => $meta ) : ?>
-					<?php $tier = isset( $policy[ $action ] ) ? $policy[ $action ] : 'ask'; ?>
-					<div class="mcp-tool-consent-row" data-tool-consent-row="<?php echo esc_attr( $action ); ?>">
+					<?php
+					$tier           = isset( $policy[ $action ] ) ? $policy[ $action ] : 'ask';
+					$required_cap   = isset( $meta['requires'] ) ? (string) $meta['requires'] : '';
+					$required_label = isset( $capability_labels[ $required_cap ] ) ? $capability_labels[ $required_cap ] : $required_cap;
+					$access_enabled = '' === $required_cap || in_array( $required_cap, $capabilities, true );
+					?>
+					<div class="mcp-tool-consent-row<?php echo $access_enabled ? '' : ' mcp-tool-consent-row-disabled'; ?>" data-tool-consent-row="<?php echo esc_attr( $action ); ?>" data-required-cap="<?php echo esc_attr( $required_cap ); ?>">
 						<div class="mcp-tool-consent-copy">
 							<strong><?php echo esc_html( $meta['label'] ); ?></strong>
 							<span><?php echo esc_html( $meta['description'] ); ?></span>
+							<span class="mcp-tool-consent-meta">
+								<span class="mcp-tool-consent-requires">
+									<?php
+									printf(
+										/* translators: %s: capability family label */
+										esc_html__( 'Requires: %s', 'axtolab-ai-connector' ),
+										esc_html( $required_label )
+									);
+									?>
+								</span>
+								<span class="mcp-tool-consent-access-note">
+									<?php esc_html_e( 'Unavailable because Tool Access is off.', 'axtolab-ai-connector' ); ?>
+								</span>
+							</span>
 						</div>
-						<fieldset class="mcp-consent-segment" aria-label="<?php echo esc_attr( $meta['label'] ); ?>">
+						<fieldset class="mcp-consent-segment" aria-label="<?php echo esc_attr( $meta['label'] ); ?>" <?php disabled( ! $access_enabled ); ?>>
 							<?php $this->render_tool_consent_choice( $action, 'always', $tier, __( 'Always allow', 'axtolab-ai-connector' ), 'dashicons-yes-alt', $connection_id ); ?>
 							<?php $this->render_tool_consent_choice( $action, 'ask', $tier, __( 'Ask first', 'axtolab-ai-connector' ), 'hand', $connection_id ); ?>
 							<?php $this->render_tool_consent_choice( $action, 'disallow', $tier, __( 'Block', 'axtolab-ai-connector' ), 'dashicons-dismiss', $connection_id ); ?>
@@ -1948,53 +1973,64 @@ JS;
 	/**
 	 * Consent actions rendered in the admin settings UI.
 	 *
-	 * @return array<string,array{label:string,description:string}>
+	 * @return array<string,array{label:string,description:string,requires:string}>
 	 */
 	private static function tool_consent_actions(): array {
 		return array(
 			'publish_content'              => array(
 				'label'       => __( 'Publish or schedule content', 'axtolab-ai-connector' ),
 				'description' => __( 'Posts, pages, and other configured content types.', 'axtolab-ai-connector' ),
+				'requires'    => 'publish',
 			),
 			'trash_content'                => array(
 				'label'       => __( 'Move content to trash', 'axtolab-ai-connector' ),
 				'description' => __( 'Soft-delete content while keeping it recoverable.', 'axtolab-ai-connector' ),
+				'requires'    => 'trash_restore',
 			),
 			'delete_content'               => array(
 				'label'       => __( 'Permanently delete content', 'axtolab-ai-connector' ),
 				'description' => __( 'Requires the permanent delete gate as well as this consent policy.', 'axtolab-ai-connector' ),
+				'requires'    => 'trash_restore',
 			),
 			'restore_content'              => array(
 				'label'       => __( 'Restore trashed content', 'axtolab-ai-connector' ),
 				'description' => __( 'Bring a trashed item back into the workflow.', 'axtolab-ai-connector' ),
+				'requires'    => 'trash_restore',
 			),
 			'restore_revision'             => array(
 				'label'       => __( 'Restore a revision', 'axtolab-ai-connector' ),
 				'description' => __( 'Replace current content with a previous revision.', 'axtolab-ai-connector' ),
+				'requires'    => 'trash_restore',
 			),
 			'woo_update_product_price'     => array(
 				'label'       => __( 'Update WooCommerce prices', 'axtolab-ai-connector' ),
 				'description' => __( 'Single-product regular or sale price changes.', 'axtolab-ai-connector' ),
+				'requires'    => 'woocommerce',
 			),
 			'woo_bulk_update_prices'       => array(
 				'label'       => __( 'Bulk update WooCommerce prices', 'axtolab-ai-connector' ),
 				'description' => __( 'One consent decision covers the whole bulk call.', 'axtolab-ai-connector' ),
+				'requires'    => 'woocommerce',
 			),
 			'woo_create_coupon'            => array(
 				'label'       => __( 'Create WooCommerce coupons', 'axtolab-ai-connector' ),
 				'description' => __( 'Discount codes, limits, and expiry settings.', 'axtolab-ai-connector' ),
+				'requires'    => 'woocommerce',
 			),
 			'generate_image_in_context'    => array(
 				'label'       => __( 'Generate contextual images', 'axtolab-ai-connector' ),
 				'description' => __( 'AI-generated images tied to a post or brand context.', 'axtolab-ai-connector' ),
+				'requires'    => 'image',
 			),
 			'batch_regenerate_post_images' => array(
 				'label'       => __( 'Batch regenerate post images', 'axtolab-ai-connector' ),
 				'description' => __( 'One consent decision covers all images in the batch.', 'axtolab-ai-connector' ),
+				'requires'    => 'image',
 			),
 			'delete_brand_kit'             => array(
 				'label'       => __( 'Delete brand kits', 'axtolab-ai-connector' ),
 				'description' => __( 'Remove saved image-generation brand guidance.', 'axtolab-ai-connector' ),
+				'requires'    => 'image',
 			),
 		);
 	}
@@ -3276,6 +3312,8 @@ JS;
 .mcp-danger-link:hover { color: #a02020; text-decoration: underline; }
 .mcp-connection-caps-row td { padding: 12px 16px; background: #f9f9f9; border-bottom: 1px solid #e0e0e0; }
 .mcp-conn-caps-editor { max-width: 980px; }
+.mcp-conn-access-section { margin-bottom: 10px; }
+.mcp-conn-section-title { margin: 0 0 4px; font-size: 13px; }
 .mcp-conn-caps-checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 8px; }
 .mcp-conn-cap-label { display: flex; align-items: center; gap: 4px; font-size: 13px; }
 .mcp-conn-cap-note { color: #888; font-size: 12px; }
@@ -3286,6 +3324,24 @@ JS;
 .mcp-conn-behavior-head .mcp-help-text { margin: 0; }
 .mcp-conn-behavior-saved { color: #00a32a; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity 0.3s; }
 .mcp-conn-behavior-list { max-width: 760px; }
+.mcp-tool-consent-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.mcp-tool-consent-requires {
+	display: inline-flex;
+	align-items: center;
+	min-height: 18px;
+	padding: 1px 7px;
+	border-radius: 3px;
+	background: #f0f6fc;
+	color: #1d4f73;
+	font-size: 11px;
+	font-weight: 600;
+}
+.mcp-tool-consent-access-note { display: none; color: #8a2424; font-size: 12px; }
+.mcp-tool-consent-row-disabled { background: #f6f7f7; }
+.mcp-tool-consent-row-disabled .mcp-tool-consent-copy { color: #646970; }
+.mcp-tool-consent-row-disabled .mcp-consent-segment { opacity: 0.42; }
+.mcp-tool-consent-row-disabled .mcp-tool-consent-requires { background: #f0f0f1; color: #646970; }
+.mcp-tool-consent-row-disabled .mcp-tool-consent-access-note { display: inline; }
 .mcp-conn-perms-btn { margin-right: 4px; }
 ';
 	}
@@ -3543,6 +3599,23 @@ JS;
         $('[data-connection="' + connId + '"].mcp-conn-cap-preset').val(connDetectPreset(connId));
     }
 
+    function connSyncBehaviorAccess(connId) {
+        var enabled = {};
+        $('[data-connection="' + connId + '"].mcp-conn-cap-checkbox:checked').each(function() {
+            enabled[$(this).data('cap')] = true;
+        });
+
+        $('.mcp-connection-caps-row[data-id="' + connId + '"] .mcp-tool-consent-row').each(function() {
+            var $row = $(this);
+            var required = $row.data('required-cap');
+            var allowed = !required || !!enabled[required];
+            $row.toggleClass('mcp-tool-consent-row-disabled', !allowed);
+            $row.attr('aria-disabled', allowed ? 'false' : 'true');
+            $row.find('.mcp-consent-segment').prop('disabled', !allowed);
+            $row.find('.mcp-conn-consent-radio').prop('disabled', !allowed);
+        });
+    }
+
     function connAutoSave(connId) {
         clearTimeout(connCapTimers[connId]);
         connCapTimers[connId] = setTimeout(function() {
@@ -3563,6 +3636,7 @@ JS;
         var $row = $(this).closest('.mcp-connection-row');
         var connId = $row.data('id');
         $('.mcp-connection-caps-row[data-id="' + connId + '"]').toggle();
+        connSyncBehaviorAccess(connId);
     });
 
     $(document).on('change', '.mcp-conn-cap-preset', function() {
@@ -3574,12 +3648,15 @@ JS;
             if ($(this).data('cap') === 'read') return;
             $(this).prop('checked', caps.indexOf($(this).data('cap')) !== -1);
         });
+        connUpdatePresetUI(connId);
+        connSyncBehaviorAccess(connId);
         connAutoSave(connId);
     });
 
     $(document).on('change', '.mcp-conn-cap-checkbox', function() {
         var connId = $(this).data('connection');
         connUpdatePresetUI(connId);
+        connSyncBehaviorAccess(connId);
         connAutoSave(connId);
     });
 
@@ -3602,12 +3679,15 @@ JS;
 
     $(document).on('change', '.mcp-conn-consent-radio', function() {
         var $radio = $(this);
+        if ($radio.prop('disabled') || $radio.closest('.mcp-tool-consent-row-disabled').length) return;
         connAutoSaveConsent($radio.data('connection'), $radio.data('action'), $radio.val());
     });
 
     // Init presets on load
     $('.mcp-connection-caps-row').each(function() {
-        connUpdatePresetUI($(this).data('id'));
+        var connId = $(this).data('id');
+        connUpdatePresetUI(connId);
+        connSyncBehaviorAccess(connId);
     });
 
     // ── Tab switching ─────────────────────────────────────────────────────────
