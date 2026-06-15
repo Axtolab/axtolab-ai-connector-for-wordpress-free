@@ -3010,8 +3010,8 @@ JS;
 	font-size: 13px;
 }
 .mcp-status-icon { font-size: 18px; flex-shrink: 0; }
-.mcp-status-label { font-weight: 600; flex: 0 0 auto; white-space: nowrap; }
-.mcp-status-detail { color: #666; font-size: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-status-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.mcp-status-detail { display: none; }
 @media (max-width: 782px) {
 	.mcp-gateway-checklist { align-items: stretch; flex-direction: column; }
 	.mcp-gateway-checklist h2 { margin-bottom: 2px; }
