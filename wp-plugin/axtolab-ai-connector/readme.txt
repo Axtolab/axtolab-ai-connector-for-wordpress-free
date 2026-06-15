@@ -8,24 +8,25 @@ Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Let AI agents read, draft, edit, and publish WordPress content safely. One-click Roll Back on every write.
+Let AI agents read, draft, edit, and publish WordPress with per-connection permissions, consent gates, and Roll Back.
 
 == Description ==
 
-Axtolab AI Connector for WordPress connects your WordPress site to AI agents like Claude, ChatGPT, and any MCP-compatible tool. AI agents can safely create drafts, edit content, manage media, work with taxonomies, and integrate with Yoast SEO — all through a secure, permission-controlled gateway with **Roll Back / Undo** on every write.
+Axtolab AI Connector for WordPress connects your WordPress site to AI agents like Claude, ChatGPT, and any MCP-compatible tool. AI agents can safely create drafts, edit content, manage media, work with taxonomies, and integrate with Yoast SEO — all through a secure gateway with per-connection tool access, sensitive-action consent, and **Roll Back / Undo** on every write.
 
-**How it works:** The plugin adds a REST API gateway to your WordPress site. A lightweight MCP server runs on your local machine and translates AI tool calls into WordPress REST requests. The plugin enforces permissions, validates requests, captures every write into a Roll Back / Undo changelog, and logs actions.
+**How it works:** The plugin adds a REST API gateway to your WordPress site. A lightweight MCP server runs on your local machine and translates AI tool calls into WordPress REST requests. The plugin enforces per-connection permissions and allow / ask first / block consent for sensitive actions, validates requests, captures every write into a Roll Back / Undo changelog, and logs actions.
 
 = Key Features =
 
 * **Roll Back / Undo on every write** — every AI-driven change captures a before/after snapshot. Revert any tool call with one click from the Logs & Roll Back admin page.
+* **Sensitive-action consent** — choose whether publishing, trash/delete/restore, WooCommerce price/coupon updates, and AI image actions run automatically, ask first, or are blocked for each connection.
 * **Content Management** — Create, edit, and manage posts, pages, and custom post types. Clone existing content as drafts. View and restore revisions. Generate shareable preview links.
 * **Media Library** — Upload images from URL, local file, or drag-and-drop portal. Search and browse existing media. Set featured images. Insert, replace, and remove inline images.
 * **WooCommerce Tools** — When WooCommerce is active, list products and orders, update product prices, bulk-adjust prices, and create guarded coupons with Roll Back capture.
 * **Stock Photos** — Search and import free stock photos from Unsplash and Pexels with automatic attribution.
 * **Yoast SEO** — Read SEO and readability scores. Update focus keyphrase, SEO title, and meta description. Preview rendered meta tags.
 * **Authors & Taxonomies** — Assign authors from an allowlist. Create and assign categories, tags, and custom taxonomy terms.
-* **Per-connection privilege model** — every MCP connection authenticates as a WordPress user via Application Password. The connection's capability set determines which AI tools can be called; the user's WP role determines which objects they can act on. Both layers must allow an action for it to succeed. The plugin never creates WordPress users — admins create the Application Password under their own (or a dedicated) WordPress profile and paste it into the connection wizard. Confirmation tokens required for publish, trash, and restore operations. Allowlist-driven content type and taxonomy controls. Rate limiting on authentication endpoints.
+* **Per-connection privilege model** — every MCP connection authenticates as a WordPress user via Application Password. The connection's capability set determines which AI tools can be called; the user's WP role determines which objects they can act on. Both layers must allow an action for it to succeed. The plugin never creates WordPress users — admins create the Application Password under their own (or a dedicated) WordPress profile and paste it into the connection wizard. Sensitive-action behavior controls can require approval or block actions after the tool permission check passes. Allowlist-driven content type and taxonomy controls. Rate limiting on authentication endpoints.
 * **Two authentication methods** — Application Passwords (for Desktop AI clients) and OAuth 2.1 with PKCE (for Web AI clients like ChatGPT and Claude Web).
 * **Upload Portal** — Drag-and-drop media uploads with time-limited tokens. No WordPress login required for the upload session.
 
