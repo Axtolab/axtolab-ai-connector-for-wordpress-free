@@ -1741,20 +1741,21 @@ JS;
 		<div class="mcp-gateway-card mcp-tool-permissions-card" id="mcp-tool-permissions">
 			<h2><?php esc_html_e( 'Tool Permissions', 'axtolab-ai-connector' ); ?></h2>
 			<p class="description" style="max-width: 820px;">
-				<?php esc_html_e( 'Connection permissions decide which tool families an AI client can see. Consent decides what happens when an allowed tool tries to publish, delete, restore, change prices, or run another sensitive action.', 'axtolab-ai-connector' ); ?>
+				<?php esc_html_e( 'Connection tool families decide which categories of tools a connection can use. Sensitive-action consent is a second gate that decides whether an allowed publish, delete, price, or image action runs automatically, asks first, or is blocked.', 'axtolab-ai-connector' ); ?>
 			</p>
 
+			<h3 class="mcp-permission-section-heading"><?php esc_html_e( 'Connection tool families', 'axtolab-ai-connector' ); ?></h3>
 			<div class="mcp-permission-grid">
 				<?php $this->render_connection_permission_card( 'oauth', __( 'OAuth connections', 'axtolab-ai-connector' ), $oauth_caps, $capability_defs ); ?>
 			</div>
 
 			<div class="mcp-tool-consent-panel">
 				<div class="mcp-tool-consent-heading">
-					<h3><?php esc_html_e( 'Consent policy', 'axtolab-ai-connector' ); ?></h3>
+					<h3><?php esc_html_e( 'Sensitive-action consent', 'axtolab-ai-connector' ); ?></h3>
 					<span class="mcp-tool-consent-saved" id="mcp-tool-consent-saved"><?php esc_html_e( 'Saved', 'axtolab-ai-connector' ); ?></span>
 				</div>
 				<p class="description">
-					<?php esc_html_e( 'Choose whether each sensitive action is blocked, asks for approval, or always runs after the connection permission check passes.', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'After a connection has the required tool family, choose what each sensitive action should do.', 'axtolab-ai-connector' ); ?>
 				</p>
 				<div class="mcp-tool-consent-list">
 					<?php foreach ( self::tool_consent_actions() as $action => $meta ) : ?>
@@ -1826,11 +1827,17 @@ JS;
 	 * @param string $tier   Tier value.
 	 * @param string $active Active tier.
 	 * @param string $label  Accessible label.
-	 * @param string $icon   Dashicon class.
+	 * @param string $icon   Dashicon class or custom icon marker.
 	 */
 	private function render_tool_consent_choice( string $action, string $tier, string $active, string $label, string $icon ): void {
+		$tooltip = self::tool_consent_choice_tooltip( $tier );
 		?>
-		<label class="mcp-consent-choice mcp-consent-choice-<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( $label ); ?>">
+		<label
+			class="mcp-consent-choice mcp-consent-choice-<?php echo esc_attr( $tier ); ?>"
+			title="<?php echo esc_attr( $tooltip ); ?>"
+			data-tooltip="<?php echo esc_attr( $tooltip ); ?>"
+			aria-label="<?php echo esc_attr( $tooltip ); ?>"
+		>
 			<input type="radio"
 				class="mcp-tool-consent-radio"
 				name="mcp_tool_consent_<?php echo esc_attr( $action ); ?>"
@@ -1839,12 +1846,44 @@ JS;
 				<?php checked( $active, $tier ); ?>
 			/>
 			<?php if ( 'hand' === $icon ) : ?>
-				<span class="mcp-consent-hand" aria-hidden="true">&#9995;</span>
+				<?php $this->render_tool_consent_hand_icon(); ?>
 			<?php else : ?>
 				<span class="dashicons <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span>
 			<?php endif; ?>
-			<span class="screen-reader-text"><?php echo esc_html( $label ); ?></span>
+			<span class="screen-reader-text"><?php echo esc_html( $tooltip ); ?></span>
 		</label>
+		<?php
+	}
+
+	/**
+	 * Tooltip copy for consent segment controls.
+	 *
+	 * @param string $tier Consent tier value.
+	 * @return string
+	 */
+	private static function tool_consent_choice_tooltip( string $tier ): string {
+		switch ( $tier ) {
+			case 'always':
+				return __( 'Always allow: run automatically after connection permissions pass.', 'axtolab-ai-connector' );
+			case 'ask':
+				return __( 'Ask first: pause and ask for approval before this action runs.', 'axtolab-ai-connector' );
+			case 'disallow':
+				return __( 'Block: never allow this action, even when the connection has the tool family.', 'axtolab-ai-connector' );
+			default:
+				return __( 'Choose the consent behavior for this sensitive action.', 'axtolab-ai-connector' );
+		}
+	}
+
+	/**
+	 * Render the Icons8 stop-hand icon used for "Ask first".
+	 *
+	 * @return void
+	 */
+	private function render_tool_consent_hand_icon(): void {
+		?>
+		<svg class="mcp-consent-svg-icon mcp-consent-hand" viewBox="0 0 50 50" focusable="false" aria-hidden="true">
+			<path d="M25 0C22.5386 0 21 2.0762 21 4v.5957C20.3675 4.2374 19.6882 4 19 4c-1.9238 0-3.8715 1.5434-3.998 3.9473A1.0001 1.0001 0 0 0 15 8v12.6113C14.1969 19.734 13.2314 19 12 19c-1.1284 0-2.1014.6226-2.5273 1.4414C9.0467 21.2602 9 22.1419 9 23v10.918c0 4.396 1.3095 8.4105 3.8711 11.3457C15.4327 48.1989 19.2523 50 24 50h8c4.9455 0 9-4.0545 9-9V12c0-.7476-.0267-1.8799-.5508-2.9609C39.9251 7.9581 38.7095 7 37 7c-.7877 0-1.4412.2394-2 .5645V7c0-1.519-.253-2.745-.957-3.6602C33.339 2.4247 32.2 2 31 2c-.9094 0-1.6356.2894-2.2559.6797C28.2248 1.2342 26.8963 0 25 0zm0 2c1.3386 0 2 1.1238 2 2v18a1.0001 1.0001 0 0 0 2 0V6c0-.5333.1425-1.0584.416-1.3984C29.6896 4.2615 30.0819 4 31 4c.8 0 1.161.1757 1.457.5605C32.753 4.9454 33 5.719 33 7v17a1.0001 1.0001 0 0 0 2 0V12c0-.6524.0737-1.5189.3496-2.0879C35.6255 9.3431 35.9095 9 37 9s1.3745.3431 1.6504.9121C38.9263 10.4811 39 11.3476 39 12v29c0 3.8545-3.1455 7-7 7h-8c-4.2523 0-7.4327-1.5432-9.6211-4.0508C12.1905 41.4417 11 37.9169 11 33.918V23c0-.7359.099-1.354.2461-1.6367C11.3932 21.0806 11.4204 21 12 21c.5 0 1.3112.4989 1.9492 1.3496C14.5872 23.2003 15 24.3333 15 25v7a1.0001 1.0001 0 1 0 2 0V8.0488C17.0759 6.6564 18.1249 6 19 6c.4619 0 .9945.1781 1.3691.5039C20.7438 6.8297 21 7.2667 21 8v15a1.0001 1.0001 0 0 0 2 0V4c0-.8762.6614-2 2-2z" />
+		</svg>
 		<?php
 	}
 
@@ -2932,11 +2971,14 @@ JS;
 
 /* Visible tool permissions */
 .mcp-tool-permissions-card { max-width: 1100px; }
+.mcp-permission-section-heading {
+	margin: 18px 0 10px;
+	font-size: 14px;
+}
 .mcp-permission-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 	gap: 16px;
-	margin-top: 16px;
 }
 .mcp-permission-box {
 	border: 1px solid #dcdcde;
@@ -3035,12 +3077,63 @@ JS;
 	pointer-events: none;
 }
 .mcp-consent-choice .dashicons,
-.mcp-consent-choice .mcp-consent-hand {
+.mcp-consent-choice .mcp-consent-svg-icon {
 	width: 20px;
 	height: 20px;
 	font-size: 20px;
 	line-height: 20px;
 	text-align: center;
+}
+.mcp-consent-choice .mcp-consent-svg-icon {
+	display: block;
+	fill: currentColor;
+}
+.mcp-consent-choice:focus-within {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+.mcp-consent-choice::after {
+	position: absolute;
+	bottom: calc(100% + 8px);
+	left: 50%;
+	z-index: 1000;
+	width: max-content;
+	max-width: 260px;
+	padding: 7px 9px;
+	border-radius: 6px;
+	background: #1d2327;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.35;
+	text-align: left;
+	white-space: normal;
+	box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+	content: attr(data-tooltip);
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(-50%, 4px);
+	transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.mcp-consent-choice-always::after {
+	left: 0;
+	transform: translateY(4px);
+}
+.mcp-consent-choice-disallow::after {
+	right: 0;
+	left: auto;
+	transform: translateY(4px);
+}
+.mcp-consent-choice:hover::after,
+.mcp-consent-choice:focus-within::after {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+.mcp-consent-choice-always:hover::after,
+.mcp-consent-choice-always:focus-within::after,
+.mcp-consent-choice-disallow:hover::after,
+.mcp-consent-choice-disallow:focus-within::after {
+	transform: translateY(0);
 }
 .mcp-consent-choice:has(input:checked) {
 	background: #646970;
