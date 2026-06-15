@@ -1,5 +1,5 @@
 {
-  "manifest_version": "0.2",
+  "manifest_version": "0.3",
   "name": "axtolab-ai-connector",
   "display_name": "Axtolab AI Connector for WordPress",
   "version": "1.0.3",
@@ -11,6 +11,12 @@
   "icon": "icon.png",
   "license": "GPL-2.0-or-later",
   "keywords": ["wordpress", "mcp", "claude", "content-management", "editorial"],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
   "tools_generated": true,
   "server": {
     "type": "node",
