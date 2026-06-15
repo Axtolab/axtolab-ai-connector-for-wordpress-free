@@ -1434,11 +1434,6 @@ JS;
 			</p>
 		</div>
 
-		<?php if ( 0 === $count ) : ?>
-			<p class="mcp-help-text">
-				<?php esc_html_e( 'No clients are connected yet. Add one from the Desktop AI Clients or Web Clients tab above.', 'axtolab-ai-connector' ); ?>
-			</p>
-		<?php else : ?>
 			<table class="mcp-connections-table" id="mcp-connections-table">
 				<thead>
 					<tr>
@@ -1560,6 +1555,14 @@ JS;
 							</td>
 						</tr>
 					<?php endforeach; ?>
+					<?php if ( 0 === $count ) : ?>
+						<tr class="mcp-connections-empty-row">
+							<td colspan="7">
+								<strong><?php esc_html_e( 'No active connections', 'axtolab-ai-connector' ); ?></strong>
+								<span><?php esc_html_e( 'Add one from Desktop AI Clients or Web Clients; it will appear here with its permissions and behavior controls.', 'axtolab-ai-connector' ); ?></span>
+							</td>
+						</tr>
+					<?php endif; ?>
 				</tbody>
 			</table>
 
@@ -1573,13 +1576,14 @@ JS;
 					);
 					?>
 					</span>
-				&mdash;
-				<a href="#" id="mcp-revoke-all-link" class="mcp-danger-link">
-					<?php esc_html_e( 'Revoke All Connections', 'axtolab-ai-connector' ); ?>
-				</a>
+				<?php if ( $count > 0 ) : ?>
+					<span class="mcp-connections-footer-separator">&mdash;</span>
+					<a href="#" id="mcp-revoke-all-link" class="mcp-danger-link">
+						<?php esc_html_e( 'Revoke All Connections', 'axtolab-ai-connector' ); ?>
+					</a>
+				<?php endif; ?>
 			</p>
 			<p id="mcp-revoke-message" class="mcp-feedback" aria-live="polite"></p>
-		<?php endif; ?>
 		<?php
 	}
 
@@ -3358,6 +3362,9 @@ JS;
 .mcp-connections-table td { padding: 10px; border-bottom: 1px solid #f0f0f1; vertical-align: middle; }
 .mcp-connections-table tbody tr:hover { background: #f9f9f9; }
 .mcp-connections-table tbody tr.mcp-conn-fading { opacity: 0; transition: opacity 0.4s ease; }
+.mcp-connections-empty-row td { padding: 18px 10px; color: #646970; background: #fbfbfc; }
+.mcp-connections-empty-row strong { display: block; margin-bottom: 4px; color: #1d2327; }
+.mcp-connections-empty-row span { display: block; max-width: 720px; }
 .mcp-conn-label { max-width: 260px; }
 .mcp-conn-label-text { display: inline-block; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .mcp-conn-label-input { width: 220px; font-size: 13px; padding: 3px 6px; }
@@ -3542,16 +3549,24 @@ JS;
             cfg.actions.revokeConnection,
             { connection_id: connId },
             function (data) {
-                $row.addClass('mcp-conn-fading');
+                var $capsRow = $('.mcp-connection-caps-row[data-id="' + connId + '"]');
+                $row.add($capsRow).addClass('mcp-conn-fading');
                 setTimeout(function () {
+                    $capsRow.remove();
                     $row.remove();
-                    // Update count or show empty state.
-                    var remaining = $('#mcp-connections-table tbody tr').length;
+                    var remaining = $('#mcp-connections-table tbody tr.mcp-connection-row').length;
                     if (remaining === 0) {
-                        window.location.reload();
-                    } else {
-                        $('#mcp-conn-count').text(remaining + ' active connection' + (remaining === 1 ? '' : 's'));
+                        $('#mcp-connections-table tbody').html(
+                            '<tr class="mcp-connections-empty-row">' +
+                                '<td colspan="7">' +
+                                    '<strong>No active connections</strong>' +
+                                    '<span>Add one from Desktop AI Clients or Web Clients; it will appear here with its permissions and behavior controls.</span>' +
+                                '</td>' +
+                            '</tr>'
+                        );
+                        $('.mcp-connections-footer-separator, #mcp-revoke-all-link').remove();
                     }
+                    $('#mcp-conn-count').text(remaining + ' active connection' + (remaining === 1 ? '' : 's'));
                 }, 400);
             },
             function (errMsg) {
