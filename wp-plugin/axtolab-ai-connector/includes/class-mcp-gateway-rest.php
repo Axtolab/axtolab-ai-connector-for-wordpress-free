@@ -1446,6 +1446,24 @@ final class Axtolab_AI_Connector_REST {
 	private static $fallback_connection_id = null;
 
 	/**
+	 * Verify a normalised plaintext Application Password against a stored hash.
+	 *
+	 * @param string $password   Plaintext password, already normalised.
+	 * @param string $hash       Stored hash from get_user_application_passwords().
+	 * @param int    $wp_user_id The user the password belongs to.
+	 * @return bool
+	 */
+	private static function verify_app_password_hash( $password, $hash, $wp_user_id ) {
+		if ( method_exists( 'WP_Application_Passwords', 'check_password' ) ) {
+			return (bool) WP_Application_Passwords::check_password( $password, $hash );
+		}
+		if ( function_exists( 'wp_verify_fast_hash' ) && 0 === strpos( $hash, '$generic$' ) ) {
+			return (bool) wp_verify_fast_hash( $password, $hash );
+		}
+		return (bool) wp_check_password( $password, $hash, $wp_user_id );
+	}
+
+	/**
 	 * Resolve the connection ID from the Authorization header as a fallback.
 	 *
 	 * The application_password_did_authenticate hook may not fire if a
@@ -1488,7 +1506,7 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		$parts    = explode( ':', $decoded, 2 );
-		$password = $parts[1];
+		$password = preg_replace( '/[^a-z\d]/i', '', $parts[1] );
 
 		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
 			return null;
@@ -1500,7 +1518,8 @@ final class Axtolab_AI_Connector_REST {
 		}
 
 		foreach ( $passwords as $item ) {
-			if ( wp_check_password( $password, $item['password'], $current_user_id ) ) {
+			$hash = isset( $item['password'] ) ? (string) $item['password'] : '';
+			if ( $hash && self::verify_app_password_hash( $password, $hash, $current_user_id ) ) {
 				// Only treat this as an MCP connection if it's in our
 				// registry — App Passwords created by the same user for
 				// other tools must not get the MCP capability surface.
@@ -4317,7 +4336,12 @@ final class Axtolab_AI_Connector_REST {
 	 * Return the capability groups and allowed tools for the current connection.
 	 */
 	public static function handle_connection_capabilities( WP_REST_Request $request ): WP_REST_Response {
-		$connection_id = Axtolab_AI_Connector_Connections::get_current_connection_id();
+		$auth_method   = self::detect_caller_auth_method();
+		$connection_id = self::get_effective_connection_id();
+
+		if ( ! $connection_id && 'oauth' === $auth_method ) {
+			$connection_id = Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID;
+		}
 
 		if ( ! $connection_id ) {
 			// Cannot determine connection (e.g., basic auth without app password UUID).

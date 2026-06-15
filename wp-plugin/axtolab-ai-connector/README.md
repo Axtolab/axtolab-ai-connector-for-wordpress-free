@@ -10,7 +10,7 @@ Let AI agents safely write, edit, and manage your WordPress site. This plugin pr
 
 ## Installation
 
-1. Download `axtolab-ai-connector-1.0.2.zip`
+1. Download `axtolab-ai-connector-1.0.3.zip`
 2. In WordPress admin: Plugins → Add New → Upload Plugin → select the zip
 3. Activate the plugin
 4. Connect your AI client (see Authentication below)
@@ -75,7 +75,7 @@ Navigate to **Settings → AI Connector** to configure:
 
 - **Desktop AI Clients tab** — install the .mcpb extension and run the inline "+ Add new connection" App Password wizard
 - **Web Clients tab** — enable Remote AI Access and OAuth 2.1 for ChatGPT / Claude Web (the OAuth-issued Bearer token is the sole credential for the MCP-over-HTTP transport)
-- **Existing connections** card — list, rename, revoke, and re-permission existing MCP connections
+- **Connection Manager tab** — list, rename, revoke, and configure tool access and sensitive-action behavior per MCP connection
 - **Image Providers** — API keys for Google Imagen, OpenAI, Unsplash, Pexels
 - **Revoke All** — clear all MCP connections (App Passwords + OAuth)
 

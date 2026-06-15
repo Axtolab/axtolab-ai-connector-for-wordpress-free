@@ -4,7 +4,7 @@ Tags: ai, mcp, claude, chatgpt, automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -230,10 +230,10 @@ All API keys are stored encrypted using AES-256-CBC with WordPress security salt
 
 1. AI Connector setup page with desktop AI client quick connect and connection status.
 2. Logs & Roll Back admin page where AI-driven writes appear for review and revert.
-3. Connection wizard — paste an Application Password and the wizard returns the wmcp1_... token to paste into the AI client's extension settings.
+3. Connection wizard — paste an Application Password, choose the client label, and set the starting tool capabilities.
 4. Web client setup tab for ChatGPT, Claude Web, and MCP-compatible clients.
 5. Image Providers tab for stock-photo and AI image provider configuration.
-6. Connection capabilities tab for choosing what each AI client can do.
+6. Connection Manager permissions screen showing Tool Access plus the sensitive-action behavior list with the Ask first tooltip.
 
 == Support ==
 
@@ -245,6 +245,15 @@ All API keys are stored encrypted using AES-256-CBC with WordPress security salt
 The same support entry points are also surfaced inside wp-admin: a "Need help?" footer on every Axtolab settings page, and "Settings · Support" / "Email support · WordPress.org forum · Docs" rows on the Plugins admin row for this plugin.
 
 == Changelog ==
+
+= 1.0.3 =
+Permission and consent behavior now line up across the admin UI and the MCP tool surface.
+
+* **Improved:** Connection Manager now owns per-connection tool families and sensitive-action behavior, making the activation/behavior split clearer for each AI client.
+* **Improved:** MCP clients now only see tools allowed by the active connection's tool-family permissions.
+* **Improved:** `wp_get_my_capabilities` now reports the active connection's actual tool families and allowed tool list.
+* **Fixed:** Application Password fallback resolution now supports newer WordPress password hashes, keeping per-connection permissions accurate when the auth hook is bypassed.
+* **Fixed:** The connection wizard's "Configure this connection" button now opens the Connection Manager reliably after creating a token.
 
 = 1.0.2 =
 WooCommerce tools are now included in the free connector.
@@ -277,6 +286,9 @@ Highlights:
 * **Submission readiness pass** — feature settings stand alone (no inline upsells), all third-party services disclosed in the External Services section, the `.mcpb` Claude Desktop installer is hosted as a GitHub Release asset and linked from the setup page.
 
 == Upgrade Notice ==
+
+= 1.0.3 =
+Aligns Connection Manager permissions, MCP tool visibility, and sensitive-action consent behavior for safer per-connection control.
 
 = 1.0.2 =
 Adds guarded WooCommerce MCP tools for products, orders, prices, and coupons while keeping the WordPress minimum at 6.2.
