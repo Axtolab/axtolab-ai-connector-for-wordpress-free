@@ -1722,9 +1722,15 @@ final class Axtolab_AI_Connector_REST {
 		$settings    = get_option( 'axtolab_ai_connector_settings', array() );
 
 		if ( 'oauth' === $auth_method ) {
-			$capabilities = isset( $settings['oauth_capabilities'] )
-				? (array) $settings['oauth_capabilities']
-				: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
+			$saved_caps   = get_option(
+				Axtolab_AI_Connector_Connections::CAPABILITIES_PREFIX . Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID,
+				null
+			);
+			$capabilities = is_array( $saved_caps )
+				? $saved_caps
+				: ( isset( $settings['oauth_capabilities'] ) && is_array( $settings['oauth_capabilities'] )
+					? $settings['oauth_capabilities']
+					: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET );
 			$note         = 'OAuth connection. Capability groups can be changed by an administrator under WordPress → Axtolab → AI Connector → Connections.';
 		} else {
 			// Application Password / direct REST: no per-connection filter.

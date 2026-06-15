@@ -138,7 +138,6 @@ class Axtolab_AI_Connector_MCP_Transport {
 		'seo',
 		'image',
 		'upload_portal',
-		'ai_actions',
 		'woocommerce',
 	);
 
@@ -1580,7 +1579,15 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 */
 	private static function get_allowed_tools(): array {
 		$settings     = get_option( 'axtolab_ai_connector_settings', array() );
-		$capabilities = $settings['oauth_capabilities'] ?? Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
+		$saved_caps   = get_option(
+			Axtolab_AI_Connector_Connections::CAPABILITIES_PREFIX . Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID,
+			null
+		);
+		$capabilities = is_array( $saved_caps )
+			? $saved_caps
+			: ( isset( $settings['oauth_capabilities'] ) && is_array( $settings['oauth_capabilities'] )
+				? $settings['oauth_capabilities']
+				: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET );
 
 		if ( ! in_array( 'read', $capabilities, true ) ) {
 			$capabilities[] = 'read';

@@ -723,6 +723,13 @@ class Axtolab_AI_Connector_OAuth {
 				'auth_method'  => 'oauth',
 			)
 		);
+		$initial_capabilities = isset( $settings['oauth_capabilities'] ) && is_array( $settings['oauth_capabilities'] )
+			? $settings['oauth_capabilities']
+			: Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET;
+		Axtolab_AI_Connector_Connections::set_capabilities(
+			Axtolab_AI_Connector_Connections::OAUTH_CONNECTION_ID,
+			$initial_capabilities
+		);
 
 		$response = new WP_REST_Response(
 			array(

@@ -1089,7 +1089,7 @@ JS;
 
 				<p class="mcp-field-label"><?php esc_html_e( 'Step 2: Add a new connection', 'axtolab-ai-connector' ); ?></p>
 				<p class="mcp-help-text">
-					<?php esc_html_e( 'Each AI client connects with its own Application Password, created in your WordPress profile. The wizard below walks you through it; the resulting connection appears in the "Existing connections" card at the bottom of the page.', 'axtolab-ai-connector' ); ?>
+					<?php esc_html_e( 'Each AI client connects with its own Application Password, created in your WordPress profile. The wizard below walks you through it; the resulting connection appears in the Connection Manager tab.', 'axtolab-ai-connector' ); ?>
 				</p>
 				<p>
 					<button type="button" class="button button-primary" id="mcp-wizard-open-btn" aria-controls="mcp-wizard-panel" aria-expanded="false">
@@ -1125,7 +1125,7 @@ JS;
 					</p>
 					<ul style="margin:6px 0 0 18px; padding:0;">
 						<li><?php esc_html_e( 'The OAuth token authenticates as the WordPress user who approved the request (typically the site admin, but could be a dedicated user you set up for AI access). That user\'s WordPress role sets the upper bound of what the AI can do at the per-object level (per-post / per-media / per-term).', 'axtolab-ai-connector' ); ?></li>
-						<li><?php esc_html_e( 'Connection capabilities (set on the OAuth connection in the "Existing connections" card after you approve) — a further filter within that upper bound, deciding which AI tools the connection is allowed to call.', 'axtolab-ai-connector' ); ?></li>
+						<li><?php esc_html_e( 'Initial connection permissions below set the starting tool access for new OAuth/web-client connections. After a client is connected, edit its live permissions in the Connection Manager tab.', 'axtolab-ai-connector' ); ?></li>
 						<li><?php esc_html_e( 'Both layers must allow an action for it to succeed; the connection capabilities can only restrict, never grant beyond what the user can already do.', 'axtolab-ai-connector' ); ?></li>
 					</ul>
 				</div>
@@ -1172,6 +1172,9 @@ JS;
 									);
 									?>
 							</p>
+							<p class="mcp-help-text">
+								<?php esc_html_e( 'Manage this active web-client connection in the Connection Manager tab. The initial permissions below apply to the next OAuth authorization.', 'axtolab-ai-connector' ); ?>
+							</p>
 							<button type="button" id="mcp-revoke-oauth-btn" class="button button-secondary" style="color: #d63638;">
 								<?php esc_html_e( 'Revoke OAuth Token', 'axtolab-ai-connector' ); ?>
 							</button>
@@ -1185,13 +1188,13 @@ JS;
 					<!-- OAuth capabilities — collapsible -->
 					<details class="mcp-cap-details" id="mcp-oauth-cap-details">
 						<summary>
-							<?php esc_html_e( 'Capabilities', 'axtolab-ai-connector' ); ?>
+							<?php esc_html_e( 'Initial permissions for new OAuth connections', 'axtolab-ai-connector' ); ?>
 							<span class="mcp-cap-badge" id="mcp-oauth-cap-badge"></span>
 							<span class="mcp-cap-saved" id="mcp-oauth-saved"><?php esc_html_e( 'Saved!', 'axtolab-ai-connector' ); ?></span>
 						</summary>
 						<div class="mcp-cap-inner">
 							<p class="mcp-help-text" style="margin-top:0;">
-								<?php esc_html_e( 'Control what this connection is allowed to do. Changes save automatically.', 'axtolab-ai-connector' ); ?>
+								<?php esc_html_e( 'Choose the starter preset for the next OAuth/web-client connection. Once a client is connected, manage its live permissions in the Connection Manager tab.', 'axtolab-ai-connector' ); ?>
 							</p>
 							<div style="margin-bottom: 10px;">
 								<select class="mcp-cap-preset" data-connection="oauth">
@@ -3631,9 +3634,9 @@ JS;
 
     // ── Per-connection permissions ─────────────────────────────────────────
     var connCapPresets = {
-        full_access:     ['read','create_edit','publish','trash_restore','media_manage','taxonomy','authors','seo','image','upload_portal','ai_actions','woocommerce'],
-        standard:        ['read','create_edit','publish','media_manage','taxonomy','authors','seo','image','upload_portal','ai_actions','woocommerce'],
-        draft_only:      ['read','create_edit','media_manage','taxonomy','seo','image','upload_portal','ai_actions'],
+        full_access:     ['read','create_edit','publish','trash_restore','media_manage','taxonomy','authors','seo','image','upload_portal','woocommerce'],
+        standard:        ['read','create_edit','publish','media_manage','taxonomy','authors','seo','image','upload_portal','woocommerce'],
+        draft_only:      ['read','create_edit','media_manage','taxonomy','seo','image','upload_portal'],
         read_only:       ['read'],
         content_manager: ['read','create_edit','publish','media_manage','taxonomy','authors','seo'],
         media_manager:   ['read','media_manage'],
@@ -3853,9 +3856,9 @@ JS;
     // ══════════════════════════════════════════════════════════════════════════
 
     var capPresets = {
-        standard:        ['read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'ai_actions', 'woocommerce'],
-        full_access:     ['read', 'create_edit', 'publish', 'trash_restore', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'ai_actions', 'woocommerce'],
-        draft_only:      ['read', 'create_edit', 'media_manage', 'taxonomy', 'seo', 'image', 'upload_portal', 'ai_actions'],
+        standard:        ['read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'woocommerce'],
+        full_access:     ['read', 'create_edit', 'publish', 'trash_restore', 'media_manage', 'taxonomy', 'authors', 'seo', 'image', 'upload_portal', 'woocommerce'],
+        draft_only:      ['read', 'create_edit', 'media_manage', 'taxonomy', 'seo', 'image', 'upload_portal'],
         content_manager: ['read', 'create_edit', 'publish', 'media_manage', 'taxonomy', 'authors', 'seo'],
         media_manager:   ['read', 'media_manage'],
         seo_specialist:  ['read', 'seo'],
