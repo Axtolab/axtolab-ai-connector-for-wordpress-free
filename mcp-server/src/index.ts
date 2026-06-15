@@ -86,7 +86,7 @@ async function main(): Promise<void> {
 
   const server = new McpServer({
     name: 'axtolab-ai-connector',
-    version: '1.0.3',
+    version: '1.0.4',
     description:
       'Axtolab AI Connector — proxies Claude tool calls to a WordPress site via the Axtolab AI Connector plugin.' +
       siteIndicator +

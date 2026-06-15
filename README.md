@@ -18,7 +18,7 @@
 
 | File | What it's for | Size | Direct download |
 |---|---|---|---|
-| 🔌 **`axtolab-ai-connector-1.0.3.zip`** | WordPress plugin — upload via WordPress Admin → Plugins → Add New → Upload Plugin | 201 KB | **[Download ZIP →](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases/latest/download/axtolab-ai-connector-1.0.3.zip)** |
+| 🔌 **`axtolab-ai-connector-1.0.3.zip`** | WordPress plugin — upload via WordPress Admin → Plugins → Add New → Upload Plugin | 201 KB | **[Download ZIP →](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases/download/v1.0.3/axtolab-ai-connector-1.0.3.zip)** |
 | 🖥️ **`axtolab-ai-connector.mcpb`** | Claude Desktop installer — double-click after the plugin is set up | 1.4 MB | **[Download .mcpb →](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases/latest/download/axtolab-ai-connector.mcpb)** |
 
 → See the [Releases page](https://github.com/Axtolab/axtolab-ai-connector-for-wordpress-free/releases) for full changelogs and SHA-256 checksums.

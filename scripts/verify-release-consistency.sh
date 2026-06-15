@@ -23,11 +23,6 @@ if [[ -z "$plugin_version" || -z "$manifest_version" || -z "$package_version" ||
   exit 1
 fi
 
-if [[ "$plugin_version" != "$manifest_version" ]]; then
-  echo "ERROR: Plugin version ($plugin_version) does not match manifest version ($manifest_version)." >&2
-  exit 1
-fi
-
 if [[ "$manifest_version" != "$package_version" ]]; then
   echo "ERROR: Manifest version ($manifest_version) does not match npm package version ($package_version)." >&2
   exit 1
@@ -73,7 +68,7 @@ with zipfile.ZipFile(mcpb_file) as archive:
 
 if bundled.get('version') != expected_version:
     raise SystemExit(
-        f"ERROR: bundled MCPB version ({bundled.get('version')}) does not match release version ({expected_version})."
+        f"ERROR: bundled MCPB version ({bundled.get('version')}) does not match MCPB source version ({expected_version})."
     )
 
 for key in ('name', 'display_name'):
@@ -163,4 +158,4 @@ if missing_in_bundle or extra_in_bundle:
 print(f'MCPB tool surface OK: {len(source_tools)} tools in sync')
 PY
 
-echo "Release consistency OK: version $plugin_version"
+echo "Release consistency OK: plugin version $plugin_version; MCPB version $manifest_version"
