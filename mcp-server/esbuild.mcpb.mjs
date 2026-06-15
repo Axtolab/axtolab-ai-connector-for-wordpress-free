@@ -25,11 +25,9 @@ import {
   readdirSync,
   statSync,
   readFileSync,
-  createWriteStream,
 } from 'fs'
 import { join, relative } from 'path'
 import { fileURLToPath } from 'url'
-import { createDeflateRaw } from 'zlib'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const MCPB_DIR = join(__dirname, 'dist', 'mcpb')
@@ -120,11 +118,10 @@ async function buildZip(sourceDir, outPath) {
     const zipPath = relPath.replace(/\\/g, '/')
     const nameBuffer = Buffer.from(zipPath, 'utf-8')
 
-    // Compress the data
-    const compressed = await deflateRaw(data)
-    const useCompression = compressed.length < data.length
-    const storedData = useCompression ? compressed : data
-    const method = useCompression ? 8 : 0 // 8 = deflate, 0 = store
+    // Store MCPB entries without compression. Claude Desktop 1.12603.1 can
+    // deadlock while previewing deflated MCPB entries near stream boundaries.
+    const storedData = data
+    const method = 0 // 0 = store
 
     // CRC32
     const crc = crc32(data)
@@ -202,18 +199,6 @@ async function buildZip(sourceDir, outPath) {
   writeFileSync(outPath, zipBuffer)
 }
 
-/** Promisified zlib.deflateRaw */
-function deflateRaw(data) {
-  return new Promise((resolve, reject) => {
-    const chunks = []
-    const deflater = createDeflateRaw()
-    deflater.on('data', (chunk) => chunks.push(chunk))
-    deflater.on('end', () => resolve(Buffer.concat(chunks)))
-    deflater.on('error', reject)
-    deflater.end(data)
-  })
-}
-
 /** CRC32 (standard ZIP CRC) */
 function crc32(buf) {
   let crc = 0xFFFFFFFF
@@ -234,6 +219,6 @@ const sizeKB = (size / 1024).toFixed(0)
 console.log(`✓ ${mcpbPath}`)
 console.log(`  Size: ${sizeKB} KB (${(size / 1024 / 1024).toFixed(2)} MB)`)
 
-if (size > 1_000_000) {
-  console.warn('⚠ Bundle is over 1MB — check that node_modules is not included')
+if (size > 5_000_000) {
+  console.warn('⚠ Stored MCPB is over 5MB — check that node_modules is not included')
 }
