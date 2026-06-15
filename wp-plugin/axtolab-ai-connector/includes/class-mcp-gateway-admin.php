@@ -2474,24 +2474,6 @@ JS;
 	}
 
 	/**
-	 * AJAX: Verify a pasted Application Password against the site's own REST API.
-	 *
-	 * The wizard's "Verify" button calls this. We make a Basic-auth GET against
-	 * `/wp-json/wp/v2/users/me` so WordPress's native Application Password
-	 * verification path runs end-to-end (no parallel password store, no
-	 * trust-on-paste shortcuts). On success we return the resolved user's id,
-	 * login, display name, role labels, and a non-blocking warning when the
-	 * underlying user has very limited capabilities (e.g. Subscriber).
-	 *
-	 * The plaintext App Password is read from $_POST and never persisted at
-	 * this step — it is only passed back to WordPress over loopback.
-	 *
-	 * Nonce: `{MENU_SLUG}-ajax`.
-	 *
-	 * @return void Sends JSON and exits.
-	 */
-
-	/**
 	 * Verify a normalised plaintext Application Password against a stored hash.
 	 *
 	 * Wraps WP_Application_Passwords::check_password() when present (WP 6.8+,
@@ -2526,6 +2508,92 @@ JS;
 		return (bool) wp_check_password( $password, $hash, $wp_user_id );
 	}
 
+	/**
+	 * Resolve the WordPress user and App Password UUID for wizard credentials.
+	 *
+	 * This mirrors WordPress core's Application Password normalisation and hash
+	 * verification without making a loopback HTTP request. Loopback verification
+	 * breaks in common Docker/local setups where the browser-facing localhost
+	 * port is not reachable from inside the WordPress container.
+	 *
+	 * @param string $username     WordPress user login.
+	 * @param string $app_password Plaintext Application Password.
+	 * @return array|WP_Error {
+	 *     @type WP_User $user         Resolved WordPress user.
+	 *     @type int     $user_id      User ID.
+	 *     @type string  $matched_uuid Matched Application Password UUID.
+	 * }
+	 */
+	private static function resolve_wizard_app_password( string $username, string $app_password ) {
+		if ( '' === $username ) {
+			return new WP_Error(
+				'missing_username',
+				__( 'Enter the WordPress username the Application Password belongs to.', 'axtolab-ai-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
+			return new WP_Error(
+				'app_passwords_unavailable',
+				__( 'Application Passwords are not available on this site.', 'axtolab-ai-connector' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$user = get_user_by( 'login', $username );
+		if ( ! $user instanceof WP_User ) {
+			return new WP_Error(
+				'invalid_credentials',
+				__( 'WordPress rejected the username + Application Password combination.', 'axtolab-ai-connector' ),
+				array( 'status' => 401 )
+			);
+		}
+
+		$normalised_password = preg_replace( '/[^a-z\d]/i', '', $app_password );
+		$passwords           = WP_Application_Passwords::get_user_application_passwords( (int) $user->ID );
+		$matched_uuid        = '';
+
+		if ( is_array( $passwords ) ) {
+			foreach ( $passwords as $pwd ) {
+				$uuid = isset( $pwd['uuid'] ) ? (string) $pwd['uuid'] : '';
+				$hash = isset( $pwd['password'] ) ? (string) $pwd['password'] : '';
+				if ( $uuid && $hash && self::verify_app_password_hash( $normalised_password, $hash, (int) $user->ID ) ) {
+					$matched_uuid = $uuid;
+					break;
+				}
+			}
+		}
+
+		if ( '' === $matched_uuid ) {
+			return new WP_Error(
+				'invalid_credentials',
+				__( 'WordPress rejected the username + Application Password combination.', 'axtolab-ai-connector' ),
+				array( 'status' => 401 )
+			);
+		}
+
+		return array(
+			'user'         => $user,
+			'user_id'      => (int) $user->ID,
+			'matched_uuid' => $matched_uuid,
+		);
+	}
+
+	/**
+	 * AJAX: Verify a pasted Application Password.
+	 *
+	 * The wizard's "Verify" button validates the credentials against
+	 * WordPress's own Application Password store without persisting the
+	 * plaintext. On success we return the resolved user's id, login, display
+	 * name, role labels, and a non-blocking warning when the underlying user
+	 * has very limited capabilities (e.g. Subscriber).
+	 *
+	 * Nonce: `{MENU_SLUG}-ajax`.
+	 *
+	 * @return void Sends JSON and exits.
+	 */
+
 	public function ajax_wizard_verify(): void {
 		check_ajax_referer( self::MENU_SLUG . '-ajax', 'nonce' );
 
@@ -2552,68 +2620,26 @@ JS;
 			wp_send_json_error( array( 'message' => __( 'Enter the WordPress username the Application Password belongs to.', 'axtolab-ai-connector' ) ), 400 );
 		}
 
-		// Round-trip through the site's own REST API so we exercise the
-		// standard wp_validate_application_password() code path.
-		$url = rest_url( 'wp/v2/users/me' );
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Standard HTTP Basic Auth header construction, not obfuscation.
-		$authorization = 'Basic ' . base64_encode( $username . ':' . $app_password );
-
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout'   => 10,
-				'sslverify' => false, // Loopback may be HTTP or self-signed.
-				'headers'   => array(
-					'Authorization' => $authorization,
-					'Accept'        => 'application/json',
-				),
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( array( 'message' => $response->get_error_message() ), 500 );
+		$resolved = self::resolve_wizard_app_password( $username, $app_password );
+		if ( is_wp_error( $resolved ) ) {
+			$status = is_array( $resolved->get_error_data() ) && isset( $resolved->get_error_data()['status'] )
+				? (int) $resolved->get_error_data()['status']
+				: 400;
+			wp_send_json_error( array( 'message' => $resolved->get_error_message() ), $status );
 		}
 
-		$code = (int) wp_remote_retrieve_response_code( $response );
-		$body = wp_remote_retrieve_body( $response );
-		$json = json_decode( $body, true );
-
-		if ( 200 !== $code || ! is_array( $json ) || empty( $json['id'] ) ) {
-			$message = is_array( $json ) && ! empty( $json['message'] )
-				? (string) $json['message']
-				: __( 'WordPress rejected the username + Application Password combination.', 'axtolab-ai-connector' );
-			wp_send_json_error( array( 'message' => $message ), 401 );
-		}
-
-		$user_id = (int) $json['id'];
-		$user    = get_user_by( 'id', $user_id );
-		if ( ! $user instanceof WP_User ) {
-			wp_send_json_error( array( 'message' => __( 'The resolved user could not be loaded.', 'axtolab-ai-connector' ) ), 500 );
-		}
+		$user_id      = (int) $resolved['user_id'];
+		$user         = $resolved['user'];
+		$matched_uuid = (string) $resolved['matched_uuid'];
 
 		// Check for App Password collisions against existing registered MCP connections.
-		// Mirror WordPress core's app-password normalisation + verification —
-		// see verify_app_password_hash() for why wp_check_password() alone is
-		// not enough on WP 6.8+ (it cannot read "$generic$" fast hashes).
-		$normalised_password = preg_replace( '/[^a-z\d]/i', '', $app_password );
-		$collision           = null;
-		$user_passwords      = class_exists( 'WP_Application_Passwords' )
-			? WP_Application_Passwords::get_user_application_passwords( $user_id )
-			: array();
-		if ( is_array( $user_passwords ) ) {
-			foreach ( $user_passwords as $pwd ) {
-				if ( ! self::verify_app_password_hash( $normalised_password, $pwd['password'], $user_id ) ) {
-					continue;
-				}
-				$existing = Axtolab_AI_Connector_Connections::get_by_uuid( $pwd['uuid'] );
-				if ( $existing ) {
-					$collision = array(
-						'connection_id' => $pwd['uuid'],
-						'label'         => isset( $existing['client_label'] ) ? $existing['client_label'] : '',
-					);
-				}
-				break;
-			}
+		$collision = null;
+		$existing  = Axtolab_AI_Connector_Connections::get_by_uuid( $matched_uuid );
+		if ( $existing ) {
+			$collision = array(
+				'connection_id' => $matched_uuid,
+				'label'         => isset( $existing['client_label'] ) ? $existing['client_label'] : '',
+			);
 		}
 
 		$role_labels = array();
@@ -2644,12 +2670,12 @@ JS;
 	/**
 	 * AJAX: Finalise the wizard and create the connection.
 	 *
-	 * Re-verifies the App Password against WordPress's REST API (so the
-	 * plaintext is never trusted from session state), then records the
-	 * connection in the registry with the resolved wp_user_id, capabilities,
-	 * and client metadata. Returns a wmcp1_ connection token built from the
-	 * same credentials so the admin can paste it into Claude Desktop / the
-	 * MCP client.
+	 * Re-verifies the App Password against WordPress's Application Password
+	 * store (so the plaintext is never trusted from session state), then
+	 * records the connection in the registry with the resolved wp_user_id,
+	 * capabilities, and client metadata. Returns a wmcp1_ connection token
+	 * built from the same credentials so the admin can paste it into Claude
+	 * Desktop / the MCP client.
 	 *
 	 * Nonce: `{MENU_SLUG}-ajax`.
 	 *
@@ -2682,73 +2708,17 @@ JS;
 			$username     = $current_user instanceof WP_User ? $current_user->user_login : '';
 		}
 
-		// Resolve the user via WordPress's own REST API + Application Password validation.
-		$url = rest_url( 'wp/v2/users/me' );
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Standard HTTP Basic Auth header construction, not obfuscation.
-		$authorization = 'Basic ' . base64_encode( $username . ':' . $app_password );
-
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout'   => 10,
-				'sslverify' => false,
-				'headers'   => array(
-					'Authorization' => $authorization,
-					'Accept'        => 'application/json',
-				),
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( array( 'message' => $response->get_error_message() ), 500 );
+		$resolved = self::resolve_wizard_app_password( $username, $app_password );
+		if ( is_wp_error( $resolved ) ) {
+			$status = is_array( $resolved->get_error_data() ) && isset( $resolved->get_error_data()['status'] )
+				? (int) $resolved->get_error_data()['status']
+				: 400;
+			wp_send_json_error( array( 'message' => $resolved->get_error_message() ), $status );
 		}
 
-		$code = (int) wp_remote_retrieve_response_code( $response );
-		$json = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( 200 !== $code || ! is_array( $json ) || empty( $json['id'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'WordPress rejected the username + Application Password combination.', 'axtolab-ai-connector' ) ), 401 );
-		}
-
-		$wp_user_id = (int) $json['id'];
-		$user       = get_user_by( 'id', $wp_user_id );
-		if ( ! $user instanceof WP_User ) {
-			wp_send_json_error( array( 'message' => __( 'The resolved user could not be loaded.', 'axtolab-ai-connector' ) ), 500 );
-		}
-
-		// Locate the UUID of the App Password we just verified by hashing
-		// against the user's stored App Passwords. WordPress does not return
-		// the UUID over /users/me, so we walk the list here.
-		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Application Passwords are not available on this site.', 'axtolab-ai-connector' ) ), 500 );
-		}
-
-		// Mirror WordPress core's wp_authenticate_application_password() exactly:
-		//   1. Strip non-alphanumerics from the pasted password (WP core does
-		//      this so the spaced display form "abcd EFGH 1234 ZYXW" and the
-		//      stripped form "abcdEFGH1234ZYXW" both validate).
-		//   2. Verify via WP_Application_Passwords::check_password(), which
-		//      dispatches to wp_verify_fast_hash() for WP 6.8+ "$generic$"
-		//      hashes and to wp_check_password() for legacy phpass hashes.
-		//      Calling wp_check_password() directly fails on the new fast-hash
-		//      format because it does not recognise the "$generic$" prefix —
-		//      which is why every comparison silently failed in 1.0.1 with
-		//      "Could not match the Application Password to a stored record".
-		$normalised_password = preg_replace( '/[^a-z\d]/i', '', $app_password );
-		$matched_uuid        = '';
-		$passwords           = WP_Application_Passwords::get_user_application_passwords( $wp_user_id );
-		if ( is_array( $passwords ) ) {
-			foreach ( $passwords as $pwd ) {
-				if ( self::verify_app_password_hash( $normalised_password, $pwd['password'], $wp_user_id ) ) {
-					$matched_uuid = $pwd['uuid'];
-					break;
-				}
-			}
-		}
-
-		if ( '' === $matched_uuid ) {
-			wp_send_json_error( array( 'message' => __( 'Could not match the Application Password to a stored record. Try again.', 'axtolab-ai-connector' ) ), 500 );
-		}
+		$wp_user_id   = (int) $resolved['user_id'];
+		$user         = $resolved['user'];
+		$matched_uuid = (string) $resolved['matched_uuid'];
 
 		// Sanitise client type against the known set.
 		$allowed_types = array( 'claude_desktop', 'cli', 'cowork', 'chatgpt', 'claude_web', 'other', 'unknown' );
