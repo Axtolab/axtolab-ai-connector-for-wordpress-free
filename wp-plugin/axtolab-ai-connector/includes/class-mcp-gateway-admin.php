@@ -540,13 +540,9 @@ class Axtolab_AI_Connector_Admin {
 				<?php esc_html_e( 'Connects Claude, ChatGPT, and AI agents to your WordPress site, safely.', 'axtolab-ai-connector' ); ?>
 			</p>
 
-			<div class="mcp-gateway-columns">
+			<?php $this->render_setup_checklist( $status ); ?>
 
-				<?php $this->render_setup_checklist( $status ); ?>
-
-				<?php $this->render_connect_claude_section( $status ); ?>
-
-			</div><!-- .mcp-gateway-columns -->
+			<?php $this->render_connect_claude_section( $status ); ?>
 
 			<?php $this->render_advanced_writes_section(); ?>
 
@@ -2967,7 +2963,6 @@ JS;
 		return '
 .mcp-gateway-wrap { max-width: 1100px; }
 .mcp-gateway-tagline { font-size: 14px; color: #666; margin-bottom: 24px; }
-.mcp-gateway-columns { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
 .mcp-gateway-card {
 	background: #fff;
 	border: 1px solid #c3c4c7;
@@ -2975,26 +2970,34 @@ JS;
 	padding: 24px;
 	margin-bottom: 24px;
 }
-.mcp-gateway-checklist { flex: 0 0 300px; }
-.mcp-gateway-connect   { flex: 1 1 400px; }
+.mcp-gateway-checklist { display: flex; align-items: center; gap: 16px; padding: 12px 16px; }
+.mcp-gateway-checklist h2 { flex: 0 0 auto; margin: 0; }
+.mcp-gateway-connect   { width: 100%; box-sizing: border-box; }
 .mcp-gateway-info      { clear: both; }
 .mcp-gateway-card h2   { margin-top: 0; font-size: 16px; }
 .mcp-gateway-card h3   { font-size: 14px; margin-bottom: 8px; }
 
 /* Status list */
-.mcp-gateway-status-list { list-style: none; margin: 0; padding: 0; }
+.mcp-gateway-status-list { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px; min-width: 0; list-style: none; margin: 0; padding: 0; }
 .mcp-gateway-status-list li {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 10px 0;
-	border-bottom: 1px solid #f0f0f1;
+	flex: 1 1 170px;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 1px solid #f0f0f1;
+	border-radius: 4px;
+	background: #f9f9f9;
 	font-size: 13px;
 }
-.mcp-gateway-status-list li:last-child { border-bottom: none; }
 .mcp-status-icon { font-size: 18px; flex-shrink: 0; }
-.mcp-status-label { font-weight: 600; flex: 1; }
-.mcp-status-detail { color: #666; font-size: 12px; }
+.mcp-status-label { font-weight: 600; flex: 0 0 auto; white-space: nowrap; }
+.mcp-status-detail { color: #666; font-size: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 782px) {
+	.mcp-gateway-checklist { align-items: stretch; flex-direction: column; }
+	.mcp-gateway-checklist h2 { margin-bottom: 2px; }
+}
 .status-ok   .mcp-status-icon { color: #46b450; }
 .status-warn .mcp-status-icon { color: #f0b849; }
 .status-error .mcp-status-icon { color: #dc3232; }
