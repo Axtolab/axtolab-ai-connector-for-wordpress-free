@@ -121,8 +121,35 @@ export function registerTools(context: ToolContext): void {
     syncImageGenerationToolVisibility();
   }
 
+  async function refreshCurrentConnectionPolicy(): Promise<void> {
+    const currentSite = siteManager.getCurrent();
+
+    try {
+      const capsResponse = await currentSite.client.getConnectionCapabilities();
+      currentSite.allowedTools = capsResponse.allowed_tools;
+      currentSite.allowedAuthorIds = capsResponse.allowed_author_ids ?? null;
+      currentSite.toolConsentPolicy = ToolConsentPolicy.normalize(capsResponse.tool_consent_policy);
+      currentSite.connectionCapabilityError = null;
+      syncToolVisibility();
+    } catch (error) {
+      if (error instanceof ToolError && error.code === 'free_multisite_disabled') {
+        currentSite.allowedTools = [];
+        currentSite.allowedAuthorIds = null;
+        currentSite.connectionCapabilityError = { code: error.code, message: error.message };
+        syncToolVisibility();
+      }
+      // Transient failures should not silently widen permissions. Keep the
+      // last known policy/visibility and let the actual tool call report any
+      // site connectivity or authorization error.
+    }
+  }
+
   async function runToolWithLimit(name: string, input: Record<string, unknown>, fn: () => Promise<unknown>) {
     try {
+      if (!BLOCKED_SITE_AVAILABLE_TOOLS.has(name)) {
+        await refreshCurrentConnectionPolicy();
+      }
+
       const { allowedTools, connectionCapabilityError } = siteManager.getCurrent()
       if (connectionCapabilityError && !BLOCKED_SITE_AVAILABLE_TOOLS.has(name)) {
         return respond({

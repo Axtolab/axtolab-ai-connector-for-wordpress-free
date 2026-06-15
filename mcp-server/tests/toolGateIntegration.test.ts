@@ -60,11 +60,19 @@ function makeSiteServices(options: {
   publishContent: () => Promise<Record<string, unknown>>;
 }): SiteServices {
   const config = makeConfig();
+  let services: SiteServices;
   const client = Object.assign(new PluginApiClient(config), {
     publishContent: options.publishContent,
+    getConnectionCapabilities: async () => ({
+      connection_id: "test-connection",
+      capabilities: [],
+      allowed_tools: services.allowedTools,
+      allowed_author_ids: services.allowedAuthorIds,
+      tool_consent_policy: services.toolConsentPolicy,
+    }),
   });
 
-  return {
+  services = {
     config,
     client,
     policy: new PolicyService(config),
@@ -73,6 +81,8 @@ function makeSiteServices(options: {
     allowedAuthorIds: null,
     connectionCapabilityError: null,
   };
+
+  return services;
 }
 
 async function callPublish(services: SiteServices, input: Record<string, unknown>) {
@@ -178,6 +188,40 @@ describe("connection capability and consent gates", () => {
     expect(result.data.published).toBe(true);
     expect(result.data.requires_confirmation).toBeUndefined();
     expect(publishCalls).toBe(1);
+  });
+
+  it("refreshes changed consent policy before the next tool call", async () => {
+    let publishCalls = 0;
+    const services = makeSiteServices({
+      publishTier: "always",
+      allowedTools: ["wp_publish_content"],
+      publishContent: async () => {
+        publishCalls += 1;
+        return { published: true };
+      },
+    });
+    const siteManager = new SiteManager(new Map([["example.com", services]]), "example.com");
+    const { server, handlers } = makeFakeServer();
+
+    registerTools({
+      server,
+      siteManager,
+      confirmations: new ConfirmationService(300),
+      rateLimiter: new RateLimiter(60, 1),
+      sessionImageStore: new SessionImageStore(),
+    });
+
+    services.toolConsentPolicy = ToolConsentPolicy.normalize({ publish_content: "ask" });
+
+    const handler = handlers.get("wp_publish_content");
+    expect(handler).toBeDefined();
+
+    const result = JSON.parse((await handler!({ id: 12, content_type: "post" })).content[0].text);
+
+    expect(result.success).toBe(true);
+    expect(result.data.requires_confirmation).toBe(true);
+    expect(result.data.confirmation_payload.action).toBe("publish_content");
+    expect(publishCalls).toBe(0);
   });
 
   it("blocks disallowed sensitive actions even when the tool family is enabled", async () => {
