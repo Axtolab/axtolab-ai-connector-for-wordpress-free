@@ -881,7 +881,7 @@ JS;
 			<ul class="mcp-gateway-status-list">
 
 				<?php // 1. Plugin Active — always green once we're rendering. ?>
-				<li class="status-ok">
+				<li class="status-ok"<?php echo self::setup_status_tooltip_attrs( __( 'Plugin Active', 'axtolab-ai-connector' ), 'v' . AXTOLAB_AI_CONNECTOR_VERSION ); ?>>
 					<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
 					<span class="mcp-status-label"><?php esc_html_e( 'Plugin Active', 'axtolab-ai-connector' ); ?></span>
 					<span class="mcp-status-detail">v<?php echo esc_html( AXTOLAB_AI_CONNECTOR_VERSION ); ?></span>
@@ -889,13 +889,13 @@ JS;
 
 				<?php // 2. App Passwords supported. ?>
 				<?php if ( class_exists( 'WP_Application_Passwords' ) && wp_is_application_passwords_available() ) : ?>
-					<li class="status-ok">
+					<li class="status-ok"<?php echo self::setup_status_tooltip_attrs( __( 'Application Passwords', 'axtolab-ai-connector' ), __( 'Available', 'axtolab-ai-connector' ) ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'Application Passwords', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail"><?php esc_html_e( 'Available', 'axtolab-ai-connector' ); ?></span>
 					</li>
 				<?php else : ?>
-					<li class="status-error">
+					<li class="status-error"<?php echo self::setup_status_tooltip_attrs( __( 'Application Passwords', 'axtolab-ai-connector' ), __( 'Disabled — enable Application Passwords on this site to use the AI Connector.', 'axtolab-ai-connector' ) ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-dismiss"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'Application Passwords', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail"><?php esc_html_e( 'Disabled — enable Application Passwords on this site to use the AI Connector.', 'axtolab-ai-connector' ); ?></span>
@@ -904,21 +904,24 @@ JS;
 
 				<?php // 3. AI Client Connected. ?>
 				<?php if ( $status['active_app_passwords'] > 0 ) : ?>
-					<li class="status-ok">
+					<?php
+					$active_connections_detail = sprintf(
+						/* translators: %d: number of active connections */
+						_n( '%d active connection', '%d active connections', $status['active_app_passwords'], 'axtolab-ai-connector' ),
+						(int) $status['active_app_passwords']
+					);
+					?>
+					<li class="status-ok"<?php echo self::setup_status_tooltip_attrs( __( 'AI Client Connected', 'axtolab-ai-connector' ), $active_connections_detail ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'AI Client Connected', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail">
 							<?php
-							printf(
-								/* translators: %d: number of active connections */
-								esc_html( _n( '%d active connection', '%d active connections', $status['active_app_passwords'], 'axtolab-ai-connector' ) ),
-								(int) $status['active_app_passwords']
-							);
+							echo esc_html( $active_connections_detail );
 							?>
 						</span>
 					</li>
 				<?php else : ?>
-					<li class="status-warn">
+					<li class="status-warn"<?php echo self::setup_status_tooltip_attrs( __( 'AI Client Connected', 'axtolab-ai-connector' ), __( 'Waiting for authorization', 'axtolab-ai-connector' ) ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-clock"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'AI Client Connected', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail"><?php esc_html_e( 'Waiting for authorization', 'axtolab-ai-connector' ); ?></span>
@@ -948,13 +951,13 @@ JS;
 
 					if ( $discovery_ok ) :
 						?>
-					<li class="status-ok">
+					<li class="status-ok"<?php echo self::setup_status_tooltip_attrs( __( 'OAuth Discovery', 'axtolab-ai-connector' ), __( 'Endpoints reachable', 'axtolab-ai-connector' ) ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'OAuth Discovery', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail"><?php esc_html_e( 'Endpoints reachable', 'axtolab-ai-connector' ); ?></span>
 					</li>
 				<?php else : ?>
-					<li class="status-warn">
+					<li class="status-warn"<?php echo self::setup_status_tooltip_attrs( __( 'OAuth Discovery', 'axtolab-ai-connector' ), __( 'Endpoints not reachable — check REST API accessibility', 'axtolab-ai-connector' ) ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-warning"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'OAuth Discovery', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail"><?php esc_html_e( 'Endpoints not reachable — check REST API accessibility', 'axtolab-ai-connector' ); ?></span>
@@ -992,13 +995,13 @@ JS;
 					}
 					if ( 'ok' === $wellknown_status ) :
 						?>
-					<li class="status-ok">
+					<li class="status-ok"<?php echo self::setup_status_tooltip_attrs( __( 'Host-root .well-known discovery', 'axtolab-ai-connector' ), __( 'RFC 8414/9728 standard paths reachable', 'axtolab-ai-connector' ) ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-yes-alt"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'Host-root .well-known discovery', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail"><?php esc_html_e( 'RFC 8414/9728 standard paths reachable', 'axtolab-ai-connector' ); ?></span>
 					</li>
 				<?php else : ?>
-					<li class="status-warn">
+					<li class="status-warn"<?php echo self::setup_status_tooltip_attrs( __( 'Host-root .well-known discovery', 'axtolab-ai-connector' ), __( 'Blocked by your web server (likely nginx). MCP clients still work via the resource-metadata flow — this is non-blocking. For full RFC 8414/9728 compliance, ask your host to forward /.well-known/oauth-* paths to PHP. See the FAQ in the plugin readme for an nginx config snippet.', 'axtolab-ai-connector' ) ); ?>>
 						<span class="mcp-status-icon dashicons dashicons-info"></span>
 						<span class="mcp-status-label"><?php esc_html_e( 'Host-root .well-known discovery', 'axtolab-ai-connector' ); ?></span>
 						<span class="mcp-status-detail">
@@ -1013,6 +1016,21 @@ JS;
 			</ul><!-- .mcp-gateway-status-list -->
 		</div><!-- .mcp-gateway-checklist -->
 		<?php
+	}
+
+	/**
+	 * Build accessible tooltip attributes for compact setup status items.
+	 *
+	 * @param string $label  Status label.
+	 * @param string $detail Status detail.
+	 * @return string HTML attributes, including a leading space.
+	 */
+	private static function setup_status_tooltip_attrs( string $label, string $detail ): string {
+		$tooltip = trim( wp_strip_all_tags( $label . ': ' . $detail ) );
+		return sprintf(
+			' title="%1$s" aria-label="%1$s"',
+			esc_attr( $tooltip )
+		);
 	}
 
 	/**
