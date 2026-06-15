@@ -150,6 +150,7 @@ add_action( 'init', 'axtolab_ai_connector_load_textdomain', 1 );
 
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-response.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-config.php';
+require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-tool-consent-policy.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-policy.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-seo-adapter.php';
 require_once AXTOLAB_AI_CONNECTOR_DIR . 'includes/class-mcp-gateway-free-gates.php';

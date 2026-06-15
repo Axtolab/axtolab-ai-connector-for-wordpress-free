@@ -5,6 +5,7 @@ import { ConfirmationService } from "../services/confirmationService.js";
 import { RateLimiter } from "../services/rateLimiter.js";
 import { SessionImageStore } from "../services/sessionImageStore.js";
 import { SiteManager } from "../services/siteManager.js";
+import { ToolConsentPolicy } from "../services/toolConsentPolicy.js";
 import { serializeError, ToolError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { toHtml, type ContentFormat } from "../services/markdownService.js";
@@ -24,6 +25,11 @@ function respond(data: unknown): { content: Array<{ type: string; text: string }
   return {
     content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
   };
+}
+
+function withoutConfirmationToken(input: Record<string, unknown>): Record<string, unknown> {
+  const { confirmation_token: _confirmationToken, ...rest } = input;
+  return rest;
 }
 
 function requireConfirmation(
@@ -138,6 +144,33 @@ export function registerTools(context: ToolContext): void {
       }
 
       rateLimiter.consume();
+
+      const consent = ToolConsentPolicy.contextForTool(name, input, site().toolConsentPolicy);
+      if (consent.tier === "disallow") {
+        return respond({
+          success: false,
+          tool: name,
+          error: {
+            code: "tool_consent_disallowed",
+            message: `The consent policy blocks ${consent.action}.`,
+          },
+        });
+      }
+
+      if (consent.tier === "ask") {
+        const gate = requireConfirmation(
+          confirmations,
+          consent.action,
+          consent.key,
+          input,
+          typeof input.confirmation_token === "string" ? input.confirmation_token : undefined
+        );
+
+        if (!gate.confirmed) {
+          return respond({ success: true, tool: name, data: gate.payload });
+        }
+      }
+
       const result = await fn();
       return respond({ success: true, tool: name, data: result });
     } catch (error) {
@@ -262,6 +295,7 @@ export function registerTools(context: ToolContext): void {
     {
       taxonomy: z.string().min(1),
       term_id: z.number().int().positive(),
+      confirmation_token: z.string().optional(),
     },
     async (args: { taxonomy: string; term_id: number }) =>
       runToolWithLimit("wp_delete_term", args, async () =>
@@ -359,10 +393,11 @@ export function registerTools(context: ToolContext): void {
       id: z.number().int().positive(),
       regular_price: z.number().nonnegative().optional(),
       sale_price: z.number().nonnegative().optional().describe("Set 0 to remove the sale price"),
+      confirmation_token: z.string().optional(),
     },
-    async (args: { id: number; regular_price?: number; sale_price?: number }) =>
+    async (args: { id: number; regular_price?: number; sale_price?: number; confirmation_token?: string }) =>
       runToolWithLimit("wp_woo_update_product_price", args, async () => {
-        const { id, ...body } = args;
+        const { id, confirmation_token: _confirmationToken, ...body } = args;
         return site().client.wooUpdateProductPrice(id, body);
       })
   );
@@ -374,10 +409,11 @@ export function registerTools(context: ToolContext): void {
       product_ids: z.array(z.number().int().positive()).min(1).max(100),
       percent_change: z.number().optional(),
       set_to: z.number().nonnegative().optional(),
+      confirmation_token: z.string().optional(),
     },
     async (args: Record<string, unknown>) =>
       runToolWithLimit("wp_woo_bulk_update_prices", args, async () =>
-        site().client.wooBulkUpdatePrices(args as Record<string, unknown>)
+        site().client.wooBulkUpdatePrices(withoutConfirmationToken(args))
       )
   );
 
@@ -417,10 +453,11 @@ export function registerTools(context: ToolContext): void {
       product_categories: z.array(z.number().int().positive()).optional().describe("Restrict coupon to WooCommerce product category term IDs"),
       expires_at: z.string().optional(),
       usage_limit: z.number().int().positive().optional(),
+      confirmation_token: z.string().optional(),
     },
     async (args: Record<string, unknown>) =>
       runToolWithLimit("wp_woo_create_coupon", args, async () =>
-        site().client.wooCreateCoupon(args as Record<string, unknown>)
+        site().client.wooCreateCoupon(withoutConfirmationToken(args))
       )
   );
 
@@ -799,6 +836,7 @@ export function registerTools(context: ToolContext): void {
     "Delete a menu item by ID. Requires edit_theme_options.",
     {
       item_id: z.number().int().positive(),
+      confirmation_token: z.string().optional(),
     },
     async (rawInput: Record<string, unknown>) =>
       runToolWithLimit("wp_delete_menu_item", rawInput, async () =>
@@ -945,6 +983,7 @@ export function registerTools(context: ToolContext): void {
     {
       term_id: z.number().int().positive(),
       meta_key: z.string().min(1).describe("Meta key to delete"),
+      confirmation_token: z.string().optional(),
     },
     async (rawInput: Record<string, unknown>) =>
       runToolWithLimit("wp_delete_term_meta", rawInput, async () =>
@@ -1144,19 +1183,6 @@ export function registerTools(context: ToolContext): void {
         const contentType = String(rawInput.content_type);
         site().policy.assertAllowedContentType(contentType);
 
-        const key = `${contentType}:${id}:publish`;
-        const gate = requireConfirmation(
-          confirmations,
-          "publish_content",
-          key,
-          rawInput,
-          rawInput.confirmation_token as string | undefined
-        );
-
-        if (!gate.confirmed) {
-          return gate.payload;
-        }
-
         return site().client.publishContent(id, {
           content_type: contentType,
           date: rawInput.date,
@@ -1178,20 +1204,24 @@ export function registerTools(context: ToolContext): void {
         const contentType = String(rawInput.content_type);
         site().policy.assertAllowedContentType(contentType);
 
-        const key = `${contentType}:${id}:trash`;
-        const gate = requireConfirmation(
-          confirmations,
-          "trash_content",
-          key,
-          rawInput,
-          rawInput.confirmation_token as string | undefined
-        );
-
-        if (!gate.confirmed) {
-          return gate.payload;
-        }
-
         return site().client.trashContent(id);
+      })
+  );
+
+  server.tool(
+    "wp_delete_content",
+    "Permanently delete content (confirmation required). Requires permanent delete to be enabled in connector settings.",
+    {
+      id: z.number().int().positive(),
+      content_type: ContentTypeSchema,
+      confirmation_token: z.string().optional(),
+    },
+    async (rawInput: Record<string, unknown>) =>
+      runToolWithLimit("wp_delete_content", rawInput, async () => {
+        const id = Number(rawInput.id);
+        const contentType = String(rawInput.content_type);
+        site().policy.assertAllowedContentType(contentType);
+        return site().client.deleteContent(id, contentType);
       })
   );
 
@@ -1208,19 +1238,6 @@ export function registerTools(context: ToolContext): void {
         const id = Number(rawInput.id);
         const contentType = String(rawInput.content_type);
         site().policy.assertAllowedContentType(contentType);
-
-        const key = `${contentType}:${id}:restore`;
-        const gate = requireConfirmation(
-          confirmations,
-          "restore_content",
-          key,
-          rawInput,
-          rawInput.confirmation_token as string | undefined
-        );
-
-        if (!gate.confirmed) {
-          return gate.payload;
-        }
 
         return site().client.restoreContent(id);
       })
@@ -1255,19 +1272,6 @@ export function registerTools(context: ToolContext): void {
         const revisionId = Number(rawInput.revision_id);
         const contentType = String(rawInput.content_type);
         site().policy.assertAllowedContentType(contentType);
-
-        const key = `${contentType}:${id}:revision:${revisionId}`;
-        const gate = requireConfirmation(
-          confirmations,
-          "restore_revision",
-          key,
-          rawInput,
-          rawInput.confirmation_token as string | undefined
-        );
-
-        if (!gate.confirmed) {
-          return gate.payload;
-        }
 
         return site().client.restoreRevision(id, revisionId);
       })
@@ -1598,6 +1602,7 @@ export function registerTools(context: ToolContext): void {
     {
       id: z.number().int().positive().describe("Post ID"),
       key: z.string().min(1).describe("Meta key to delete"),
+      confirmation_token: z.string().optional(),
     },
     async (rawInput: Record<string, unknown>) =>
       runToolWithLimit("wp_delete_post_meta", rawInput, async () =>
@@ -1672,6 +1677,7 @@ export function registerTools(context: ToolContext): void {
     "Permanently delete a comment.",
     {
       id: z.number().int().positive(),
+      confirmation_token: z.string().optional(),
     },
     async (rawInput: Record<string, unknown>) =>
       runToolWithLimit("wp_delete_comment", rawInput, async () =>
@@ -2014,11 +2020,13 @@ export function registerTools(context: ToolContext): void {
 
         let newAllowedTools: string[] | null = null;
         let newAllowedAuthorIds: number[] | null = null;
+        let newToolConsentPolicy = ToolConsentPolicy.defaults();
         let connectionCapabilityError: { code: string; message: string } | null = null;
         try {
           const capsResponse = await newClient.getConnectionCapabilities();
           newAllowedTools = capsResponse.allowed_tools;
           newAllowedAuthorIds = capsResponse.allowed_author_ids ?? null;
+          newToolConsentPolicy = ToolConsentPolicy.normalize(capsResponse.tool_consent_policy);
         } catch (error) {
           if (error instanceof ToolError && error.code === 'free_multisite_disabled') {
             newAllowedTools = [];
@@ -2035,6 +2043,7 @@ export function registerTools(context: ToolContext): void {
           config: newConfig,
           client: newClient,
           policy: new PolicyService(newConfig),
+          toolConsentPolicy: newToolConsentPolicy,
           allowedTools: newAllowedTools,
           allowedAuthorIds: newAllowedAuthorIds,
           connectionCapabilityError,

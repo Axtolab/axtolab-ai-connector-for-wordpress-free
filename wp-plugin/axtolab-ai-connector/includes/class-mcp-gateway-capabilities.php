@@ -63,6 +63,7 @@ class Axtolab_AI_Connector_Capabilities {
 		),
 		'trash_restore' => array(
 			'wp_trash_content',
+			'wp_delete_content',
 			'wp_restore_content',
 			'wp_restore_revision',
 			'wp_delete_comment',

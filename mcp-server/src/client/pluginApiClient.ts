@@ -140,6 +140,10 @@ export class PluginApiClient {
     return this.request("POST", `/content/${id}/trash`, { body: {} });
   }
 
+  public async deleteContent(id: number, contentType: string): Promise<Record<string, unknown>> {
+    return this.request("DELETE", `/content/${id}`, { query: { content_type: contentType } });
+  }
+
   public async restoreContent(id: number): Promise<ContentRecord> {
     return this.request("POST", `/content/${id}/restore`, { body: {} });
   }
@@ -364,6 +368,7 @@ export class PluginApiClient {
     capabilities: string[]
     allowed_tools: string[]
     allowed_author_ids: number[] | null
+    tool_consent_policy?: Record<string, "disallow" | "ask" | "always">
   }> {
     return this.request("GET", "/connection/capabilities");
   }

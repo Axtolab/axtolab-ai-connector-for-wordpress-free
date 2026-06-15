@@ -557,38 +557,23 @@ class Axtolab_AI_Connector_MCP_Transport {
 	 * @throws Exception On dispatch or execution failure.
 	 */
 	private static function dispatch_tool( string $tool_name, array $args ) {
-		// Handle destructive tools with confirmation flow.
-		$destructive_tools = array(
-			'wp_publish_content'  => array(
-				'action'  => 'publish_content',
-				'key_tpl' => '{ct}:{id}:publish',
-			),
-			'wp_trash_content'    => array(
-				'action'  => 'trash_content',
-				'key_tpl' => '{ct}:{id}:trash',
-			),
-			'wp_restore_content'  => array(
-				'action'  => 'restore_content',
-				'key_tpl' => '{ct}:{id}:restore',
-			),
-			'wp_restore_revision' => array(
-				'action'  => 'restore_revision',
-				'key_tpl' => '{ct}:{id}:revision:{rev}',
-			),
-		);
+		$consent = Axtolab_AI_Connector_Tool_Consent_Policy::context_for_tool( $tool_name, $args );
 
-		if ( isset( $destructive_tools[ $tool_name ] ) ) {
-			$conf = $destructive_tools[ $tool_name ];
-			$ct   = $args['content_type'] ?? 'post';
-			$id   = intval( $args['id'] ?? 0 );
-			$rev  = intval( $args['revision_id'] ?? 0 );
-			$key  = str_replace( array( '{ct}', '{id}', '{rev}' ), array( $ct, $id, $rev ), $conf['key_tpl'] );
+		if ( Axtolab_AI_Connector_Tool_Consent_Policy::TIER_DISALLOW === $consent['tier'] ) {
+			throw new Exception( 'Tool action blocked by the consent policy.', 403 );
+		}
 
+		if ( Axtolab_AI_Connector_Tool_Consent_Policy::TIER_ASK === $consent['tier'] ) {
 			if ( empty( $args['confirmation_token'] ) ) {
-				return Axtolab_AI_Connector_Confirmation::issue( $conf['action'], $key, $args );
+				return Axtolab_AI_Connector_Confirmation::issue( $consent['action'], $consent['key'], $args );
 			}
 
-			Axtolab_AI_Connector_Confirmation::consume( $args['confirmation_token'], $conf['action'], $key );
+			Axtolab_AI_Connector_Confirmation::consume( $args['confirmation_token'], $consent['action'], $consent['key'] );
+		}
+
+		$extension_result = apply_filters( 'axtolab_ai_core_mcp_tool_dispatch', null, $tool_name, $args );
+		if ( null !== $extension_result ) {
+			return $extension_result;
 		}
 
 		$request = self::build_rest_request( $tool_name, $args );
@@ -698,6 +683,11 @@ class Axtolab_AI_Connector_MCP_Transport {
 
 			case 'wp_trash_content':
 				$request = new WP_REST_Request( 'POST', $ns . '/content/' . intval( $args['id'] ?? 0 ) . '/trash' );
+				$request->set_param( 'content_type', $args['content_type'] ?? 'post' );
+				return $request;
+
+			case 'wp_delete_content':
+				$request = new WP_REST_Request( 'DELETE', $ns . '/content/' . intval( $args['id'] ?? 0 ) );
 				$request->set_param( 'content_type', $args['content_type'] ?? 'post' );
 				return $request;
 
@@ -1063,6 +1053,21 @@ class Axtolab_AI_Connector_MCP_Transport {
 					'confirmation_token' => array( 'type' => 'string' ),
 				),
 				'required'   => array( 'id', 'content_type' ),
+			),
+			'annotations' => array( 'destructiveHint' => true ),
+		);
+
+		$tools[] = array(
+			'name'        => 'wp_delete_content',
+			'description' => 'Permanently delete content. Requires confirmation_token and permanent delete enabled in connector settings.',
+			'inputSchema' => array(
+				'type'       => 'object',
+				'properties' => array(
+					'id'                 => array( 'type' => 'integer' ),
+					'content_type'       => $ct_enum,
+					'confirmation_token' => array( 'type' => 'string' ),
+				),
+				'required' => array( 'id', 'content_type' ),
 			),
 			'annotations' => array( 'destructiveHint' => true ),
 		);
@@ -1557,7 +1562,7 @@ class Axtolab_AI_Connector_MCP_Transport {
 			),
 		);
 
-		return $tools;
+		return apply_filters( 'axtolab_ai_core_register_tools', $tools );
 	}
 
 	// =========================================================================

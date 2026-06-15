@@ -17,6 +17,7 @@ async function main(): Promise<void> {
   const { PluginApiClient } = await import('./client/pluginApiClient.js')
   const { ToolError } = await import('./utils/errors.js')
   const { PolicyService } = await import('./services/policyService.js')
+  const { ToolConsentPolicy } = await import('./services/toolConsentPolicy.js')
   const { SiteManager } = await import('./services/siteManager.js')
   const { ConfirmationService } = await import(
     './services/confirmationService.js'
@@ -29,7 +30,7 @@ async function main(): Promise<void> {
   // Build services for each connected site
   const siteServicesMap = new Map<
     string,
-    { config: import('./config.js').Config; client: InstanceType<typeof PluginApiClient>; policy: InstanceType<typeof PolicyService>; allowedTools: string[] | null; allowedAuthorIds: number[] | null; connectionCapabilityError: { code: string; message: string } | null }
+    { config: import('./config.js').Config; client: InstanceType<typeof PluginApiClient>; policy: InstanceType<typeof PolicyService>; toolConsentPolicy: import('./services/toolConsentPolicy.js').ToolConsentPolicyMap; allowedTools: string[] | null; allowedAuthorIds: number[] | null; connectionCapabilityError: { code: string; message: string } | null }
   >()
 
   for (const [hostname, config] of configMap) {
@@ -38,11 +39,13 @@ async function main(): Promise<void> {
 
     let allowedTools: string[] | null = null
     let allowedAuthorIds: number[] | null = null
+    let toolConsentPolicy = ToolConsentPolicy.defaults()
     let connectionCapabilityError: { code: string; message: string } | null = null
     try {
       const capsResponse = await client.getConnectionCapabilities()
       allowedTools = capsResponse.allowed_tools
       allowedAuthorIds = capsResponse.allowed_author_ids ?? null
+      toolConsentPolicy = ToolConsentPolicy.normalize(capsResponse.tool_consent_policy)
     } catch (error) {
       if (error instanceof ToolError && error.code === 'free_multisite_disabled') {
         // Free multisite connections are an intentional fail-closed state.
@@ -62,6 +65,7 @@ async function main(): Promise<void> {
       config,
       client,
       policy,
+      toolConsentPolicy,
       allowedTools,
       allowedAuthorIds,
       connectionCapabilityError,
@@ -87,7 +91,7 @@ async function main(): Promise<void> {
       'Axtolab AI Connector — proxies Claude tool calls to a WordPress site via the Axtolab AI Connector plugin.' +
       siteIndicator +
       ' Always call wp_getting_started first. Follow the IDEATE → DRAFT → PACKAGE workflow. ' +
-      'Destructive actions (publish, trash, restore) require a confirmation token.',
+      'Destructive actions (publish, trash, delete, restore) follow the site consent policy.',
   })
 
   // Global services (not per-site)

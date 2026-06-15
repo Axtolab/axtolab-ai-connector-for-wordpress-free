@@ -150,6 +150,11 @@ final class Axtolab_AI_Connector_REST {
 					'callback'            => array( __CLASS__, 'handle_update_content' ),
 					'permission_callback' => array( __CLASS__, 'permission_edit_post' ),
 				),
+				array(
+					'methods'             => 'DELETE',
+					'callback'            => array( __CLASS__, 'handle_delete_content' ),
+					'permission_callback' => array( __CLASS__, 'permission_delete_post' ),
+				),
 			)
 		);
 
@@ -1670,6 +1675,7 @@ final class Axtolab_AI_Connector_REST {
 			'allowed_taxonomies'    => array_values( $config['allowed_taxonomies'] ),
 			'solutions_root_slug'   => $config['solutions_root_slug'],
 			'yoast_allowed_paths'   => array_values( $config['yoast_allowed_paths'] ),
+			'tool_consent_policy'   => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy(),
 			'theme'                 => $theme_context,
 		);
 
@@ -3092,6 +3098,51 @@ final class Axtolab_AI_Connector_REST {
 		return Axtolab_AI_Connector_Response::success( Axtolab_AI_Connector_Policy::to_content_record( $updated ), 200, self::audit_id() );
 	}
 
+	public static function handle_delete_content( WP_REST_Request $request ): WP_REST_Response {
+		$denied = self::require_tool_capability( 'wp_delete_content' );
+		if ( $denied ) {
+			return $denied;
+		}
+
+		$config = Axtolab_AI_Connector_Config::get();
+		if ( empty( $config['allow_permanent_delete'] ) ) {
+			return Axtolab_AI_Connector_Response::error( 'permanent_delete_disabled', 'Permanent delete is disabled in connector settings.', 403, self::audit_id() );
+		}
+
+		$post = self::get_post_from_request( $request, true );
+		if ( is_wp_error( $post ) ) {
+			return self::from_wp_error( $post );
+		}
+
+		$can_delete = Axtolab_AI_Connector_Policy::can_delete_content( $post->ID );
+		if ( is_wp_error( $can_delete ) ) {
+			return self::from_wp_error( $can_delete );
+		}
+
+		$before_snapshot = Axtolab_AI_Connector_Snapshots::capture_post( $post->ID );
+		$content_type    = $post->post_type;
+		$title           = get_the_title( $post );
+		$deleted         = wp_delete_post( $post->ID, true );
+
+		if ( ! $deleted ) {
+			return Axtolab_AI_Connector_Response::error( 'delete_failed', 'Could not permanently delete post.', 500, self::audit_id() );
+		}
+
+		self::record_change( 'post', (string) $post->ID, Axtolab_AI_Connector_Changelog::ACTION_DELETE, 'wp_delete_content', $before_snapshot, null );
+
+		return Axtolab_AI_Connector_Response::success(
+			array(
+				'id'           => $post->ID,
+				'content_type' => $content_type,
+				'title'        => $title,
+				'deleted'      => true,
+				'permanent'    => true,
+			),
+			200,
+			self::audit_id()
+		);
+	}
+
 	public static function handle_restore_content( WP_REST_Request $request ): WP_REST_Response {
 		$denied = self::require_tool_capability( 'wp_restore_content' );
 		if ( $denied ) {
@@ -4275,6 +4326,7 @@ final class Axtolab_AI_Connector_REST {
 					'capabilities'       => Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET,
 					'allowed_tools'      => array_values( Axtolab_AI_Connector_Capabilities::tools_for( Axtolab_AI_Connector_Capabilities::DEFAULT_PRESET ) ),
 					'allowed_author_ids' => null,
+					'tool_consent_policy' => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy(),
 				)
 			);
 		}
@@ -4289,6 +4341,7 @@ final class Axtolab_AI_Connector_REST {
 				'capabilities'       => array_values( $capabilities ),
 				'allowed_tools'      => array_values( $allowed_tools ),
 				'allowed_author_ids' => $allowed_author_ids,
+				'tool_consent_policy' => Axtolab_AI_Connector_Tool_Consent_Policy::exported_policy(),
 			)
 		);
 	}

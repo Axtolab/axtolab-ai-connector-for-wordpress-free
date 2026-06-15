@@ -103,7 +103,8 @@ $GLOBALS['image_gate_test_options'] = array(
 	),
 );
 
-function apply_filters( $hook, $value ) {
+function apply_filters( $hook, $value, ...$args ) {
+	unset( $args );
 	return array_key_exists( $hook, $GLOBALS['image_gate_test_filters'] ) ? $GLOBALS['image_gate_test_filters'][ $hook ] : $value;
 }
 
@@ -111,8 +112,18 @@ function get_option( $key, $default = false ) {
 	return array_key_exists( $key, $GLOBALS['image_gate_test_options'] ) ? $GLOBALS['image_gate_test_options'][ $key ] : $default;
 }
 
+function update_option( $key, $value, $autoload = null ) {
+	unset( $autoload );
+	$GLOBALS['image_gate_test_options'][ $key ] = $value;
+	return true;
+}
+
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error;
+}
+
+function sanitize_key( $key ) {
+	return preg_replace( '/[^a-z0-9_\\-]/', '', strtolower( (string) $key ) );
 }
 
 function __( $text, $domain = 'default' ) {
@@ -123,6 +134,11 @@ function __( $text, $domain = 'default' ) {
 function wp_salt( $scheme = 'auth' ) {
 	unset( $scheme );
 	return 'test-salt-for-no-secret-proof';
+}
+
+function wp_generate_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
+	unset( $special_chars, $extra_special_chars );
+	return str_repeat( 'x', (int) $length );
 }
 
 function get_current_user_id() {
@@ -138,8 +154,10 @@ function wp_json_encode( $data, $flags = 0 ) {
 }
 
 require_once __DIR__ . '/../includes/class-mcp-gateway-free-gates.php';
+require_once __DIR__ . '/../includes/class-mcp-gateway-config.php';
 require_once __DIR__ . '/../includes/class-mcp-gateway-capabilities.php';
 require_once __DIR__ . '/../includes/class-mcp-gateway-image-providers.php';
+require_once __DIR__ . '/../includes/class-mcp-gateway-tool-consent-policy.php';
 require_once __DIR__ . '/../includes/class-mcp-gateway-response.php';
 require_once __DIR__ . '/../includes/class-mcp-gateway-rest.php';
 require_once __DIR__ . '/../includes/class-mcp-gateway-mcp-transport.php';

@@ -35,6 +35,7 @@ final class Axtolab_AI_Connector_Config {
 			'media_require_alt_text'       => true,
 			'media_allowed_import_domains' => array(),
 			'remote_mcp_enabled'           => false,
+			'tool_consent_policy'          => array(),
 		);
 
 		$saved = get_option( self::OPTION_KEY, array() );

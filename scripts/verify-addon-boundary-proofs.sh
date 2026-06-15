@@ -25,6 +25,7 @@ cd "$REPO_ROOT"
 # as whichever WP user the admin chose during wizard setup.
 proofs=(
   "wp-plugin/axtolab-ai-connector/tests/free-image-generation-gate-proof.php"
+  "wp-plugin/axtolab-ai-connector/tests/tool-consent-policy-proof.php"
 )
 
 for proof in "${proofs[@]}"; do

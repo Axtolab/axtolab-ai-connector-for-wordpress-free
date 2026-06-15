@@ -1,6 +1,7 @@
 import { Config } from '../config.js'
 import { PluginApiClient } from '../client/pluginApiClient.js'
 import { PolicyService } from './policyService.js'
+import type { ToolConsentPolicyMap } from './toolConsentPolicy.js'
 import { ToolError } from '../utils/errors.js'
 
 // ---------------------------------------------------------------------------
@@ -14,6 +15,7 @@ export interface SiteServices {
   config: Config
   client: PluginApiClient
   policy: PolicyService
+  toolConsentPolicy: ToolConsentPolicyMap
   allowedTools: string[] | null      // null = all allowed (older plugin or fetch failed)
   allowedAuthorIds: number[] | null  // null = any author allowed
   connectionCapabilityError?: { code: string; message: string } | null
