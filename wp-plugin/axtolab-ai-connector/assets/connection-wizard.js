@@ -31,6 +31,7 @@
 	var $verifyMsg   = $( '#mcp-wizard-verify-result' );
 	var $createMsg   = $( '#mcp-wizard-create-message' );
 	var $success     = $( '#mcp-wizard-success' );
+	var $configureBtn = $( '#mcp-wizard-configure-btn' );
 	var $doneBtn     = $( '#mcp-wizard-done-btn' );
 	var $appPwdField = $( '#mcp-wizard-app-password' );
 	var $userField   = $( '#mcp-wizard-username' );
@@ -81,6 +82,7 @@
 		$presetField.val( 'standard' );
 		applyPreset( 'standard' );
 		$success.prop( 'hidden', true );
+		$configureBtn.attr( 'data-connection-id', '' ).data( 'connection-id', '' );
 		$createBtn.prop( 'disabled', true );
 		$verifyMsg.text( '' ).removeClass( 'is-success is-error' );
 		$createMsg.text( '' ).removeClass( 'is-success is-error' );
@@ -149,6 +151,14 @@
 
 	$doneBtn.on( 'click', function () {
 		// Reload to show the new row in the connections table.
+		window.location.reload();
+	} );
+
+	$configureBtn.on( 'click', function () {
+		if ( typeof window.axtolabAiConnectorOpenConnectionManager === 'function' ) {
+			window.axtolabAiConnectorOpenConnectionManager( $( this ).attr( 'data-connection-id' ) || $( this ).data( 'connection-id' ) || '' );
+			return;
+		}
 		window.location.reload();
 	} );
 
@@ -247,6 +257,7 @@
 				$createBtn.text( 'Create connection' );
 				$createMsg.text( data.message || 'Connection created.' ).removeClass( 'is-error' ).addClass( 'is-success' );
 				$( '#mcp-wizard-token' ).text( data.token || '' );
+				$configureBtn.attr( 'data-connection-id', data.connection_id || '' ).data( 'connection-id', data.connection_id || '' );
 				$success.prop( 'hidden', false );
 				// Wipe the password field so it doesn't linger in the DOM.
 				$appPwdField.val( '' );

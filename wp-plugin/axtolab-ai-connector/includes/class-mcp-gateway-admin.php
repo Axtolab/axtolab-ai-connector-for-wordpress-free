@@ -1754,10 +1754,16 @@ JS;
 						<?php esc_html_e( 'Copy', 'axtolab-ai-connector' ); ?>
 					</button>
 				</div>
-				<p style="margin-top:10px;">
+				<p class="mcp-token-next-actions">
+					<button type="button" class="button button-primary" id="mcp-wizard-configure-btn">
+						<?php esc_html_e( 'Configure This Connection', 'axtolab-ai-connector' ); ?>
+					</button>
 					<button type="button" class="button" id="mcp-wizard-done-btn">
 						<?php esc_html_e( 'Done', 'axtolab-ai-connector' ); ?>
 					</button>
+					<span class="mcp-help-text">
+						<?php esc_html_e( 'Configure opens Connection Manager after a refresh so the new connection and its behavior controls are visible.', 'axtolab-ai-connector' ); ?>
+					</span>
 				</p>
 			</div>
 
@@ -3093,6 +3099,14 @@ JS;
 	white-space: pre-wrap;
 	word-break: break-word;
 }
+.mcp-token-next-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin: 10px 0 0;
+}
+.mcp-token-next-actions .mcp-help-text { margin: 0; max-width: 720px; }
 
 /* Tabs */
 .mcp-tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid #c3c4c7; margin-bottom: 16px; }
@@ -3362,6 +3376,11 @@ JS;
 .mcp-connections-table td { padding: 10px; border-bottom: 1px solid #f0f0f1; vertical-align: middle; }
 .mcp-connections-table tbody tr:hover { background: #f9f9f9; }
 .mcp-connections-table tbody tr.mcp-conn-fading { opacity: 0; transition: opacity 0.4s ease; }
+.mcp-connections-table tbody tr.mcp-conn-highlight td {
+	background: #fff8e5;
+	box-shadow: inset 3px 0 0 #dba617;
+	transition: background 0.2s ease, box-shadow 0.2s ease;
+}
 .mcp-connections-empty-row td { padding: 18px 10px; color: #646970; background: #fbfbfc; }
 .mcp-connections-empty-row strong { display: block; margin-bottom: 4px; color: #1d2327; }
 .mcp-connections-empty-row span { display: block; max-width: 720px; }
@@ -3455,6 +3474,72 @@ JS;
                 if (errorCb) errorCb('Request failed. Please try again.');
             });
     }
+
+    function getMcpSessionStorage() {
+        try {
+            return window.sessionStorage;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function switchMcpTab(tab) {
+        var $tab = $('.mcp-tab[data-tab="' + tab + '"]');
+        if (!$tab.length) return false;
+        $('.mcp-tab').removeClass('mcp-tab-active');
+        $tab.addClass('mcp-tab-active');
+        $('.mcp-tab-content').removeClass('mcp-tab-content-active');
+        $('.mcp-tab-content[data-tab="' + tab + '"]').addClass('mcp-tab-content-active');
+        return true;
+    }
+
+    function queueConnectionManagerOpen(connectionId) {
+        var storage = getMcpSessionStorage();
+        if (storage) {
+            storage.setItem('axtolabAiConnectorOpenTab', 'connection-manager');
+            if (connectionId) {
+                storage.setItem('axtolabAiConnectorOpenConnection', connectionId);
+            } else {
+                storage.removeItem('axtolabAiConnectorOpenConnection');
+            }
+        }
+        window.location.reload();
+    }
+
+    function openQueuedConnectionManagerTarget() {
+        var storage = getMcpSessionStorage();
+        if (!storage) return;
+
+        var tab = storage.getItem('axtolabAiConnectorOpenTab');
+        var connectionId = storage.getItem('axtolabAiConnectorOpenConnection');
+        storage.removeItem('axtolabAiConnectorOpenTab');
+        storage.removeItem('axtolabAiConnectorOpenConnection');
+
+        if (tab) {
+            switchMcpTab(tab);
+        }
+
+        if (connectionId) {
+            setTimeout(function() {
+                var $row = $('.mcp-connection-row[data-id="' + connectionId + '"]');
+                var $capsRow = $('.mcp-connection-caps-row[data-id="' + connectionId + '"]');
+                if (!$row.length || !$capsRow.length) return;
+                $capsRow.show();
+                connSyncBehaviorAccess(connectionId);
+                $row.addClass('mcp-conn-highlight');
+                $capsRow.addClass('mcp-conn-highlight');
+                if ($row[0] && $row[0].scrollIntoView) {
+                    $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                $row.find('.mcp-conn-perms-btn').trigger('focus');
+                setTimeout(function() {
+                    $row.add($capsRow).removeClass('mcp-conn-highlight');
+                }, 2500);
+            }, 100);
+        }
+    }
+
+    window.axtolabAiConnectorOpenConnectionManager = queueConnectionManagerOpen;
 
     // ══════════════════════════════════════════════════════════════════════════
     // Connection Manager — Rename, Revoke, Revoke All
@@ -3777,12 +3862,10 @@ JS;
 
     // ── Tab switching ─────────────────────────────────────────────────────────
     $(document).on('click', '.mcp-tab', function () {
-        var tab = $(this).data('tab');
-        $('.mcp-tab').removeClass('mcp-tab-active');
-        $(this).addClass('mcp-tab-active');
-        $('.mcp-tab-content').removeClass('mcp-tab-content-active');
-        $('.mcp-tab-content[data-tab="' + tab + '"]').addClass('mcp-tab-content-active');
+        switchMcpTab($(this).data('tab'));
     });
+
+    openQueuedConnectionManagerTarget();
 
     // ── Copy button ──────────────────────────────────────────────────────────
     $(document).on('click', '.mcp-copy-btn', function () {
