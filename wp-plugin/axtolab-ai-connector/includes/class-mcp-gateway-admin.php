@@ -1028,7 +1028,7 @@ JS;
 	private static function setup_status_tooltip_attrs( string $label, string $detail ): string {
 		$tooltip = trim( wp_strip_all_tags( $label . ': ' . $detail ) );
 		return sprintf(
-			' title="%1$s" aria-label="%1$s"',
+			' title="%1$s" aria-label="%1$s" data-tooltip="%1$s" tabindex="0"',
 			esc_attr( $tooltip )
 		);
 	}
@@ -2999,6 +2999,7 @@ JS;
 .mcp-gateway-status-list { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px; min-width: 0; list-style: none; margin: 0; padding: 0; }
 .mcp-gateway-status-list li {
 	display: flex;
+	position: relative;
 	align-items: center;
 	gap: 8px;
 	flex: 1 1 170px;
@@ -3007,8 +3008,53 @@ JS;
 	border: 1px solid #f0f0f1;
 	border-radius: 4px;
 	background: #f9f9f9;
+	cursor: help;
 	font-size: 13px;
 }
+.mcp-gateway-status-list li::before {
+	position: absolute;
+	bottom: calc(100% + 8px);
+	left: 0;
+	z-index: 1000;
+	width: max-content;
+	max-width: 320px;
+	padding: 7px 9px;
+	border-radius: 6px;
+	background: #1d2327;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.35;
+	white-space: normal;
+	box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+	content: attr(data-tooltip);
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(4px);
+	transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.mcp-gateway-status-list li::after {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	border: 1px solid #c3c4c7;
+	border-radius: 999px;
+	color: #646970;
+	content: "?";
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1;
+}
+.mcp-gateway-status-list li:hover::before,
+.mcp-gateway-status-list li:focus::before,
+.mcp-gateway-status-list li:focus-within::before {
+	opacity: 1;
+	transform: translateY(0);
+}
+.mcp-gateway-status-list li:focus { outline: 2px solid #2271b1; outline-offset: 2px; }
 .mcp-status-icon { font-size: 18px; flex-shrink: 0; }
 .mcp-status-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .mcp-status-detail { display: none; }
